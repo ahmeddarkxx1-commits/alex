@@ -1,0 +1,26 @@
+{
+  "name": "منصة المعهد الفني الصناعي بالإسكندرية",
+  "short_name": "ITI Alex Hub",
+  "description": "المنصة الأكاديمية الشاملة لطلاب المعهد الفني الصناعي بالإسكندرية - تلخيصات، شيتات، جداول سكاشن، ومواعيد تسليم",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#070B14",
+  "theme_color": "#070B14",
+  "orientation": "portrait-primary",
+  "dir": "rtl",
+  "lang": "ar",
+  "icons": [
+    {
+      "src": "/icons/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
