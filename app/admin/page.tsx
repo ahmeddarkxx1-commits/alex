@@ -16,7 +16,8 @@ import {
   SessionType,
   AnnouncementCategory,
   UrgencyLevel,
-  SemesterNumber
+  SemesterNumber,
+  StudentUser
 } from '@/types/database';
 import { 
   getDepartments, 
@@ -53,7 +54,14 @@ import {
   Users,
   Eye,
   CheckCheck,
-  XCircle
+  XCircle,
+  Search,
+  FileSpreadsheet,
+  X,
+  ChevronDown,
+  ChevronUp,
+  ExternalLink,
+  BookOpen
 } from 'lucide-react';
 
 export default function AdminDashboard() {
@@ -68,12 +76,25 @@ export default function AdminDashboard() {
   const [resources, setResources] = useState<Resource[]>([]);
   const [schedules, setSchedules] = useState<Schedule[]>([]);
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
+  const [students, setStudents] = useState<StudentUser[]>([]);
 
   // Navigation Tab
-  const [activeTab, setActiveTab] = useState<'create-resource' | 'schedules' | 'announcements' | 'manage' | 'review'>('create-resource');
+  const [activeTab, setActiveTab] = useState<'create-resource' | 'schedules' | 'announcements' | 'manage' | 'review' | 'students'>('create-resource');
 
   // PDF File Input Ref
   const pdfInputRef = useRef<HTMLInputElement>(null);
+
+  // Quick Form Collapsible Mode
+  const [showDetailedMarkdown, setShowDetailedMarkdown] = useState(false);
+
+  // Inline PDF Preview Modal
+  const [previewPdfUrl, setPreviewPdfUrl] = useState<string | null>(null);
+  const [previewPdfTitle, setPreviewPdfTitle] = useState<string>('');
+  const [previewResource, setPreviewResource] = useState<Resource | null>(null);
+
+  // Student Directory State
+  const [studentSearch, setStudentSearch] = useState('');
+  const [studentYearFilter, setStudentYearFilter] = useState<AcademicYear | 'all'>('all');
 
   // Feedback Toast
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
@@ -139,6 +160,17 @@ export default function AdminDashboard() {
     setSchedules(sch);
     setAnnouncements(anns);
 
+    // Load registered students
+    try {
+      const stRes = await fetch('/api/students');
+      if (stRes.ok) {
+        const stData = await stRes.json();
+        if (Array.isArray(stData)) setStudents(stData);
+      }
+    } catch (e) {
+      // ignore
+    }
+
     if (depts.length > 0) {
       if (!newResDeptId) setNewResDeptId(depts[0].id);
       if (!schDeptId) setSchDeptId(depts[0].id);
@@ -148,6 +180,35 @@ export default function AdminDashboard() {
   useEffect(() => {
     refreshAllData();
   }, []);
+
+  // Export Students to CSV
+  const handleExportStudentsCsv = () => {
+    if (students.length === 0) {
+      showToast('لا يوجد طلاب مسجلين للتصدير حالياً', 'error');
+      return;
+    }
+
+    const headers = ['م', 'اسم الطالب', 'كود الطالب', 'الفرقة الدراسية', 'الفصل الدراسي', 'السكشن', 'رقم الهاتف', 'تاريخ التسجيل'];
+    const rows = students.map((s, idx) => [
+      idx + 1,
+      `"${s.name.replace(/"/g, '""')}"`,
+      `"${s.student_code || '-'}"`,
+      `"${s.academic_year}"`,
+      `"الترم ${s.semester_number}"`,
+      `"${s.section_number || 'عام'}"`,
+      `"${s.phone || '-'}"`,
+      `"${new Date(s.created_at).toLocaleDateString('ar-EG')}"`
+    ]);
+
+    const csvContent = '\uFEFF' + [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `kashf_students_iti_alex_${new Date().toISOString().slice(0, 10)}.csv`;
+    link.click();
+    showToast(`تم تصدير كشف ${students.length} طالب بنجاح كملف Excel (CSV)!`);
+  };
 
   // Update subjects dropdown when department or year changes
   useEffect(() => {
@@ -609,72 +670,151 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      {/* 5 Dashboard Tabs Buttons */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5">
-        <button
-          onClick={() => setActiveTab('create-resource')}
-          className={`flex items-center justify-center gap-2 p-3.5 rounded-full text-xs sm:text-sm font-bold border-[1.5px] border-[#171717] transition-all ${
-            activeTab === 'create-resource'
-              ? 'bg-[#171717] text-white shadow-[0_2px_4px_rgba(0,0,0,0.2)]'
-              : 'bg-[#fdfbf9] text-[#171717] hover:bg-[#f7efe9] shadow-[0_1px_2px_rgba(0,0,0,0.25)]'
-          }`}
-        >
-          <PlusCircle className={`w-4 h-4 ${activeTab === 'create-resource' ? 'text-[#ff6f1e]' : 'text-[#171717]'}`} />
-          <span>نشر تلخيص / شيت</span>
-        </button>
+      {/* Executive KPI Stat Cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <div className="bg-[#f7efe9] border-[1.5px] border-[#171717] rounded-[14px] p-4 shadow-[0_1px_2px_rgba(0,0,0,0.1)] flex items-center justify-between">
+          <div>
+            <p className="text-[11px] font-bold text-[#171717]/70">المحتويات المعتمدة والمنشورة</p>
+            <h3 className="text-xl font-black text-[#2b1a07] mt-0.5">
+              {resources.filter((r) => !r.review_status || r.review_status === 'approved').length}
+            </h3>
+            <span className="text-[10px] text-emerald-700 font-bold">متاحة لجميع الطلاب ✓</span>
+          </div>
+          <div className="w-10 h-10 rounded-full bg-[#fdfbf9] border border-[#171717] flex items-center justify-center text-emerald-600">
+            <CheckCheck className="w-5 h-5" />
+          </div>
+        </div>
 
-        <button
-          onClick={() => setActiveTab('review')}
-          className={`flex items-center justify-center gap-2 p-3.5 rounded-full text-xs sm:text-sm font-bold border-[1.5px] border-[#171717] transition-all relative ${
-            activeTab === 'review'
-              ? 'bg-[#171717] text-white shadow-[0_2px_4px_rgba(0,0,0,0.2)]'
-              : 'bg-[#fdfbf9] text-[#171717] hover:bg-[#f7efe9] shadow-[0_1px_2px_rgba(0,0,0,0.25)]'
-          }`}
-        >
-          <CheckCheck className={`w-4 h-4 ${activeTab === 'review' ? 'text-[#22c55e]' : 'text-[#171717]'}`} />
-          <span>مراجعة واعتماد المحتوى</span>
-          {resources.filter((r) => r.review_status === 'pending_review').length > 0 && (
-            <span className="w-5 h-5 rounded-full bg-[#ff6f1e] text-[#2b1a07] text-[10px] font-black flex items-center justify-center border border-[#171717]">
+        <div className="bg-[#f7efe9] border-[1.5px] border-[#171717] rounded-[14px] p-4 shadow-[0_1px_2px_rgba(0,0,0,0.1)] flex items-center justify-between">
+          <div>
+            <p className="text-[11px] font-bold text-[#171717]/70">طابور المراجعة والاعتماد</p>
+            <h3 className="text-xl font-black text-[#ff6f1e] mt-0.5">
               {resources.filter((r) => r.review_status === 'pending_review').length}
-            </span>
-          )}
-        </button>
+            </h3>
+            <span className="text-[10px] text-[#ce500a] font-bold">بانتظار موافقة المشرف ⏳</span>
+          </div>
+          <div className="w-10 h-10 rounded-full bg-[#fdfbf9] border border-[#171717] flex items-center justify-center text-[#ff6f1e]">
+            <Clock className="w-5 h-5" />
+          </div>
+        </div>
 
-        <button
-          onClick={() => setActiveTab('schedules')}
-          className={`flex items-center justify-center gap-2 p-3.5 rounded-full text-xs sm:text-sm font-bold border-[1.5px] border-[#171717] transition-all ${
-            activeTab === 'schedules'
-              ? 'bg-[#171717] text-white shadow-[0_2px_4px_rgba(0,0,0,0.2)]'
-              : 'bg-[#fdfbf9] text-[#171717] hover:bg-[#f7efe9] shadow-[0_1px_2px_rgba(0,0,0,0.25)]'
-          }`}
-        >
-          <Calendar className={`w-4 h-4 ${activeTab === 'schedules' ? 'text-[#ff6f1e]' : 'text-[#171717]'}`} />
-          <span>إدارة جدول الفترات</span>
-        </button>
+        <div className="bg-[#f7efe9] border-[1.5px] border-[#171717] rounded-[14px] p-4 shadow-[0_1px_2px_rgba(0,0,0,0.1)] flex items-center justify-between">
+          <div>
+            <p className="text-[11px] font-bold text-[#171717]/70">الطلاب المسجلون بالمنصة</p>
+            <h3 className="text-xl font-black text-[#2b1a07] mt-0.5">
+              {students.length}
+            </h3>
+            <span className="text-[10px] text-[#171717]/70 font-bold">حسابات موثقة بالدليل 👥</span>
+          </div>
+          <div className="w-10 h-10 rounded-full bg-[#fdfbf9] border border-[#171717] flex items-center justify-center text-[#2b1a07]">
+            <Users className="w-5 h-5" />
+          </div>
+        </div>
 
-        <button
-          onClick={() => setActiveTab('announcements')}
-          className={`flex items-center justify-center gap-2 p-3.5 rounded-full text-xs sm:text-sm font-bold border-[1.5px] border-[#171717] transition-all ${
-            activeTab === 'announcements'
-              ? 'bg-[#171717] text-white shadow-[0_2px_4px_rgba(0,0,0,0.2)]'
-              : 'bg-[#fdfbf9] text-[#171717] hover:bg-[#f7efe9] shadow-[0_1px_2px_rgba(0,0,0,0.25)]'
-          }`}
-        >
-          <Bell className={`w-4 h-4 ${activeTab === 'announcements' ? 'text-[#ff6f1e]' : 'text-[#171717]'}`} />
-          <span>نشر تنبيه أو موعد تسليم</span>
-        </button>
+        <div className="bg-[#f7efe9] border-[1.5px] border-[#171717] rounded-[14px] p-4 shadow-[0_1px_2px_rgba(0,0,0,0.1)] flex items-center justify-between">
+          <div>
+            <p className="text-[11px] font-bold text-[#171717]/70">قنوات التليجرام المرتبطة</p>
+            <h3 className="text-xl font-black text-[#2b1a07] mt-0.5">
+              2
+            </h3>
+            <span className="text-[10px] text-emerald-700 font-bold">قناة سنة 1 + سنة 2 متصلتان 📡</span>
+          </div>
+          <div className="w-10 h-10 rounded-full bg-[#fdfbf9] border border-[#171717] flex items-center justify-center text-[#0284c7]">
+            <Send className="w-5 h-5" />
+          </div>
+        </div>
+      </div>
 
-        <button
-          onClick={() => setActiveTab('manage')}
-          className={`flex items-center justify-center gap-2 p-3.5 rounded-full text-xs sm:text-sm font-bold border-[1.5px] border-[#171717] transition-all ${
-            activeTab === 'manage'
-              ? 'bg-[#171717] text-white shadow-[0_2px_4px_rgba(0,0,0,0.2)]'
-              : 'bg-[#fdfbf9] text-[#171717] hover:bg-[#f7efe9] shadow-[0_1px_2px_rgba(0,0,0,0.25)]'
-          }`}
-        >
-          <Database className={`w-4 h-4 ${activeTab === 'manage' ? 'text-[#ff6f1e]' : 'text-[#171717]'}`} />
-          <span>المحتوى والنسخ الاحتياطي</span>
-        </button>
+      {/* Role-Based Dashboard Tabs Buttons */}
+      <div className="flex flex-wrap gap-2 pt-1">
+        {(currentUser.role === 'super_admin' || currentUser.role === 'dept_rep') && (
+          <button
+            onClick={() => setActiveTab('create-resource')}
+            className={`flex items-center justify-center gap-2 px-4 py-3 rounded-full text-xs sm:text-sm font-bold border-[1.5px] border-[#171717] transition-all cursor-pointer ${
+              activeTab === 'create-resource'
+                ? 'bg-[#171717] text-white shadow-[0_2px_4px_rgba(0,0,0,0.2)]'
+                : 'bg-[#fdfbf9] text-[#171717] hover:bg-[#f7efe9] shadow-[0_1px_2px_rgba(0,0,0,0.25)]'
+            }`}
+          >
+            <PlusCircle className={`w-4 h-4 ${activeTab === 'create-resource' ? 'text-[#ff6f1e]' : 'text-[#171717]'}`} />
+            <span>نشر تلخيص / شيت</span>
+          </button>
+        )}
+
+        {(currentUser.role === 'super_admin' || currentUser.role === 'reviewer_admin' || currentUser.role === 'dept_rep') && (
+          <button
+            onClick={() => setActiveTab('review')}
+            className={`flex items-center justify-center gap-2 px-4 py-3 rounded-full text-xs sm:text-sm font-bold border-[1.5px] border-[#171717] transition-all cursor-pointer relative ${
+              activeTab === 'review'
+                ? 'bg-[#171717] text-white shadow-[0_2px_4px_rgba(0,0,0,0.2)]'
+                : 'bg-[#fdfbf9] text-[#171717] hover:bg-[#f7efe9] shadow-[0_1px_2px_rgba(0,0,0,0.25)]'
+            }`}
+          >
+            <CheckCheck className={`w-4 h-4 ${activeTab === 'review' ? 'text-[#22c55e]' : 'text-[#171717]'}`} />
+            <span>{currentUser.role === 'dept_rep' ? 'ملفاتي وحالة الاعتماد' : 'طابور مراجعة واعتماد المحتوى'}</span>
+            {resources.filter((r) => r.review_status === 'pending_review').length > 0 && (
+              <span className="w-5 h-5 rounded-full bg-[#ff6f1e] text-[#2b1a07] text-[10px] font-black flex items-center justify-center border border-[#171717]">
+                {resources.filter((r) => r.review_status === 'pending_review').length}
+              </span>
+            )}
+          </button>
+        )}
+
+        {(currentUser.role === 'super_admin' || currentUser.role === 'reviewer_admin') && (
+          <button
+            onClick={() => setActiveTab('students')}
+            className={`flex items-center justify-center gap-2 px-4 py-3 rounded-full text-xs sm:text-sm font-bold border-[1.5px] border-[#171717] transition-all cursor-pointer ${
+              activeTab === 'students'
+                ? 'bg-[#171717] text-white shadow-[0_2px_4px_rgba(0,0,0,0.2)]'
+                : 'bg-[#fdfbf9] text-[#171717] hover:bg-[#f7efe9] shadow-[0_1px_2px_rgba(0,0,0,0.25)]'
+            }`}
+          >
+            <Users className={`w-4 h-4 ${activeTab === 'students' ? 'text-[#ff6f1e]' : 'text-[#171717]'}`} />
+            <span>دليل وقوائم الطلاب ({students.length})</span>
+          </button>
+        )}
+
+        {currentUser.role === 'super_admin' && (
+          <button
+            onClick={() => setActiveTab('schedules')}
+            className={`flex items-center justify-center gap-2 px-4 py-3 rounded-full text-xs sm:text-sm font-bold border-[1.5px] border-[#171717] transition-all cursor-pointer ${
+              activeTab === 'schedules'
+                ? 'bg-[#171717] text-white shadow-[0_2px_4px_rgba(0,0,0,0.2)]'
+                : 'bg-[#fdfbf9] text-[#171717] hover:bg-[#f7efe9] shadow-[0_1px_2px_rgba(0,0,0,0.25)]'
+            }`}
+          >
+            <Calendar className={`w-4 h-4 ${activeTab === 'schedules' ? 'text-[#ff6f1e]' : 'text-[#171717]'}`} />
+            <span>إدارة جدول الفترات</span>
+          </button>
+        )}
+
+        {(currentUser.role === 'super_admin' || currentUser.role === 'reviewer_admin') && (
+          <button
+            onClick={() => setActiveTab('announcements')}
+            className={`flex items-center justify-center gap-2 px-4 py-3 rounded-full text-xs sm:text-sm font-bold border-[1.5px] border-[#171717] transition-all cursor-pointer ${
+              activeTab === 'announcements'
+                ? 'bg-[#171717] text-white shadow-[0_2px_4px_rgba(0,0,0,0.2)]'
+                : 'bg-[#fdfbf9] text-[#171717] hover:bg-[#f7efe9] shadow-[0_1px_2px_rgba(0,0,0,0.25)]'
+            }`}
+          >
+            <Bell className={`w-4 h-4 ${activeTab === 'announcements' ? 'text-[#ff6f1e]' : 'text-[#171717]'}`} />
+            <span>نشر تنبيه أو موعد تسليم</span>
+          </button>
+        )}
+
+        {currentUser.role === 'super_admin' && (
+          <button
+            onClick={() => setActiveTab('manage')}
+            className={`flex items-center justify-center gap-2 px-4 py-3 rounded-full text-xs sm:text-sm font-bold border-[1.5px] border-[#171717] transition-all cursor-pointer ${
+              activeTab === 'manage'
+                ? 'bg-[#171717] text-white shadow-[0_2px_4px_rgba(0,0,0,0.2)]'
+                : 'bg-[#fdfbf9] text-[#171717] hover:bg-[#f7efe9] shadow-[0_1px_2px_rgba(0,0,0,0.25)]'
+            }`}
+          >
+            <Database className={`w-4 h-4 ${activeTab === 'manage' ? 'text-[#ff6f1e]' : 'text-[#171717]'}`} />
+            <span>المحتوى والنسخ الاحتياطي</span>
+          </button>
+        )}
       </div>
 
       {/* ---------------------------------------------------- */}
@@ -736,11 +876,24 @@ export default function AdminDashboard() {
                   onChange={(e) => setNewResSubjectId(e.target.value)}
                   className="w-full bg-[#fdfbf9] border-[1.5px] border-[#171717] rounded-[8px] p-2.5 text-xs sm:text-sm text-[#171717] focus:outline-none focus:border-[#ff6f1e] cursor-pointer"
                 >
-                  {subjects.map((s) => (
-                    <option key={s.id} value={s.id}>
-                      {s.name_ar}
-                    </option>
-                  ))}
+                  <optgroup label={newResYear === 'الفرقة الأولى' ? 'الفصل الدراسي الأول (الترم 1)' : 'الفصل الدراسي الأول (الترم 3)'}>
+                    {subjects
+                      .filter((s) => s.semester_number === 1 || s.semester_number === 3)
+                      .map((s) => (
+                        <option key={s.id} value={s.id}>
+                          {s.name_ar}
+                        </option>
+                      ))}
+                  </optgroup>
+                  <optgroup label={newResYear === 'الفرقة الأولى' ? 'الفصل الدراسي الثاني (الترم 2)' : 'الفصل الدراسي الثاني (الترم 4)'}>
+                    {subjects
+                      .filter((s) => s.semester_number === 2 || s.semester_number === 4)
+                      .map((s) => (
+                        <option key={s.id} value={s.id}>
+                          {s.name_ar}
+                        </option>
+                      ))}
+                  </optgroup>
                 </select>
               </div>
             </div>
@@ -814,18 +967,36 @@ export default function AdminDashboard() {
               />
             </div>
 
-            {/* Markdown Explanation */}
-            <div>
-              <label className="block text-xs font-bold text-[#171717] mb-1.5">
-                الشرح الكامل والقوانين وخطوات الحل (Markdown مع دعم المعادلات):
-              </label>
-              <textarea
-                rows={6}
-                value={newResMarkdown}
-                onChange={(e) => setNewResMarkdown(e.target.value)}
-                placeholder="### المحتويات الرئيسية:&#10;1. القانون الرياضي: C = 0.0675 * D^2&#10;2. خطوات المعايرة الميدانية..."
-                className="w-full bg-[#fdfbf9] border-[1.5px] border-[#171717] rounded-[8px] p-2.5 text-xs sm:text-sm text-[#171717] focus:outline-none focus:border-[#ff6f1e] font-mono"
-              />
+            {/* Collapsible Detailed Markdown Explanation */}
+            <div className="bg-[#fdfbf9] border-[1.5px] border-[#171717] rounded-[12px] p-3.5 space-y-2">
+              <button
+                type="button"
+                onClick={() => setShowDetailedMarkdown(!showDetailedMarkdown)}
+                className="w-full flex items-center justify-between text-xs font-bold text-[#2b1a07] cursor-pointer"
+              >
+                <span className="flex items-center gap-2">
+                  <BookOpen className="w-4 h-4 text-[#ff6f1e]" />
+                  <span>كتابة شرح نصي مفصل / قوانين بالمعادلات (اختياري - في حال عدم توفر PDF)</span>
+                </span>
+                <span className="flex items-center gap-1 text-[11px] text-[#171717]/60">
+                  <span>{showDetailedMarkdown ? 'طي الشرح' : 'توسيع وحفظ'}</span>
+                  {showDetailedMarkdown ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                </span>
+              </button>
+              {showDetailedMarkdown && (
+                <div className="pt-2 border-t border-[#171717]/10 space-y-1.5">
+                  <p className="text-[11px] text-[#171717]/60">
+                    يمكنك كتابة القوانين الرياضية والخطوات الميدانية باستخدام Markdown وسيعرضها الموقع بشكل منسق للطلاب:
+                  </p>
+                  <textarea
+                    rows={5}
+                    value={newResMarkdown}
+                    onChange={(e) => setNewResMarkdown(e.target.value)}
+                    placeholder="### المحتويات الرئيسية:&#10;1. القانون الرياضي: C = 0.0675 * D^2&#10;2. خطوات المعايرة الميدانية..."
+                    className="w-full bg-[#fdfbf9] border-[1.5px] border-[#171717] rounded-[8px] p-2.5 text-xs sm:text-sm text-[#171717] focus:outline-none focus:border-[#ff6f1e] font-mono"
+                  />
+                </div>
+              )}
             </div>
 
             {/* PDF File Upload & Attachment (STRICTLY PDF ONLY TO SAVE STORAGE) */}
@@ -1178,15 +1349,29 @@ export default function AdminDashboard() {
 
                       {/* PDF View / Download */}
                       {r.file_url ? (
-                        <a
-                          href={r.file_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[#f7efe9] hover:bg-[#ff6f1e]/15 border-[1.5px] border-[#171717] text-xs font-bold text-[#2b1a07] transition-all shadow-[0_1px_2px_rgba(0,0,0,0.15)]"
-                        >
-                          <FileText className="w-3.5 h-3.5 text-[#ff6f1e]" />
-                          <span>معاينة وتحميل مستند الـ PDF ↗</span>
-                        </a>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setPreviewPdfUrl(r.file_url || null);
+                              setPreviewPdfTitle(r.title);
+                              setPreviewResource(r);
+                            }}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#171717] hover:bg-[#171717]/85 border border-[#171717] text-xs font-bold text-white transition-all shadow-[0_1px_2px_rgba(0,0,0,0.15)] cursor-pointer"
+                          >
+                            <Eye className="w-3.5 h-3.5 text-[#ff6f1e]" />
+                            <span>معاينة فورية سريعة 👁️</span>
+                          </button>
+                          <a
+                            href={r.file_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#f7efe9] hover:bg-[#ff6f1e]/15 border-[1.5px] border-[#171717] text-xs font-bold text-[#2b1a07] transition-all shadow-[0_1px_2px_rgba(0,0,0,0.15)]"
+                          >
+                            <ExternalLink className="w-3.5 h-3.5 text-[#ff6f1e]" />
+                            <span>فتح بالمتصفح ↗</span>
+                          </a>
+                        </div>
                       ) : (
                         <span className="text-[11px] text-[#171717]/40 font-bold">
                           لا يوجد ملف PDF مرفق
@@ -1242,6 +1427,162 @@ export default function AdminDashboard() {
                 <p className="text-xs text-[#171717]/60">كل المحتويات معتمدة أو تم فحصها بالكامل.</p>
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* ---------------------------------------------------- */}
+      {/* TAB: REGISTERED STUDENTS DIRECTORY (دليل وقوائم الطلاب) */}
+      {/* ---------------------------------------------------- */}
+      {activeTab === 'students' && (
+        <div className="space-y-6">
+          <div className="bg-[#f7efe9] border-[1.5px] border-[#171717] rounded-[16px] p-6 shadow-[0_1px_2px_rgba(0,0,0,0.15)] space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b-[1.5px] border-[#171717]/15 pb-4">
+              <div>
+                <h2 className="text-lg font-black text-[#2b1a07] flex items-center gap-2">
+                  <Users className="w-6 h-6 text-[#ff6f1e]" />
+                  <span>دليل وقوائم الطلاب المسجلين بالمنصة ({students.length})</span>
+                </h2>
+                <p className="text-xs text-[#171717]/70 mt-1 leading-relaxed">
+                  يمكن لمشرفي الشعبة مراجعة بيانات الطلاب، متابعة أرقام الهواتف، والفرق الدراسية، وتصدير كشف رسمي بصيغة Excel / CSV.
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={handleExportStudentsCsv}
+                  className="inline-flex items-center gap-2 px-4 py-2.5 rounded-full bg-[#171717] hover:bg-[#171717]/90 text-white font-bold text-xs shadow-[0_2px_4px_rgba(0,0,0,0.2)] transition-all cursor-pointer"
+                >
+                  <FileSpreadsheet className="w-4 h-4 text-[#22c55e]" />
+                  <span>تصدير كشف الطلاب (Excel / CSV)</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Filter and Search Controls */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
+              <div className="sm:col-span-2 relative">
+                <Search className="w-4 h-4 text-[#171717]/40 absolute right-3 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  value={studentSearch}
+                  onChange={(e) => setStudentSearch(e.target.value)}
+                  placeholder="ابحث بالاسم، أو كود الطالب، أو رقم الهاتف..."
+                  className="w-full pr-9 pl-3 py-2.5 bg-[#fdfbf9] border-[1.5px] border-[#171717] rounded-[8px] text-xs text-[#171717] focus:outline-none focus:border-[#ff6f1e]"
+                />
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setStudentYearFilter('all')}
+                  className={`flex-1 py-2 px-2 text-xs font-bold rounded-[8px] border-[1.5px] transition-all cursor-pointer ${
+                    studentYearFilter === 'all'
+                      ? 'bg-[#171717] text-white border-[#171717]'
+                      : 'bg-[#fdfbf9] text-[#171717] border-[#171717]/30 hover:bg-[#f7efe9]'
+                  }`}
+                >
+                  الكل ({students.length})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setStudentYearFilter('الفرقة الأولى')}
+                  className={`flex-1 py-2 px-2 text-xs font-bold rounded-[8px] border-[1.5px] transition-all cursor-pointer ${
+                    studentYearFilter === 'الفرقة الأولى'
+                      ? 'bg-[#171717] text-white border-[#171717]'
+                      : 'bg-[#fdfbf9] text-[#171717] border-[#171717]/30 hover:bg-[#f7efe9]'
+                  }`}
+                >
+                  سنة 1 ({students.filter((s) => s.academic_year === 'الفرقة الأولى').length})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setStudentYearFilter('الفرقة الثانية')}
+                  className={`flex-1 py-2 px-2 text-xs font-bold rounded-[8px] border-[1.5px] transition-all cursor-pointer ${
+                    studentYearFilter === 'الفرقة الثانية'
+                      ? 'bg-[#171717] text-white border-[#171717]'
+                      : 'bg-[#fdfbf9] text-[#171717] border-[#171717]/30 hover:bg-[#f7efe9]'
+                  }`}
+                >
+                  سنة 2 ({students.filter((s) => s.academic_year === 'الفرقة الثانية').length})
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Students Directory Table */}
+          <div className="bg-[#fdfbf9] border-[1.5px] border-[#171717] rounded-[16px] p-6 shadow-[0_1px_2px_rgba(0,0,0,0.15)] space-y-4">
+            <div className="overflow-x-auto">
+              <table className="w-full text-xs text-right">
+                <thead className="bg-[#f7efe9] text-[#2b1a07] font-bold border-b-[1.5px] border-[#171717]">
+                  <tr>
+                    <th className="p-3">م</th>
+                    <th className="p-3">اسم الطالب</th>
+                    <th className="p-3">كود الطالب</th>
+                    <th className="p-3">الفرقة الدراسية</th>
+                    <th className="p-3">الترم</th>
+                    <th className="p-3">السكشن</th>
+                    <th className="p-3">رقم الهاتف</th>
+                    <th className="p-3">تاريخ التسجيل</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[#171717]/10">
+                  {students
+                    .filter((s) => {
+                      if (studentYearFilter !== 'all' && s.academic_year !== studentYearFilter) return false;
+                      if (!studentSearch.trim()) return true;
+                      const q = studentSearch.toLowerCase();
+                      return (
+                        s.name.toLowerCase().includes(q) ||
+                        (s.student_code && s.student_code.toLowerCase().includes(q)) ||
+                        (s.phone && s.phone.includes(q))
+                      );
+                    })
+                    .map((s, idx) => (
+                      <tr key={s.id || idx} className="hover:bg-[#f7efe9]/70 transition-colors">
+                        <td className="p-3 font-mono text-[#171717]/60">{idx + 1}</td>
+                        <td className="p-3 font-extrabold text-[#2b1a07]">
+                          <div className="flex items-center gap-2">
+                            <div className="w-6 h-6 rounded-full bg-[#f7efe9] border border-[#171717] flex items-center justify-center text-[10px] font-black text-[#ff6f1e]">
+                              {s.name.slice(0, 1)}
+                            </div>
+                            <span>{s.name}</span>
+                          </div>
+                        </td>
+                        <td className="p-3 font-mono font-bold text-[#171717]">{s.student_code || '-'}</td>
+                        <td className="p-3">
+                          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-[#f7efe9] border border-[#171717]/30 text-[#2b1a07]">
+                            {s.academic_year}
+                          </span>
+                        </td>
+                        <td className="p-3 text-[#171717]/80">الترم {s.semester_number}</td>
+                        <td className="p-3 font-bold text-[#171717]">{s.section_number || 'عام'}</td>
+                        <td className="p-3 font-mono text-[#171717]/80 dir-ltr text-right">{s.phone || '-'}</td>
+                        <td className="p-3 text-[11px] text-[#171717]/60 font-mono">
+                          {new Date(s.created_at).toLocaleDateString('ar-EG')}
+                        </td>
+                      </tr>
+                    ))}
+                </tbody>
+              </table>
+
+              {students.filter((s) => {
+                if (studentYearFilter !== 'all' && s.academic_year !== studentYearFilter) return false;
+                if (!studentSearch.trim()) return true;
+                const q = studentSearch.toLowerCase();
+                return (
+                  s.name.toLowerCase().includes(q) ||
+                  (s.student_code && s.student_code.toLowerCase().includes(q)) ||
+                  (s.phone && s.phone.includes(q))
+                );
+              }).length === 0 && (
+                <div className="text-center py-10 space-y-2">
+                  <Users className="w-8 h-8 text-[#171717]/30 mx-auto" />
+                  <p className="text-xs font-bold text-[#171717]/60">لا يوجد طلاب يطابقون معايير البحث الحالية</p>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}
@@ -1729,6 +2070,103 @@ export default function AdminDashboard() {
                   ))}
                 </tbody>
               </table>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ---------------------------------------------------- */}
+      {/* INLINE PDF PREVIEW MODAL */}
+      {/* ---------------------------------------------------- */}
+      {previewPdfUrl && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="relative w-full max-w-5xl h-[90vh] bg-[#fdfbf9] border-[2px] border-[#171717] rounded-[16px] shadow-[0_8px_30px_rgba(0,0,0,0.3)] flex flex-col overflow-hidden">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between p-4 bg-[#f7efe9] border-b-[1.5px] border-[#171717]">
+              <div className="flex items-center gap-2.5 truncate">
+                <div className="w-8 h-8 rounded-full bg-[#fdfbf9] border border-[#171717] flex items-center justify-center text-[#ff6f1e] flex-shrink-0">
+                  <FileText className="w-4 h-4" />
+                </div>
+                <div className="truncate">
+                  <h3 className="text-sm sm:text-base font-black text-[#2b1a07] truncate">
+                    {previewPdfTitle || 'معاينة مستند الـ PDF'}
+                  </h3>
+                  <p className="text-[11px] text-[#171717]/60 truncate">
+                    معاينة أصلية للمستند المرفوع من المندوب للتدقيق الأكاديمي
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 flex-shrink-0">
+                <a
+                  href={previewPdfUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-[#fdfbf9] hover:bg-[#f7efe9] text-xs font-bold text-[#171717] border border-[#171717] transition-all"
+                >
+                  <ExternalLink className="w-3.5 h-3.5 text-[#ff6f1e]" />
+                  <span className="hidden sm:inline">فتح بالمتصفح</span>
+                </a>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setPreviewPdfUrl(null);
+                    setPreviewResource(null);
+                  }}
+                  className="w-8 h-8 rounded-full bg-[#fdfbf9] hover:bg-rose-100 text-rose-700 border border-[#171717] flex items-center justify-center font-black transition-all cursor-pointer"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+
+            {/* PDF Viewer Frame */}
+            <div className="flex-1 bg-[#171717]/5 relative">
+              <iframe
+                src={`${previewPdfUrl}#toolbar=1`}
+                className="w-full h-full border-none"
+                title={previewPdfTitle}
+              />
+            </div>
+
+            {/* Modal Footer Controls */}
+            <div className="p-3.5 bg-[#f7efe9] border-t-[1.5px] border-[#171717] flex flex-wrap items-center justify-between gap-3">
+              <div className="text-xs text-[#171717]/70 font-bold">
+                {previewResource ? (
+                  <span>
+                    الرافع: {previewResource.author_name} | {previewResource.academic_year} - {previewResource.subject?.name_ar}
+                  </span>
+                ) : (
+                  <span>معاينة فورية لمستند PDF</span>
+                )}
+              </div>
+
+              <div className="flex items-center gap-2">
+                {previewResource && previewResource.review_status !== 'approved' && (
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      await handleApproveResource(previewResource);
+                      setPreviewPdfUrl(null);
+                      setPreviewResource(null);
+                    }}
+                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-[#22c55e] hover:bg-[#22c55e]/90 text-white font-black text-xs border border-[#171717] shadow-[0_1px_3px_rgba(0,0,0,0.2)] transition-all cursor-pointer"
+                  >
+                    <CheckCircle2 className="w-4 h-4" />
+                    <span>اعتماد المستند فوراً ✓</span>
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setPreviewPdfUrl(null);
+                    setPreviewResource(null);
+                  }}
+                  className="px-4 py-2 rounded-full bg-[#fdfbf9] hover:bg-[#f7efe9] text-xs font-bold text-[#171717] border border-[#171717] transition-all cursor-pointer"
+                >
+                  إغلاق المعاينة
+                </button>
+              </div>
             </div>
           </div>
         </div>

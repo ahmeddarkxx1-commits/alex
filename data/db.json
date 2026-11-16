@@ -459,22 +459,25 @@
   ],
   "resources": [
     {
-      "id": "res-surv-101-1",
-      "department_id": "dept-surveying",
-      "subject_id": "subj-sem1-1",
-      "academic_year": "الفرقة الأولى",
-      "semester_number": 1,
+      "title": "ثثث",
+      "summary": "ثثث",
+      "content_markdown": "ثثث",
+      "file_url": "/api/files/1794861304104_Mobi_Cashier_Pro_-_UI_UX_Audit_Report.pdf",
       "type": "تلخيص محاضرة",
-      "title": "شرح أخطاء جهاز الميزان (Level) واختبار الوتدين Two-Peg Test وضبط خط التسديد",
-      "summary": "ملخص شامل لضبط الفقاعة الدائرية والأنبوبية، وخطوات اختبار الوتدين الميداني بالمسائل والقوانين.",
-      "content_markdown": "### أخطاء جهاز الميزان وكيفية تلافيها:\n\n1. **الخطأ الآلي (Instrumental Error):**\n   - عدم توازي خط النظر (Line of Collimation) مع المحور البصري لفقاعة التسوية.\n   - تآكل كعب القامة المعدني أو عدم رأسية القامة أثناء الرصد.\n\n2. **خطوات اختبار الوتدين (Two-Peg Test):**\n   - تثبيت وتدين $A$ و $B$ على مسافة $50$ إلى $60$ متراً.\n   - **الخطوة الأولى:** تنصيب الميزان في المنتصف تماماً بين $A$ و $B$.\n     - قراءة القامة عند $A$ هي $a_1$ وعند $B$ هي $b_1$.\n     - فرق المنسوب الحقيقي:\n       $$\\Delta h = a_1 - b_1$$\n   - **الخطوة الثانية:** نقل الجهاز بالقرب من الوتد $A$ على بُعد مترين.\n     - نقرأ عند $A$ لتكون $a_2$.\n     - القراءة الصحيحة المفترضة عند $B$:\n       $$b_{2\\text{ (صحيحة)}} = a_2 - \\Delta h$$\n     - إذا كانت القراءة الفعلية تختلف، يتم تحريك مسمار حامل الشعرات لتصحيح الشعرة الوسطى.\n\n3. **قانون تصحيح التحديب والانكسار معاً:**\n   $$C_{cr} = 0.0675 \\times D^2$$\n   *(حيث $D$ بالكيلومتر و $C_{cr}$ بالمتر يُطرح دائماً من قراءة القامة).*",
-      "file_url": "https://example.com/iti-notes/surveying-level-test.pdf",
       "due_date": null,
       "week_number": 3,
-      "author_name": "م. حسام الدين (مندوب مساحة)",
-      "is_pinned": true,
-      "views_count": 520,
-      "created_at": "2026-11-14T20:13:34.075Z"
+      "subject_id": "subj-sem1-1",
+      "department_id": "dept-surveying",
+      "academic_year": "الفرقة الأولى",
+      "semester_number": 1,
+      "author_name": "مندوب شعبة المساحة العامة (Uploader)",
+      "is_pinned": false,
+      "review_status": "approved",
+      "id": "res-1794861460805",
+      "views_count": 0,
+      "created_at": "2026-11-16T20:37:40.805Z",
+      "reviewer_name": "مندوب شعبة المساحة العامة (Uploader)",
+      "reviewed_at": "2026-11-16T20:38:12.201Z"
     },
     {
       "id": "res-surv-101-2",
@@ -722,6 +725,17 @@
     }
   ],
   "announcements": [
+    {
+      "title": "سيسس",
+      "details": "سسسسس",
+      "category": "تسليم شيت",
+      "urgency": "عاجل جداً",
+      "event_date": "2026-11-19T00:00:00.000Z",
+      "is_active": true,
+      "department_id": "dept-surveying",
+      "id": "ann-1794861277738",
+      "created_at": "2026-11-16T20:34:37.738Z"
+    },
     {
       "id": "ann-1",
       "department_id": "dept-surveying",
