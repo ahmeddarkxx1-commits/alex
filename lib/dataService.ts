@@ -16,22 +16,19 @@ import {
 } from '@/types/database';
 import { 
   INITIAL_DEPARTMENTS, 
-  INITIAL_SUBJECTS, 
-  INITIAL_RESOURCES, 
-  INITIAL_SCHEDULES, 
-  INITIAL_ANNOUNCEMENTS 
+  INITIAL_SUBJECTS 
 } from '@/lib/mockData';
 
 const STORAGE_KEYS = {
-  DEPARTMENTS: 'iti_alex_departments_v3',
-  SUBJECTS: 'iti_alex_subjects_v3',
-  RESOURCES: 'iti_alex_resources_v3',
-  SCHEDULES: 'iti_alex_schedules_v3',
-  ANNOUNCEMENTS: 'iti_alex_announcements_v3',
-  BOOKMARKS: 'iti_alex_bookmarks_v3',
-  USER_PREFS: 'iti_alex_user_prefs_v3',
-  STUDENT_USER: 'iti_alex_student_user_v3',
-  STUDENT_ACCOUNTS: 'iti_alex_student_accounts_v3',
+  DEPARTMENTS: 'iti_alex_departments_v4',
+  SUBJECTS: 'iti_alex_subjects_v4',
+  RESOURCES: 'iti_alex_resources_v4',
+  SCHEDULES: 'iti_alex_schedules_v4',
+  ANNOUNCEMENTS: 'iti_alex_announcements_v4',
+  BOOKMARKS: 'iti_alex_bookmarks_v4',
+  USER_PREFS: 'iti_alex_user_prefs_v4',
+  STUDENT_USER: 'iti_alex_student_user_v4',
+  STUDENT_ACCOUNTS: 'iti_alex_student_accounts_v4',
 };
 
 // Safe helper to get from LocalStorage (client side only)
@@ -163,7 +160,7 @@ export async function getResources(params?: {
   }
 
   if (resources.length === 0) {
-    resources = getLocalItem<Resource[]>(STORAGE_KEYS.RESOURCES, INITIAL_RESOURCES);
+    resources = getLocalItem<Resource[]>(STORAGE_KEYS.RESOURCES, []);
   }
 
   const allDepts = await getDepartments();
@@ -232,7 +229,7 @@ export async function createResource(newRes: Omit<Resource, 'id' | 'views_count'
     }
   }
 
-  const list = getLocalItem<Resource[]>(STORAGE_KEYS.RESOURCES, INITIAL_RESOURCES);
+  const list = getLocalItem<Resource[]>(STORAGE_KEYS.RESOURCES, []);
   const updated = [resourceToSave, ...list];
   setLocalItem(STORAGE_KEYS.RESOURCES, updated);
   return resourceToSave;
@@ -255,7 +252,7 @@ export async function deleteResource(id: string): Promise<boolean> {
     }
   }
 
-  const list = getLocalItem<Resource[]>(STORAGE_KEYS.RESOURCES, INITIAL_RESOURCES);
+  const list = getLocalItem<Resource[]>(STORAGE_KEYS.RESOURCES, []);
   const filtered = list.filter((r) => r.id !== id);
   setLocalItem(STORAGE_KEYS.RESOURCES, filtered);
   return true;
@@ -280,7 +277,7 @@ export async function updateResource(id: string, updates: Partial<Resource>): Pr
     }
   }
 
-  const list = getLocalItem<Resource[]>(STORAGE_KEYS.RESOURCES, INITIAL_RESOURCES);
+  const list = getLocalItem<Resource[]>(STORAGE_KEYS.RESOURCES, []);
   const idx = list.findIndex((r) => r.id === id);
   if (idx !== -1) {
     list[idx] = { ...list[idx], ...updates };
@@ -337,7 +334,7 @@ export async function getSchedules(params?: {
   }
 
   if (schedules.length === 0) {
-    schedules = getLocalItem<Schedule[]>(STORAGE_KEYS.SCHEDULES, INITIAL_SCHEDULES);
+    schedules = getLocalItem<Schedule[]>(STORAGE_KEYS.SCHEDULES, []);
   }
 
   const allDepts = await getDepartments();
@@ -398,7 +395,7 @@ export async function createSchedule(newSch: Omit<Schedule, 'id' | 'created_at'>
     }
   }
 
-  const list = getLocalItem<Schedule[]>(STORAGE_KEYS.SCHEDULES, INITIAL_SCHEDULES);
+  const list = getLocalItem<Schedule[]>(STORAGE_KEYS.SCHEDULES, []);
   const updated = [...list, item];
   setLocalItem(STORAGE_KEYS.SCHEDULES, updated);
   return item;
@@ -420,7 +417,7 @@ export async function deleteSchedule(id: string): Promise<boolean> {
       console.error(e);
     }
   }
-  const list = getLocalItem<Schedule[]>(STORAGE_KEYS.SCHEDULES, INITIAL_SCHEDULES);
+  const list = getLocalItem<Schedule[]>(STORAGE_KEYS.SCHEDULES, []);
   const filtered = list.filter((s) => s.id !== id);
   setLocalItem(STORAGE_KEYS.SCHEDULES, filtered);
   return true;
@@ -459,7 +456,7 @@ export async function getAnnouncements(departmentId?: string): Promise<Announcem
   }
 
   if (announcements.length === 0) {
-    announcements = getLocalItem<Announcement[]>(STORAGE_KEYS.ANNOUNCEMENTS, INITIAL_ANNOUNCEMENTS);
+    announcements = getLocalItem<Announcement[]>(STORAGE_KEYS.ANNOUNCEMENTS, []);
   }
 
   if (departmentId) {
@@ -496,7 +493,7 @@ export async function createAnnouncement(newAnn: Omit<Announcement, 'id' | 'crea
     }
   }
 
-  const list = getLocalItem<Announcement[]>(STORAGE_KEYS.ANNOUNCEMENTS, INITIAL_ANNOUNCEMENTS);
+  const list = getLocalItem<Announcement[]>(STORAGE_KEYS.ANNOUNCEMENTS, []);
   setLocalItem(STORAGE_KEYS.ANNOUNCEMENTS, [item, ...list]);
   return item;
 }

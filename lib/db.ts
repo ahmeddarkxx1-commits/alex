@@ -44,26 +44,6 @@ export const INITIAL_ADMINS: AdminUser[] = [
     is_active: true,
     created_at: '2026-01-01T00:00:00.000Z',
   },
-  {
-    id: 'admin-reviewer',
-    email: 'reviewer@iti-alex.edu.eg',
-    full_name: 'د. مراجع ومعتمد المحتوى الأكاديمي',
-    role: 'reviewer_admin',
-    password: 'reviewer123',
-    assigned_department_id: null,
-    is_active: true,
-    created_at: '2026-01-01T00:00:00.000Z',
-  },
-  {
-    id: 'rep-survey',
-    email: 'survey-rep@iti-alex.edu.eg',
-    full_name: 'مندوب شعبة المساحة العامة',
-    role: 'dept_rep',
-    password: 'rep123',
-    assigned_department_id: 'dept-surveying',
-    is_active: true,
-    created_at: '2026-01-01T00:00:00.000Z',
-  },
 ];
 
 const DATA_DIR = path.join(process.cwd(), 'data');
@@ -78,36 +58,11 @@ function initDb(): DatabaseSchema {
   if (!fs.existsSync(DB_FILE)) {
     const initialData: DatabaseSchema = {
       departments: INITIAL_DEPARTMENTS,
-      students: [
-        {
-          id: 'student-demo-1',
-          name: 'محمد أحمد إبراهيم',
-          student_code: '20241001',
-          phone: '01012345678',
-          department_id: 'dept-surveying',
-          department_name: 'شعبة المساحة العامة',
-          academic_year: 'الفرقة الأولى',
-          semester_number: 1,
-          section_number: 'سكشن 1',
-          created_at: new Date().toISOString(),
-        },
-        {
-          id: 'student-demo-2',
-          name: 'علي حسن علي',
-          student_code: '20242002',
-          phone: '01123456789',
-          department_id: 'dept-surveying',
-          department_name: 'شعبة المساحة العامة',
-          academic_year: 'الفرقة الثانية',
-          semester_number: 3,
-          section_number: 'سكشن 2',
-          created_at: new Date().toISOString(),
-        }
-      ],
+      students: [],
       subjects: INITIAL_SUBJECTS,
-      resources: INITIAL_RESOURCES,
-      schedules: INITIAL_SCHEDULES,
-      announcements: INITIAL_ANNOUNCEMENTS,
+      resources: [],
+      schedules: [],
+      announcements: [],
       admins: INITIAL_ADMINS,
     };
     fs.writeFileSync(DB_FILE, JSON.stringify(initialData, null, 2), 'utf-8');
@@ -122,9 +77,9 @@ function initDb(): DatabaseSchema {
     if (!parsed.departments) { parsed.departments = INITIAL_DEPARTMENTS; modified = true; }
     if (!parsed.students) { parsed.students = []; modified = true; }
     if (!parsed.subjects || parsed.subjects.length < 32) { parsed.subjects = INITIAL_SUBJECTS; modified = true; }
-    if (!parsed.resources) { parsed.resources = INITIAL_RESOURCES; modified = true; }
-    if (!parsed.schedules) { parsed.schedules = INITIAL_SCHEDULES; modified = true; }
-    if (!parsed.announcements) { parsed.announcements = INITIAL_ANNOUNCEMENTS; modified = true; }
+    if (!parsed.resources) { parsed.resources = []; modified = true; }
+    if (!parsed.schedules) { parsed.schedules = []; modified = true; }
+    if (!parsed.announcements) { parsed.announcements = []; modified = true; }
     if (!parsed.admins || parsed.admins.length === 0) { parsed.admins = INITIAL_ADMINS; modified = true; }
 
     if (modified) {
@@ -137,9 +92,9 @@ function initDb(): DatabaseSchema {
       departments: INITIAL_DEPARTMENTS,
       students: [],
       subjects: INITIAL_SUBJECTS,
-      resources: INITIAL_RESOURCES,
-      schedules: INITIAL_SCHEDULES,
-      announcements: INITIAL_ANNOUNCEMENTS,
+      resources: [],
+      schedules: [],
+      announcements: [],
       admins: INITIAL_ADMINS,
     };
     fs.writeFileSync(DB_FILE, JSON.stringify(fallback, null, 2), 'utf-8');
