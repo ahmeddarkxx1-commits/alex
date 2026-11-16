@@ -44,44 +44,44 @@ export default function SchedulesTab({ schedules, activeDeptName, activeYear }: 
   const getBadgeStyle = (type: SessionType) => {
     switch (type) {
       case 'محاضرة نظري':
-        return 'bg-blue-950/60 text-blue-300 border-blue-900/60';
+        return 'bg-[#f7efe9] text-[#2b1a07] border-[#171717]';
       case 'سكشن عملي':
-        return 'bg-emerald-950/60 text-emerald-300 border-emerald-900/60';
+        return 'bg-[#22c55e]/20 text-[#171717] border-[#171717]';
       case 'ورشة':
-        return 'bg-amber-950/60 text-amber-300 border-amber-900/60';
+        return 'bg-[#ff6f1e]/20 text-[#ce500a] border-[#171717]';
       case 'معمل':
-        return 'bg-purple-950/60 text-purple-300 border-purple-900/60';
+        return 'bg-[#3b82f6]/20 text-[#171717] border-[#171717]';
       default:
-        return 'bg-slate-800 text-slate-300 border-slate-700';
+        return 'bg-[#fdfbf9] text-[#171717] border-[#171717]';
     }
   };
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-4">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-[#0F1422] border border-slate-800 p-4 rounded-2xl">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-[#f7efe9] border-[1.5px] border-[#171717] p-4 rounded-[12px] shadow-[0_2px_12px_rgba(0,0,0,0.06)]">
         <div>
-          <h2 className="text-base sm:text-lg font-bold text-white">
+          <h2 className="text-base sm:text-lg font-black text-[#2b1a07]">
             جدول المحاضرات والسكاشن
           </h2>
-          <p className="text-xs text-slate-400 mt-0.5">
+          <p className="text-xs text-[#2b1a07]/70 font-medium mt-0.5">
             {activeDeptName} — {activeYear}
           </p>
         </div>
 
-        <div className="text-xs font-semibold px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-300">
-          اليوم: <span className="text-blue-400 font-bold">{todayArabic}</span>
+        <div className="text-xs font-bold px-3 py-1.5 rounded-[20px] bg-[#fdfbf9] border-[1.5px] border-[#171717] text-[#2b1a07] shadow-[0_1px_2px_rgba(0,0,0,0.15)]">
+          اليوم: <span className="text-[#ff6f1e]">{todayArabic}</span>
         </div>
       </div>
 
-      {/* Days Bar */}
+      {/* Days Bar (Pill buttons) */}
       <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
         <button
           onClick={() => setSelectedDay('الكل')}
-          className={`px-3.5 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-colors ${
+          className={`px-3.5 py-1.5 rounded-[20px] text-xs font-bold whitespace-nowrap transition-all border-[1.5px] border-[#171717] shadow-[0_1px_2px_rgba(0,0,0,0.15)] ${
             selectedDay === 'الكل'
-              ? 'bg-blue-600 text-white'
-              : 'bg-slate-900/80 text-slate-400 hover:text-white border border-slate-800'
+              ? 'bg-[#ff6f1e] text-[#2b1a07]'
+              : 'bg-[#fdfbf9] text-[#171717] hover:bg-[#f7efe9]'
           }`}
         >
           كل الأسبوع ({schedules.length})
@@ -96,20 +96,20 @@ export default function SchedulesTab({ schedules, activeDeptName, activeYear }: 
             <button
               key={day}
               onClick={() => setSelectedDay(day)}
-              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-colors border flex items-center gap-1.5 ${
+              className={`px-3.5 py-1.5 rounded-[20px] text-xs font-bold whitespace-nowrap transition-all border-[1.5px] border-[#171717] shadow-[0_1px_2px_rgba(0,0,0,0.15)] flex items-center gap-1.5 ${
                 isSelected
-                  ? 'bg-blue-600 border-blue-500 text-white'
-                  : 'bg-slate-900/80 text-slate-400 hover:text-white border-slate-800'
+                  ? 'bg-[#ff6f1e] text-[#2b1a07]'
+                  : 'bg-[#fdfbf9] text-[#171717] hover:bg-[#f7efe9]'
               }`}
             >
               <span>{day}</span>
-              <span className={`text-[10px] px-1 rounded ${
-                isSelected ? 'bg-blue-800 text-white' : 'bg-slate-800 text-slate-500'
+              <span className={`text-[10px] px-1.5 py-0.2 rounded-full border-[1px] ${
+                isSelected ? 'bg-[#2b1a07] text-white border-[#2b1a07]' : 'bg-[#f7efe9] text-[#171717] border-[#171717]/30'
               }`}>
                 {count}
               </span>
               {isToday && (
-                <span className="text-[10px] text-blue-300 font-bold">
+                <span className="text-[10px] text-[#ce500a] font-black">
                   (اليوم)
                 </span>
               )}
@@ -118,19 +118,19 @@ export default function SchedulesTab({ schedules, activeDeptName, activeYear }: 
         })}
       </div>
 
-      {/* Sub-filters */}
-      <div className="flex flex-wrap items-center justify-between gap-3 text-xs bg-slate-900/60 p-3 rounded-xl border border-slate-800/80">
+      {/* Sub-filters in Superr styling */}
+      <div className="flex flex-wrap items-center justify-between gap-3 text-xs bg-[#fdfbf9] p-3 rounded-[12px] border-[1.5px] border-[#171717] shadow-[0_1px_2px_rgba(0,0,0,0.06)]">
         <div className="flex items-center gap-2">
-          <span className="text-slate-400 font-medium">السكشن:</span>
+          <span className="text-[#2b1a07] font-bold">السكشن:</span>
           <div className="flex items-center gap-1">
             {(['الكل', 'عام', 'سكشن 1', 'سكشن 2', 'سكشن 3', 'سكشن 4'] as (SectionNumber | 'الكل')[]).map((sec) => (
               <button
                 key={sec}
                 onClick={() => setSelectedSection(sec)}
-                className={`px-2 py-0.5 rounded text-xs transition-colors ${
+                className={`px-2.5 py-0.5 rounded-[20px] text-xs border-[1px] transition-colors ${
                   selectedSection === sec
-                    ? 'bg-slate-700 text-white font-bold'
-                    : 'text-slate-400 hover:text-slate-200'
+                    ? 'bg-[#171717] text-white border-[#171717] font-bold'
+                    : 'bg-[#f7efe9] text-[#171717] border-[#171717]/30 hover:border-[#171717]'
                 }`}
               >
                 {sec}
@@ -140,16 +140,16 @@ export default function SchedulesTab({ schedules, activeDeptName, activeYear }: 
         </div>
 
         <div className="flex items-center gap-2">
-          <span className="text-slate-400 font-medium">النوع:</span>
+          <span className="text-[#2b1a07] font-bold">النوع:</span>
           <div className="flex items-center gap-1">
             {(['الكل', 'محاضرة نظري', 'سكشن عملي', 'ورشة', 'معمل'] as (SessionType | 'الكل')[]).map((t) => (
               <button
                 key={t}
                 onClick={() => setSelectedType(t)}
-                className={`px-2 py-0.5 rounded text-xs transition-colors ${
+                className={`px-2.5 py-0.5 rounded-[20px] text-xs border-[1px] transition-colors ${
                   selectedType === t
-                    ? 'bg-slate-700 text-white font-bold'
-                    : 'text-slate-400 hover:text-slate-200'
+                    ? 'bg-[#171717] text-white border-[#171717] font-bold'
+                    : 'bg-[#f7efe9] text-[#171717] border-[#171717]/30 hover:border-[#171717]'
                 }`}
               >
                 {t}
@@ -161,51 +161,51 @@ export default function SchedulesTab({ schedules, activeDeptName, activeYear }: 
 
       {/* Schedules Cards */}
       {filtered.length === 0 ? (
-        <div className="text-center py-10 bg-[#0F1422] rounded-2xl border border-slate-800 p-6">
-          <Calendar className="w-8 h-8 text-slate-600 mx-auto mb-2" />
-          <p className="text-xs font-bold text-slate-300">لا توجد فترات مسجلة لهذا اليوم بالفلتر المختار</p>
-          <p className="text-[11px] text-slate-400 mt-0.5">يمكنك اختيار يوم آخر أو اختيار كل الأسبوع لمعاينة الجدول كاملاً.</p>
+        <div className="text-center py-10 bg-[#f7efe9] rounded-[12px] border-[1.5px] border-[#171717] p-6 shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
+          <Calendar className="w-8 h-8 text-[#171717]/40 mx-auto mb-2" />
+          <p className="text-xs font-bold text-[#2b1a07]">لا توجد فترات مسجلة لهذا اليوم بالفلتر المختار</p>
+          <p className="text-[11px] text-[#2b1a07]/60 mt-0.5">يمكنك اختيار يوم آخر أو اختيار كل الأسبوع لمعاينة الجدول كاملاً.</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
           {filtered.map((item) => (
             <div
               key={item.id}
-              className="bg-[#0F1422] border border-slate-800 rounded-2xl p-4 space-y-3"
+              className="bg-[#fdfbf9] border-[1.5px] border-[#171717] rounded-[12px] p-4 space-y-3 shadow-[0_2px_12px_rgba(0,0,0,0.06)] hover:shadow-[0_4px_16px_rgba(0,0,0,0.1)] transition-all"
             >
               <div className="flex items-center justify-between text-xs">
-                <span className="font-bold text-slate-300 bg-slate-900 px-2 py-0.5 rounded border border-slate-800">
+                <span className="font-bold text-[#2b1a07] bg-[#f7efe9] px-2.5 py-0.5 rounded-[20px] border-[1px] border-[#171717]">
                   {item.day_of_week}
                 </span>
 
-                <span className={`text-[11px] font-semibold px-2 py-0.5 rounded border ${getBadgeStyle(item.session_type)}`}>
+                <span className={`text-[11px] font-bold px-2.5 py-0.5 rounded-[20px] border-[1px] ${getBadgeStyle(item.session_type)}`}>
                   {item.session_type}
                 </span>
               </div>
 
               <div>
-                <h4 className="text-sm sm:text-base font-bold text-white">
+                <h4 className="text-sm sm:text-base font-black text-[#2b1a07]">
                   {item.subject?.name_ar || 'مادة تخصصية'}
                 </h4>
-                <div className="text-xs text-slate-400 mt-0.5">
-                  الفئة: <span className="text-slate-300">{item.section_number}</span>
+                <div className="text-xs text-[#2b1a07]/70 font-semibold mt-0.5">
+                  الفئة: <span className="text-[#2b1a07] font-bold">{item.section_number}</span>
                 </div>
               </div>
 
-              <div className="space-y-1.5 text-xs text-slate-300 bg-slate-900/60 p-3 rounded-xl border border-slate-800/60">
+              <div className="space-y-1.5 text-xs text-[#171717] bg-[#f7efe9] p-3 rounded-[8px] border-[1px] border-[#171717]/20">
                 <div className="flex items-center gap-2">
-                  <Clock className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                  <span className="font-mono dir-ltr font-medium">{item.start_time} - {item.end_time}</span>
+                  <Clock className="w-3.5 h-3.5 text-[#ff6f1e] shrink-0" />
+                  <span className="font-mono dir-ltr font-bold text-[#2b1a07]">{item.start_time} - {item.end_time}</span>
                 </div>
 
                 <div className="flex items-center gap-2">
-                  <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                  <span className="text-slate-300">{item.location_room}</span>
+                  <MapPin className="w-3.5 h-3.5 text-[#ff6f1e] shrink-0" />
+                  <span className="font-medium text-[#2b1a07]">{item.location_room}</span>
                 </div>
 
                 {item.instructor_name && (
-                  <div className="flex items-center gap-2 pt-1 border-t border-slate-800 text-slate-400">
-                    <User className="w-3.5 h-3.5 text-slate-500 shrink-0" />
+                  <div className="flex items-center gap-2 pt-1 border-t-[1px] border-[#171717]/15 text-[#2b1a07]/70 font-medium">
+                    <User className="w-3.5 h-3.5 text-[#171717]/50 shrink-0" />
                     <span>{item.instructor_name}</span>
                   </div>
                 )}

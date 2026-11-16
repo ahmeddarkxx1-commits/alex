@@ -5,35 +5,121 @@
 @tailwind utilities;
 
 :root {
-  --background: #0B0F19;
-  --foreground: #F8FAFC;
+  --color-cream-paper: #fdfbf9;
+  --color-charcoal: #171717;
+  --color-cocoa-ink: #2b1a07;
+  --color-dew-drop: #f7efe9;
+  --color-marker-orange: #ff6f1e;
+  --color-burnt-sienna: #ce500a;
+  --color-sky-sticker: #3b82f6;
+  --color-bubblegum-sticker: #ff66cf;
+  --color-sprout-sticker: #22c55e;
+  --color-shadow-mist: #bebcbb;
 }
 
 body {
-  background-color: var(--background);
-  color: var(--foreground);
-  font-family: 'Cairo', system-ui, -apple-system, sans-serif;
+  background-color: var(--color-cream-paper);
+  color: var(--color-charcoal);
+  font-family: 'Cairo', ui-sans-serif, system-ui, -apple-system, sans-serif;
   direction: rtl;
   text-align: right;
   min-height: 100vh;
   overflow-x: hidden;
 }
 
-/* Custom Scrollbar */
+h1, h2, h3, h4, h5, h6 {
+  color: var(--color-cocoa-ink);
+  font-weight: 700;
+}
+
+/* Scrollbar for Warm Paper Theme */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 7px;
+  height: 7px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #0B0F19;
+  background: #fdfbf9;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #1E293B;
-  border-radius: 9999px;
+  background: #bebcbb;
+  border-radius: 20px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #334155;
+  background: #171717;
+}
+
+/* Superr Pill Button Signature */
+.btn-pill {
+  background-color: #fdfbf9;
+  border: 1.5px solid #171717;
+  border-radius: 20px;
+  padding: 8px 24px;
+  color: #171717;
+  font-weight: 600;
+  box-shadow: rgba(0, 0, 0, 0.25) 0px 1px 2px 0px;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.btn-pill:hover {
+  transform: translateY(-1px);
+  box-shadow: rgba(0, 0, 0, 0.2) 0px 3px 6px 0px;
+}
+
+.btn-pill:active {
+  transform: translateY(0px);
+  box-shadow: rgba(0, 0, 0, 0.25) 0px 1px 2px 0px;
+}
+
+/* Superr Paper Card */
+.paper-card {
+  background-color: #fdfbf9;
+  border: 1.5px solid #171717;
+  border-radius: 12px;
+  box-shadow: rgba(0, 0, 0, 0.06) 0px 2px 20px 0px;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.paper-card-tint {
+  background-color: #f7efe9;
+  border: 1.5px solid #171717;
+  border-radius: 12px;
+  box-shadow: rgba(0, 0, 0, 0.06) 0px 2px 20px 0px;
+}
+
+/* Marker Underline Accent */
+.marker-highlight {
+  position: relative;
+  display: inline-block;
+  color: #2b1a07;
+}
+
+.marker-highlight::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: 2px;
+  width: 100%;
+  height: 6px;
+  background-color: #ff6f1e;
+  opacity: 0.35;
+  border-radius: 3px;
+  z-index: -1;
+  transform: rotate(-1deg);
+}
+
+/* Notebook Sticker Tag */
+.sticker-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 12px;
+  border: 1.5px solid #171717;
+  border-radius: 20px;
+  background-color: #fdfbf9;
+  font-size: 12px;
+  font-weight: 700;
+  color: #171717;
 }

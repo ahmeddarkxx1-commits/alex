@@ -20,15 +20,15 @@ export default function ResourceCard({
   const getBadgeStyle = () => {
     switch (resource.type) {
       case 'تلخيص محاضرة':
-        return 'bg-blue-950/60 text-blue-300 border-blue-800/60';
+        return 'bg-[#f7efe9] text-[#2b1a07] border-[#171717]';
       case 'شيت وتكليف':
-        return 'bg-amber-950/60 text-amber-300 border-amber-800/60';
+        return 'bg-[#ff6f1e]/20 text-[#ce500a] border-[#171717]';
       case 'مذكرة سكشن عملي':
-        return 'bg-emerald-950/60 text-emerald-300 border-emerald-800/60';
+        return 'bg-[#22c55e]/15 text-[#171717] border-[#171717]';
       case 'بنك أسئلة وامتحانات':
-        return 'bg-purple-950/60 text-purple-300 border-purple-800/60';
+        return 'bg-[#3b82f6]/15 text-[#171717] border-[#171717]';
       default:
-        return 'bg-slate-800 text-slate-300 border-slate-700';
+        return 'bg-[#f7efe9] text-[#171717] border-[#171717]';
     }
   };
 
@@ -52,72 +52,72 @@ export default function ResourceCard({
   }
 
   return (
-    <div className="flex flex-col justify-between bg-[#0F1422] border border-slate-800 hover:border-slate-700 rounded-2xl p-4 sm:p-5 transition-colors">
+    <div className="flex flex-col justify-between bg-[#fdfbf9] border-[1.5px] border-[#171717] rounded-[12px] p-5 shadow-[0_2px_20px_rgba(0,0,0,0.06)] hover:shadow-[0_4px_16px_rgba(0,0,0,0.1)] transition-all">
       <div>
-        {/* Top: Category & Bookmark */}
+        {/* Top: Category Tag & Bookmark */}
         <div className="flex items-center justify-between gap-2 mb-3">
-          <span className={`text-[11px] font-semibold px-2.5 py-0.5 rounded border ${getBadgeStyle()}`}>
+          <span className={`text-[11px] font-bold px-3 py-0.5 rounded-[20px] border-[1.5px] shadow-[0_1px_2px_rgba(0,0,0,0.1)] ${getBadgeStyle()}`}>
             {resource.type}
           </span>
 
           <button
             onClick={() => onToggleBookmark(resource.id)}
-            className={`p-1.5 rounded-lg transition-colors ${
+            className={`p-1.5 rounded-[20px] border-[1px] transition-colors ${
               isBookmarked
-                ? 'text-amber-400 bg-amber-950/40'
-                : 'text-slate-500 hover:text-slate-300'
+                ? 'bg-[#ff6f1e] text-[#2b1a07] border-[#171717]'
+                : 'bg-[#f7efe9] text-[#171717]/60 border-[#171717]/30 hover:text-[#171717]'
             }`}
             title={isBookmarked ? 'إزالة من المحفوظات' : 'حفظ'}
           >
-            <Bookmark className={`w-4 h-4 ${isBookmarked ? 'fill-amber-400' : ''}`} />
+            <Bookmark className={`w-3.5 h-3.5 ${isBookmarked ? 'fill-[#2b1a07]' : ''}`} />
           </button>
         </div>
 
-        {/* Subject & Semester */}
-        <div className="text-xs text-slate-400 font-medium mb-1.5">
-          <span className="text-slate-300 font-semibold">{resource.subject?.name_ar}</span>
+        {/* Subject & Week */}
+        <div className="text-xs text-[#2b1a07]/70 font-semibold mb-1.5">
+          <span className="text-[#2b1a07] font-bold">{resource.subject?.name_ar}</span>
           {resource.week_number && (
-            <span> • الأسبوع {resource.week_number}</span>
+            <span> • المحاضرة {resource.week_number}</span>
           )}
         </div>
 
         {/* Title */}
         <h3
           onClick={() => onOpenReader(resource)}
-          className="text-base font-bold text-white hover:text-blue-400 transition-colors cursor-pointer leading-snug line-clamp-2 mb-2"
+          className="text-base font-black text-[#2b1a07] hover:text-[#ff6f1e] transition-colors cursor-pointer leading-snug line-clamp-2 mb-2"
         >
           {resource.title}
         </h3>
 
         {/* Summary */}
-        <p className="text-xs text-slate-400 leading-relaxed line-clamp-2 mb-4">
+        <p className="text-xs text-[#171717]/80 leading-relaxed line-clamp-2 mb-4 font-normal">
           {resource.summary}
         </p>
       </div>
 
       {/* Footer */}
-      <div className="pt-3 border-t border-slate-800/80 space-y-3">
+      <div className="pt-3 border-t-[1.5px] border-[#171717]/15 space-y-3">
         {resource.due_date && dueText && (
-          <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-semibold ${
-            isDueUrgent ? 'bg-rose-950/40 text-rose-300' : 'bg-slate-900 text-slate-400'
+          <div className={`flex items-center gap-1.5 px-3 py-1 rounded-[20px] text-xs font-bold border-[1.5px] border-[#171717] ${
+            isDueUrgent ? 'bg-[#ff6f1e]/20 text-[#ce500a]' : 'bg-[#f7efe9] text-[#2b1a07]'
           }`}>
-            <Clock className="w-3.5 h-3.5" />
+            <Clock className="w-3.5 h-3.5 text-[#ff6f1e]" />
             <span>{dueText}</span>
           </div>
         )}
 
-        <div className="flex items-center justify-between text-xs text-slate-400">
+        <div className="flex items-center justify-between text-xs text-[#171717]/70">
           <div className="flex items-center gap-1">
-            <User className="w-3.5 h-3.5 text-slate-400" />
-            <span className="line-clamp-1">{resource.author_name}</span>
+            <User className="w-3.5 h-3.5 text-[#ff6f1e]" />
+            <span className="line-clamp-1 font-semibold">{resource.author_name}</span>
           </div>
 
           <button
             onClick={() => onOpenReader(resource)}
-            className="inline-flex items-center gap-0.5 font-bold text-blue-400 hover:text-blue-300 transition-colors"
+            className="btn-pill inline-flex items-center gap-0.5 !py-1 !px-3 text-xs"
           >
-            <span>عرض الملخص</span>
-            <ChevronLeft className="w-4 h-4" />
+            <span>قراءة</span>
+            <ChevronLeft className="w-3.5 h-3.5" />
           </button>
         </div>
       </div>

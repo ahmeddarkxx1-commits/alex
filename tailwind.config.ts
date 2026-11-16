@@ -6,42 +6,56 @@ const config: Config = {
     "./components/**/*.{js,ts,jsx,tsx,mdx}",
     "./app/**/*.{js,ts,jsx,tsx,mdx}",
   ],
-  darkMode: "class",
   theme: {
     extend: {
       colors: {
-        background: "#070B14",
-        surface: {
-          DEFAULT: "#0F172A",
-          hover: "#1E293B",
-          card: "#0F172A",
-          muted: "#131E32",
+        cream: {
+          DEFAULT: "#fdfbf9",
+          paper: "#fdfbf9",
         },
-        border: {
-          DEFAULT: "#1E293B",
-          light: "#334155",
+        dew: {
+          DEFAULT: "#f7efe9",
+          drop: "#f7efe9",
         },
-        brand: {
-          cyan: "#06B6D4",
-          emerald: "#10B981",
-          amber: "#F59E0B",
-          rose: "#F43F5E",
-          purple: "#8B5CF6",
+        charcoal: "#171717",
+        cocoa: {
+          DEFAULT: "#2b1a07",
+          ink: "#2b1a07",
+        },
+        marker: {
+          DEFAULT: "#ff6f1e",
+          orange: "#ff6f1e",
+        },
+        sienna: {
+          DEFAULT: "#ce500a",
+          burnt: "#ce500a",
+        },
+        sky: {
+          sticker: "#3b82f6",
+        },
+        bubblegum: {
+          sticker: "#ff66cf",
+        },
+        sprout: {
+          sticker: "#22c55e",
+        },
+        shadow: {
+          mist: "#bebcbb",
         },
       },
       fontFamily: {
-        cairo: ["'Cairo'", "system-ui", "-apple-system", "sans-serif"],
-        inter: ["'Inter'", "system-ui", "-apple-system", "sans-serif"],
+        cairo: ["'Cairo'", "ui-sans-serif", "system-ui", "-apple-system", "sans-serif"],
+        inter: ["'Inter'", "ui-sans-serif", "system-ui", "-apple-system", "sans-serif"],
       },
-      animation: {
-        "fade-in": "fadeIn 0.25s ease-out forwards",
-        "pulse-slow": "pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite",
+      borderRadius: {
+        'pill': '20px',
+        'footer': '56px',
+        'card': '12px',
       },
-      keyframes: {
-        fadeIn: {
-          "0%": { opacity: "0", transform: "translateY(6px)" },
-          "100%": { opacity: "1", transform: "translateY(0)" },
-        },
+      boxShadow: {
+        'paper-btn': 'rgba(0, 0, 0, 0.25) 0px 1px 2px 0px',
+        'paper-card': 'rgba(0, 0, 0, 0.06) 0px 2px 20px 0px',
+        'paper-lift': 'rgba(0, 0, 0, 0.12) 0px 3px 8px 0px',
       },
     },
   },

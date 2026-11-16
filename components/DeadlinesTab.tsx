@@ -51,7 +51,7 @@ export default function DeadlinesTab({
     urgency: a.urgency,
     isResource: false,
     rawResource: null as Resource | null,
-    subtitle: 'تنبيه أكاديمي وإداري',
+    subtitle: 'تنبيه أكاديمي',
   }));
 
   const allTimelineItems = [...sheetItems, ...announcementItems].sort((a, b) => {
@@ -66,27 +66,28 @@ export default function DeadlinesTab({
   });
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-4">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-[#0F1422] border border-slate-800 p-4 rounded-2xl">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-[#f7efe9] border-[1.5px] border-[#171717] p-4 rounded-[12px] shadow-[0_2px_12px_rgba(0,0,0,0.06)]">
         <div>
-          <h2 className="text-base sm:text-lg font-bold text-white">
+          <h2 className="text-base sm:text-lg font-black text-[#2b1a07]">
             مواعيد التسليم والتنبيهات
           </h2>
-          <p className="text-xs text-slate-400 mt-0.5">
+          <p className="text-xs text-[#2b1a07]/70 font-medium mt-0.5">
             مواعيد تسليم الشيتات، الامتحانات العملية، والتنبيهات
           </p>
         </div>
 
+        {/* Categories Filter in Pill Buttons */}
         <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
           {['الكل', 'تسليم شيت', 'امتحان عملي', 'ميدتيرم', 'تنبيه إداري'].map((cat) => (
             <button
               key={cat}
               onClick={() => setSelectedCategory(cat)}
-              className={`px-3 py-1 rounded-lg text-xs font-semibold whitespace-nowrap transition-colors ${
+              className={`px-3 py-1 rounded-[20px] text-xs font-bold whitespace-nowrap transition-colors border-[1.5px] border-[#171717] shadow-[0_1px_2px_rgba(0,0,0,0.1)] ${
                 selectedCategory === cat
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-800'
+                  ? 'bg-[#ff6f1e] text-[#2b1a07]'
+                  : 'bg-[#fdfbf9] text-[#171717] hover:bg-[#f7efe9]'
               }`}
             >
               {cat}
@@ -103,35 +104,35 @@ export default function DeadlinesTab({
           return (
             <div
               key={item.id}
-              className="bg-[#0F1422] border border-slate-800 rounded-2xl p-4 sm:p-5 transition-colors"
+              className="bg-[#fdfbf9] border-[1.5px] border-[#171717] rounded-[12px] p-4 sm:p-5 shadow-[0_2px_12px_rgba(0,0,0,0.06)] hover:shadow-[0_4px_16px_rgba(0,0,0,0.1)] transition-all"
             >
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div className="space-y-1.5 flex-1">
                   <div className="flex items-center gap-2">
-                    <span className="text-[11px] font-semibold text-slate-300 bg-slate-900 px-2 py-0.5 rounded border border-slate-800">
+                    <span className="text-[11px] font-bold text-[#2b1a07] bg-[#f7efe9] px-2.5 py-0.5 rounded-[20px] border-[1px] border-[#171717]">
                       {item.category}
                     </span>
-                    <span className="text-xs text-slate-400">
+                    <span className="text-xs text-[#2b1a07]/70 font-medium">
                       {item.subtitle}
                     </span>
                   </div>
 
-                  <h3 className="text-sm sm:text-base font-bold text-white">
+                  <h3 className="text-sm sm:text-base font-black text-[#2b1a07]">
                     {item.title}
                   </h3>
 
-                  <p className="text-xs text-slate-400 line-clamp-2">
+                  <p className="text-xs text-[#171717]/80 line-clamp-2 font-normal">
                     {item.details}
                   </p>
                 </div>
 
-                <div className="flex sm:flex-col items-center sm:items-end justify-between gap-2.5 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-800">
-                  <div className={`px-2.5 py-1 rounded text-xs font-semibold ${
+                <div className="flex sm:flex-col items-center sm:items-end justify-between gap-2.5 pt-2 sm:pt-0 border-t sm:border-t-0 border-[#171717]/15">
+                  <div className={`px-3 py-1 rounded-[20px] text-xs font-bold border-[1.5px] border-[#171717] shadow-[0_1px_2px_rgba(0,0,0,0.1)] ${
                     countdown.isPassed
-                      ? 'bg-slate-800 text-slate-500'
+                      ? 'bg-[#f7efe9] text-[#171717]/50'
                       : countdown.isUrgent
-                      ? 'bg-amber-950/60 text-amber-300 border border-amber-800/60'
-                      : 'bg-slate-900 text-slate-300 border border-slate-800'
+                      ? 'bg-[#ff6f1e] text-[#2b1a07]'
+                      : 'bg-[#f7efe9] text-[#2b1a07]'
                   }`}>
                     <span className="flex items-center gap-1">
                       <Clock className="w-3.5 h-3.5" />
@@ -140,7 +141,7 @@ export default function DeadlinesTab({
                   </div>
 
                   {item.event_date && (
-                    <span className="text-[11px] text-slate-400 font-mono">
+                    <span className="text-[11px] text-[#2b1a07]/70 font-mono font-medium">
                       {new Date(item.event_date).toLocaleDateString('ar-EG')}
                     </span>
                   )}
@@ -148,10 +149,10 @@ export default function DeadlinesTab({
                   {item.isResource && item.rawResource && (
                     <button
                       onClick={() => onOpenResource(item.rawResource!)}
-                      className="inline-flex items-center gap-0.5 text-xs font-bold text-blue-400 hover:text-blue-300 transition-colors"
+                      className="btn-pill inline-flex items-center gap-0.5 !py-1 !px-3 text-xs"
                     >
                       <span>عرض الشيت</span>
-                      <ChevronLeft className="w-4 h-4" />
+                      <ChevronLeft className="w-3.5 h-3.5" />
                     </button>
                   )}
                 </div>

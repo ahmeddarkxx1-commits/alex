@@ -367,16 +367,16 @@ export default function AdminDashboard() {
   // ----------------------------------------------------
   if (!currentUser) {
     return (
-      <div className="min-h-[80vh] flex items-center justify-center px-4 py-12">
-        <div className="w-full max-w-md bg-surface border border-border rounded-3xl p-6 sm:p-8 shadow-2xl glass-panel space-y-6">
+      <div className="min-h-[80vh] flex items-center justify-center px-4 py-12 bg-[#fdfbf9]">
+        <div className="w-full max-w-md bg-[#f7efe9] border-[1.5px] border-[#171717] rounded-[16px] p-6 sm:p-8 shadow-[0_2px_12px_rgba(0,0,0,0.08)] space-y-6">
           <div className="text-center space-y-2">
-            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center mx-auto text-white shadow-lg shadow-cyan-500/20">
-              <ShieldCheck className="w-8 h-8" />
+            <div className="w-14 h-14 rounded-full bg-[#fdfbf9] border-[1.5px] border-[#171717] flex items-center justify-center mx-auto text-[#2b1a07] shadow-[0_1px_2px_rgba(0,0,0,0.2)]">
+              <ShieldCheck className="w-8 h-8 text-[#ff6f1e]" />
             </div>
-            <h1 className="text-xl sm:text-2xl font-black text-white">
+            <h1 className="text-xl sm:text-2xl font-black text-[#2b1a07]">
               بوابة إدارة المعهد الفني الصناعي
             </h1>
-            <p className="text-xs text-slate-400">
+            <p className="text-xs text-[#171717]/70">
               تسجيل دخول الأدمن ومناديب الشعب الأكاديمية لنشر التلخيصات والشيتات وتحديث الجداول
             </p>
           </div>
@@ -385,10 +385,10 @@ export default function AdminDashboard() {
           <div className="space-y-3 pt-2">
             <button
               onClick={() => handleLogin('super')}
-              className="w-full flex items-center justify-between p-3.5 rounded-2xl bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-extrabold text-sm shadow-lg shadow-cyan-500/20 transition-all hover:scale-[1.01]"
+              className="w-full flex items-center justify-between p-3.5 rounded-full bg-[#171717] hover:bg-[#171717]/90 text-white font-bold text-sm shadow-[0_2px_4px_rgba(0,0,0,0.2)] transition-all"
             >
               <div className="flex items-center gap-2.5">
-                <ShieldCheck className="w-5 h-5" />
+                <ShieldCheck className="w-5 h-5 text-[#ff6f1e]" />
                 <span>دخول سريع كـ Super Admin (مؤسس المنصة)</span>
               </div>
               <ArrowRight className="w-4 h-4 rotate-180" />
@@ -396,20 +396,20 @@ export default function AdminDashboard() {
 
             <button
               onClick={() => handleLogin('rep')}
-              className="w-full flex items-center justify-between p-3.5 rounded-2xl bg-slate-800 hover:bg-slate-700 border border-border text-slate-200 font-extrabold text-sm transition-all hover:scale-[1.01]"
+              className="w-full flex items-center justify-between p-3.5 rounded-full bg-[#fdfbf9] hover:bg-[#f7efe9] border-[1.5px] border-[#171717] text-[#171717] font-bold text-sm shadow-[0_1px_2px_rgba(0,0,0,0.25)] transition-all"
             >
               <div className="flex items-center gap-2.5">
-                <Users className="w-5 h-5 text-emerald-400" />
+                <Users className="w-5 h-5 text-[#ff6f1e]" />
                 <span>دخول سريع كـ مندوب شعبة المساحة العامة</span>
               </div>
               <ArrowRight className="w-4 h-4 rotate-180" />
             </button>
           </div>
 
-          <div className="pt-4 border-t border-border/60 text-center">
+          <div className="pt-4 border-t border-[#171717]/15 text-center">
             <Link
               href="/"
-              className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-400 hover:text-cyan-400 transition-colors"
+              className="inline-flex items-center gap-1.5 text-xs font-bold text-[#171717]/80 hover:text-[#ff6f1e] transition-colors"
             >
               <span>العودة لصفحة الطلاب الرئيسية</span>
               <ArrowRight className="w-3.5 h-3.5 rotate-180" />
@@ -424,35 +424,35 @@ export default function AdminDashboard() {
   // LOGGED IN DASHBOARD
   // ----------------------------------------------------
   return (
-    <div className="min-h-screen max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+    <div className="min-h-screen max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6 bg-[#fdfbf9] text-[#171717]">
       {/* Toast Notification */}
       {toast && (
-        <div className={`fixed top-4 left-4 z-50 flex items-center gap-2 px-4 py-3 rounded-2xl shadow-2xl border text-sm font-bold animate-fade-in ${
+        <div className={`fixed top-4 left-4 z-50 flex items-center gap-2 px-4 py-3 rounded-full shadow-lg border-[1.5px] border-[#171717] text-sm font-bold ${
           toast.type === 'success'
-            ? 'bg-emerald-950/90 text-emerald-300 border-emerald-500/50'
-            : 'bg-rose-950/90 text-rose-300 border-rose-500/50'
+            ? 'bg-[#22c55e]/20 text-[#171717]'
+            : 'bg-[#ff6f1e]/20 text-[#2b1a07]'
         }`}>
-          {toast.type === 'success' ? <CheckCircle2 className="w-5 h-5 text-emerald-400" /> : <AlertCircle className="w-5 h-5 text-rose-400" />}
+          {toast.type === 'success' ? <CheckCircle2 className="w-5 h-5 text-[#22c55e]" /> : <AlertCircle className="w-5 h-5 text-[#ce500a]" />}
           <span>{toast.message}</span>
         </div>
       )}
 
       {/* Admin Top Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-surface border border-border p-5 rounded-3xl glass-panel">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-[#f7efe9] border-[1.5px] border-[#171717] p-5 rounded-[16px] shadow-[0_1px_2px_rgba(0,0,0,0.15)]">
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-2xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400">
-            <ShieldCheck className="w-6 h-6" />
+          <div className="w-12 h-12 rounded-full bg-[#fdfbf9] border-[1.5px] border-[#171717] flex items-center justify-center text-[#2b1a07]">
+            <ShieldCheck className="w-6 h-6 text-[#ff6f1e]" />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-lg sm:text-xl font-black text-white">
+              <h1 className="text-lg sm:text-xl font-extrabold text-[#2b1a07]">
                 لوحة تحكم المنصة الأكاديمية
               </h1>
-              <span className="text-[11px] font-black px-2.5 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">
+              <span className="text-[11px] font-extrabold px-2.5 py-0.5 rounded-full bg-[#fdfbf9] text-[#2b1a07] border-[1.5px] border-[#171717]">
                 {currentUser.role === 'super_admin' ? 'Super Admin' : 'مندوب شعبة'}
               </span>
             </div>
-            <p className="text-xs text-slate-400 mt-0.5">
+            <p className="text-xs text-[#171717]/70 mt-0.5">
               مرحباً {currentUser.full_name} ({currentUser.email})
             </p>
           </div>
@@ -461,13 +461,13 @@ export default function AdminDashboard() {
         <div className="flex items-center gap-3 self-end sm:self-auto">
           <Link
             href="/"
-            className="px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-200 transition-colors"
+            className="px-4 py-2 rounded-full bg-[#fdfbf9] hover:bg-[#f7efe9] text-xs font-bold text-[#171717] border-[1.5px] border-[#171717] shadow-[0_1px_2px_rgba(0,0,0,0.25)] transition-all"
           >
             معاينة واجهة الطلاب
           </Link>
           <button
             onClick={() => setCurrentUser(null)}
-            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/30 text-rose-300 text-xs font-bold transition-colors"
+            className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-[#fdfbf9] hover:bg-rose-50 border-[1.5px] border-[#171717] text-rose-700 text-xs font-bold transition-colors"
           >
             <LogOut className="w-3.5 h-3.5" />
             <span>تسجيل الخروج</span>
@@ -479,50 +479,50 @@ export default function AdminDashboard() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5">
         <button
           onClick={() => setActiveTab('create-resource')}
-          className={`flex items-center justify-center gap-2 p-3.5 rounded-2xl text-xs sm:text-sm font-extrabold border transition-all ${
+          className={`flex items-center justify-center gap-2 p-3.5 rounded-full text-xs sm:text-sm font-bold border-[1.5px] border-[#171717] transition-all ${
             activeTab === 'create-resource'
-              ? 'bg-gradient-to-r from-cyan-600 to-blue-600 text-white border-cyan-400 shadow-lg shadow-cyan-500/20'
-              : 'bg-surface text-slate-400 hover:text-white border-border hover:border-slate-700'
+              ? 'bg-[#171717] text-white shadow-[0_2px_4px_rgba(0,0,0,0.2)]'
+              : 'bg-[#fdfbf9] text-[#171717] hover:bg-[#f7efe9] shadow-[0_1px_2px_rgba(0,0,0,0.25)]'
           }`}
         >
-          <PlusCircle className="w-4 h-4" />
+          <PlusCircle className={`w-4 h-4 ${activeTab === 'create-resource' ? 'text-[#ff6f1e]' : 'text-[#171717]'}`} />
           <span>نشر تلخيص / شيت جديد</span>
         </button>
 
         <button
           onClick={() => setActiveTab('schedules')}
-          className={`flex items-center justify-center gap-2 p-3.5 rounded-2xl text-xs sm:text-sm font-extrabold border transition-all ${
+          className={`flex items-center justify-center gap-2 p-3.5 rounded-full text-xs sm:text-sm font-bold border-[1.5px] border-[#171717] transition-all ${
             activeTab === 'schedules'
-              ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white border-emerald-400 shadow-lg shadow-emerald-500/20'
-              : 'bg-surface text-slate-400 hover:text-white border-border hover:border-slate-700'
+              ? 'bg-[#171717] text-white shadow-[0_2px_4px_rgba(0,0,0,0.2)]'
+              : 'bg-[#fdfbf9] text-[#171717] hover:bg-[#f7efe9] shadow-[0_1px_2px_rgba(0,0,0,0.25)]'
           }`}
         >
-          <Calendar className="w-4 h-4" />
-          <span>إدارة جدول المحاضرات والسكاشن</span>
+          <Calendar className={`w-4 h-4 ${activeTab === 'schedules' ? 'text-[#ff6f1e]' : 'text-[#171717]'}`} />
+          <span>إدارة جدول الفترات</span>
         </button>
 
         <button
           onClick={() => setActiveTab('announcements')}
-          className={`flex items-center justify-center gap-2 p-3.5 rounded-2xl text-xs sm:text-sm font-extrabold border transition-all ${
+          className={`flex items-center justify-center gap-2 p-3.5 rounded-full text-xs sm:text-sm font-bold border-[1.5px] border-[#171717] transition-all ${
             activeTab === 'announcements'
-              ? 'bg-gradient-to-r from-amber-600 to-orange-600 text-white border-amber-400 shadow-lg shadow-amber-500/20'
-              : 'bg-surface text-slate-400 hover:text-white border-border hover:border-slate-700'
+              ? 'bg-[#171717] text-white shadow-[0_2px_4px_rgba(0,0,0,0.2)]'
+              : 'bg-[#fdfbf9] text-[#171717] hover:bg-[#f7efe9] shadow-[0_1px_2px_rgba(0,0,0,0.25)]'
           }`}
         >
-          <Bell className="w-4 h-4" />
-          <span>نشر تنبيه أو موعد تسليم عاجل</span>
+          <Bell className={`w-4 h-4 ${activeTab === 'announcements' ? 'text-[#ff6f1e]' : 'text-[#171717]'}`} />
+          <span>نشر تنبيه أو موعد تسليم</span>
         </button>
 
         <button
           onClick={() => setActiveTab('manage')}
-          className={`flex items-center justify-center gap-2 p-3.5 rounded-2xl text-xs sm:text-sm font-extrabold border transition-all ${
+          className={`flex items-center justify-center gap-2 p-3.5 rounded-full text-xs sm:text-sm font-bold border-[1.5px] border-[#171717] transition-all ${
             activeTab === 'manage'
-              ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white border-purple-400 shadow-lg shadow-purple-500/20'
-              : 'bg-surface text-slate-400 hover:text-white border-border hover:border-slate-700'
+              ? 'bg-[#171717] text-white shadow-[0_2px_4px_rgba(0,0,0,0.2)]'
+              : 'bg-[#fdfbf9] text-[#171717] hover:bg-[#f7efe9] shadow-[0_1px_2px_rgba(0,0,0,0.25)]'
           }`}
         >
-          <Database className="w-4 h-4" />
-          <span>إدارة المحتوى والنسخ الاحتياطي</span>
+          <Database className={`w-4 h-4 ${activeTab === 'manage' ? 'text-[#ff6f1e]' : 'text-[#171717]'}`} />
+          <span>المحتوى والنسخ الاحتياطي</span>
         </button>
       </div>
 
@@ -530,13 +530,13 @@ export default function AdminDashboard() {
       {/* TAB 1: CREATE NEW RESOURCE */}
       {/* ---------------------------------------------------- */}
       {activeTab === 'create-resource' && (
-        <div className="bg-surface border border-border rounded-3xl p-6 sm:p-8 shadow-xl space-y-6">
-          <div className="border-b border-border/70 pb-4">
-            <h2 className="text-lg font-black text-white flex items-center gap-2">
-              <PlusCircle className="w-5 h-5 text-brand-cyan" />
+        <div className="bg-[#f7efe9] border-[1.5px] border-[#171717] rounded-[16px] p-6 sm:p-8 shadow-[0_1px_2px_rgba(0,0,0,0.15)] space-y-6">
+          <div className="border-b-[1.5px] border-[#171717]/15 pb-4">
+            <h2 className="text-lg font-black text-[#2b1a07] flex items-center gap-2">
+              <PlusCircle className="w-5 h-5 text-[#ff6f1e]" />
               <span>نشر تلخيص جديد، شيت مطلوب تسليمه، أو بنك أسئلة</span>
             </h2>
-            <p className="text-xs text-slate-400 mt-1">
+            <p className="text-xs text-[#171717]/70 mt-1">
               سيظهر المحتوى فوراً في واجهة الطلاب مع إمكانية إرسال إشعار تليجرام تلقائي لقناة الدفعة
             </p>
           </div>
@@ -545,12 +545,12 @@ export default function AdminDashboard() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {/* Department */}
               <div>
-                <label className="block text-xs font-bold text-slate-300 mb-1.5">الشعبة الدراسية:</label>
+                <label className="block text-xs font-bold text-[#171717] mb-1.5">الشعبة الدراسية:</label>
                 <select
                   value={newResDeptId}
                   onChange={(e) => setNewResDeptId(e.target.value)}
                   disabled={currentUser.role === 'dept_rep'}
-                  className="w-full bg-slate-900 border border-border rounded-xl p-2.5 text-xs sm:text-sm text-white focus:outline-none focus:border-cyan-500 disabled:opacity-60 cursor-pointer"
+                  className="w-full bg-[#fdfbf9] border-[1.5px] border-[#171717] rounded-[8px] p-2.5 text-xs sm:text-sm text-[#171717] focus:outline-none focus:border-[#ff6f1e] disabled:opacity-60 cursor-pointer"
                 >
                   {departments.map((d) => (
                     <option key={d.id} value={d.id}>
@@ -562,11 +562,11 @@ export default function AdminDashboard() {
 
               {/* Academic Year */}
               <div>
-                <label className="block text-xs font-bold text-slate-300 mb-1.5">الفرقة الدراسية:</label>
+                <label className="block text-xs font-bold text-[#171717] mb-1.5">الفرقة الدراسية:</label>
                 <select
                   value={newResYear}
                   onChange={(e) => setNewResYear(e.target.value as AcademicYear)}
-                  className="w-full bg-slate-900 border border-border rounded-xl p-2.5 text-xs sm:text-sm text-white focus:outline-none focus:border-cyan-500 cursor-pointer"
+                  className="w-full bg-[#fdfbf9] border-[1.5px] border-[#171717] rounded-[8px] p-2.5 text-xs sm:text-sm text-[#171717] focus:outline-none focus:border-[#ff6f1e] cursor-pointer"
                 >
                   <option value="الفرقة الأولى">الفرقة الأولى</option>
                   <option value="الفرقة الثانية">الفرقة الثانية</option>
@@ -575,11 +575,11 @@ export default function AdminDashboard() {
 
               {/* Subject */}
               <div>
-                <label className="block text-xs font-bold text-slate-300 mb-1.5">المادة الدراسية:</label>
+                <label className="block text-xs font-bold text-[#171717] mb-1.5">المادة الدراسية:</label>
                 <select
                   value={newResSubjectId}
                   onChange={(e) => setNewResSubjectId(e.target.value)}
-                  className="w-full bg-slate-900 border border-border rounded-xl p-2.5 text-xs sm:text-sm text-white focus:outline-none focus:border-cyan-500 cursor-pointer"
+                  className="w-full bg-[#fdfbf9] border-[1.5px] border-[#171717] rounded-[8px] p-2.5 text-xs sm:text-sm text-[#171717] focus:outline-none focus:border-[#ff6f1e] cursor-pointer"
                 >
                   {subjects.map((s) => (
                     <option key={s.id} value={s.id}>
@@ -593,11 +593,11 @@ export default function AdminDashboard() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {/* Resource Type */}
               <div>
-                <label className="block text-xs font-bold text-slate-300 mb-1.5">نوع المحتوى:</label>
+                <label className="block text-xs font-bold text-[#171717] mb-1.5">نوع المحتوى:</label>
                 <select
                   value={newResType}
                   onChange={(e) => setNewResType(e.target.value as ResourceType)}
-                  className="w-full bg-slate-900 border border-border rounded-xl p-2.5 text-xs sm:text-sm text-white focus:outline-none focus:border-cyan-500 cursor-pointer"
+                  className="w-full bg-[#fdfbf9] border-[1.5px] border-[#171717] rounded-[8px] p-2.5 text-xs sm:text-sm text-[#171717] focus:outline-none focus:border-[#ff6f1e] cursor-pointer"
                 >
                   <option value="تلخيص محاضرة">تلخيص محاضرة</option>
                   <option value="شيت وتكليف">شيت وتكليف مطلوب تسليمه</option>
@@ -608,60 +608,60 @@ export default function AdminDashboard() {
 
               {/* Week Number */}
               <div>
-                <label className="block text-xs font-bold text-slate-300 mb-1.5">رقم المحاضرة / الأسبوع:</label>
+                <label className="block text-xs font-bold text-[#171717] mb-1.5">رقم المحاضرة / الأسبوع:</label>
                 <input
                   type="number"
                   min="1"
                   max="16"
                   value={newResWeek}
                   onChange={(e) => setNewResWeek(e.target.value)}
-                  className="w-full bg-slate-900 border border-border rounded-xl p-2.5 text-xs sm:text-sm text-white focus:outline-none focus:border-cyan-500"
+                  className="w-full bg-[#fdfbf9] border-[1.5px] border-[#171717] rounded-[8px] p-2.5 text-xs sm:text-sm text-[#171717] focus:outline-none focus:border-[#ff6f1e]"
                 />
               </div>
 
               {/* Due Date if Sheet */}
               <div>
-                <label className="block text-xs font-bold text-slate-300 mb-1.5">
+                <label className="block text-xs font-bold text-[#171717] mb-1.5">
                   موعد التسليم الأخير (للشيتات والتكليفات):
                 </label>
                 <input
                   type="date"
                   value={newResDueDate}
                   onChange={(e) => setNewResDueDate(e.target.value)}
-                  className="w-full bg-slate-900 border border-border rounded-xl p-2.5 text-xs sm:text-sm text-white focus:outline-none focus:border-cyan-500"
+                  className="w-full bg-[#fdfbf9] border-[1.5px] border-[#171717] rounded-[8px] p-2.5 text-xs sm:text-sm text-[#171717] focus:outline-none focus:border-[#ff6f1e]"
                 />
               </div>
             </div>
 
             {/* Title */}
             <div>
-              <label className="block text-xs font-bold text-slate-300 mb-1.5">عنوان التلخيص / الشيت:</label>
+              <label className="block text-xs font-bold text-[#171717] mb-1.5">عنوان التلخيص / الشيت:</label>
               <input
                 type="text"
                 required
                 value={newResTitle}
                 onChange={(e) => setNewResTitle(e.target.value)}
                 placeholder="مثال: شرح اختبار الوتدين لجهاز الميزان وقوانين تصحيح التحديب والانكسار"
-                className="w-full bg-slate-900 border border-border rounded-xl p-2.5 text-xs sm:text-sm text-white focus:outline-none focus:border-cyan-500"
+                className="w-full bg-[#fdfbf9] border-[1.5px] border-[#171717] rounded-[8px] p-2.5 text-xs sm:text-sm text-[#171717] focus:outline-none focus:border-[#ff6f1e]"
               />
             </div>
 
             {/* Summary */}
             <div>
-              <label className="block text-xs font-bold text-slate-300 mb-1.5">الملخص السريع (يظهر في كارت المعاينة):</label>
+              <label className="block text-xs font-bold text-[#171717] mb-1.5">الملخص السريع (يظهر في كارت المعاينة):</label>
               <textarea
                 required
                 rows={2}
                 value={newResSummary}
                 onChange={(e) => setNewResSummary(e.target.value)}
                 placeholder="اكتب نبذة مختصرة تلخص أهم ما جاء في المحاضرة أو الشيت..."
-                className="w-full bg-slate-900 border border-border rounded-xl p-2.5 text-xs sm:text-sm text-white focus:outline-none focus:border-cyan-500"
+                className="w-full bg-[#fdfbf9] border-[1.5px] border-[#171717] rounded-[8px] p-2.5 text-xs sm:text-sm text-[#171717] focus:outline-none focus:border-[#ff6f1e]"
               />
             </div>
 
             {/* Markdown Explanation */}
             <div>
-              <label className="block text-xs font-bold text-slate-300 mb-1.5">
+              <label className="block text-xs font-bold text-[#171717] mb-1.5">
                 الشرح الكامل والقوانين وخطوات الحل (Markdown مع دعم المعادلات):
               </label>
               <textarea
@@ -669,33 +669,33 @@ export default function AdminDashboard() {
                 value={newResMarkdown}
                 onChange={(e) => setNewResMarkdown(e.target.value)}
                 placeholder="### المحتويات الرئيسية:&#10;1. القانون الرياضي: C = 0.0675 * D^2&#10;2. خطوات المعايرة الميدانية..."
-                className="w-full bg-slate-900 border border-border rounded-xl p-2.5 text-xs sm:text-sm text-white focus:outline-none focus:border-cyan-500 font-mono"
+                className="w-full bg-[#fdfbf9] border-[1.5px] border-[#171717] rounded-[8px] p-2.5 text-xs sm:text-sm text-[#171717] focus:outline-none focus:border-[#ff6f1e] font-mono"
               />
             </div>
 
             {/* File URL (PDF or Drive) */}
             <div>
-              <label className="block text-xs font-bold text-slate-300 mb-1.5">رابط ملف PDF أو صور الشيت (اختياري):</label>
+              <label className="block text-xs font-bold text-[#171717] mb-1.5">رابط ملف PDF أو صور الشيت (اختياري):</label>
               <input
                 type="url"
                 value={newResFileUrl}
                 onChange={(e) => setNewResFileUrl(e.target.value)}
                 placeholder="https://example.com/files/surveying-level.pdf"
-                className="w-full bg-slate-900 border border-border rounded-xl p-2.5 text-xs sm:text-sm text-white focus:outline-none focus:border-cyan-500 dir-ltr text-left"
+                className="w-full bg-[#fdfbf9] border-[1.5px] border-[#171717] rounded-[8px] p-2.5 text-xs sm:text-sm text-[#171717] focus:outline-none focus:border-[#ff6f1e] dir-ltr text-left"
               />
             </div>
 
             {/* Telegram notification toggle */}
-            <div className="flex items-center gap-2.5 p-3 rounded-xl bg-slate-900/60 border border-border">
+            <div className="flex items-center gap-2.5 p-3 rounded-[8px] bg-[#fdfbf9] border-[1.5px] border-[#171717]">
               <input
                 type="checkbox"
                 id="notifyTg"
                 checked={notifyTelegram}
                 onChange={(e) => setNotifyTelegram(e.target.checked)}
-                className="w-4 h-4 rounded text-brand-cyan focus:ring-cyan-500 cursor-pointer"
+                className="w-4 h-4 rounded text-[#ff6f1e] focus:ring-[#ff6f1e] cursor-pointer accent-[#ff6f1e]"
               />
-              <label htmlFor="notifyTg" className="text-xs font-bold text-slate-300 cursor-pointer flex items-center gap-1.5">
-                <Send className="w-3.5 h-3.5 text-cyan-400" />
+              <label htmlFor="notifyTg" className="text-xs font-bold text-[#171717] cursor-pointer flex items-center gap-1.5">
+                <Send className="w-3.5 h-3.5 text-[#ff6f1e]" />
                 <span>إرسال إشعار فوري لجروب وقناة تليجرام الدفعة فور النشر (Telegram Bot API)</span>
               </label>
             </div>
@@ -703,7 +703,7 @@ export default function AdminDashboard() {
             {/* Submit Button */}
             <button
               type="submit"
-              className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-extrabold text-sm shadow-lg shadow-cyan-500/25 transition-all"
+              className="w-full py-3 px-4 rounded-full bg-[#ff6f1e] hover:bg-[#ff6f1e]/90 text-[#2b1a07] font-extrabold text-sm border-[1.5px] border-[#171717] shadow-[0_1px_2px_rgba(0,0,0,0.25)] transition-all cursor-pointer"
             >
               نشر التلخيص / الشيت الآن
             </button>
@@ -716,10 +716,10 @@ export default function AdminDashboard() {
       {/* ---------------------------------------------------- */}
       {activeTab === 'schedules' && (
         <div className="space-y-6">
-          <div className="bg-surface border border-border rounded-3xl p-6 sm:p-8 shadow-xl space-y-6">
-            <div className="border-b border-border/70 pb-4">
-              <h2 className="text-lg font-black text-white flex items-center gap-2">
-                <Calendar className="w-5 h-5 text-brand-emerald" />
+          <div className="bg-[#f7efe9] border-[1.5px] border-[#171717] rounded-[16px] p-6 sm:p-8 shadow-[0_1px_2px_rgba(0,0,0,0.15)] space-y-6">
+            <div className="border-b-[1.5px] border-[#171717]/15 pb-4">
+              <h2 className="text-lg font-black text-[#2b1a07] flex items-center gap-2">
+                <Calendar className="w-5 h-5 text-[#ff6f1e]" />
                 <span>إضافة فترة دراسية جديدة (محاضرة نظري / سكشن عملي / ورشة)</span>
               </h2>
             </div>
@@ -727,11 +727,11 @@ export default function AdminDashboard() {
             <form onSubmit={handleCreateSchedule} className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div>
-                  <label className="block text-xs font-bold text-slate-300 mb-1.5">الشعبة:</label>
+                  <label className="block text-xs font-bold text-[#171717] mb-1.5">الشعبة:</label>
                   <select
                     value={schDeptId}
                     onChange={(e) => setSchDeptId(e.target.value)}
-                    className="w-full bg-slate-900 border border-border rounded-xl p-2.5 text-xs text-white"
+                    className="w-full bg-[#fdfbf9] border-[1.5px] border-[#171717] rounded-[8px] p-2.5 text-xs text-[#171717]"
                   >
                     {departments.map((d) => (
                       <option key={d.id} value={d.id}>{d.name_ar}</option>
@@ -740,11 +740,11 @@ export default function AdminDashboard() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-300 mb-1.5">الفرقة:</label>
+                  <label className="block text-xs font-bold text-[#171717] mb-1.5">الفرقة:</label>
                   <select
                     value={schYear}
                     onChange={(e) => setSchYear(e.target.value as AcademicYear)}
-                    className="w-full bg-slate-900 border border-border rounded-xl p-2.5 text-xs text-white"
+                    className="w-full bg-[#fdfbf9] border-[1.5px] border-[#171717] rounded-[8px] p-2.5 text-xs text-[#171717]"
                   >
                     <option value="الفرقة الأولى">الفرقة الأولى</option>
                     <option value="الفرقة الثانية">الفرقة الثانية</option>
@@ -752,11 +752,11 @@ export default function AdminDashboard() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-300 mb-1.5">اليوم:</label>
+                  <label className="block text-xs font-bold text-[#171717] mb-1.5">اليوم:</label>
                   <select
                     value={schDay}
                     onChange={(e) => setSchDay(e.target.value as DayOfWeek)}
-                    className="w-full bg-slate-900 border border-border rounded-xl p-2.5 text-xs text-white"
+                    className="w-full bg-[#fdfbf9] border-[1.5px] border-[#171717] rounded-[8px] p-2.5 text-xs text-[#171717]"
                   >
                     {['السبت', 'الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس'].map((d) => (
                       <option key={d} value={d}>{d}</option>
@@ -765,11 +765,11 @@ export default function AdminDashboard() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-300 mb-1.5">المادة:</label>
+                  <label className="block text-xs font-bold text-[#171717] mb-1.5">المادة:</label>
                   <select
                     value={schSubjectId}
                     onChange={(e) => setSchSubjectId(e.target.value)}
-                    className="w-full bg-slate-900 border border-border rounded-xl p-2.5 text-xs text-white"
+                    className="w-full bg-[#fdfbf9] border-[1.5px] border-[#171717] rounded-[8px] p-2.5 text-xs text-[#171717]"
                   >
                     {subjects.map((s) => (
                       <option key={s.id} value={s.id}>{s.name_ar}</option>
@@ -780,11 +780,11 @@ export default function AdminDashboard() {
 
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div>
-                  <label className="block text-xs font-bold text-slate-300 mb-1.5">نوع الفترة:</label>
+                  <label className="block text-xs font-bold text-[#171717] mb-1.5">نوع الفترة:</label>
                   <select
                     value={schType}
                     onChange={(e) => setSchType(e.target.value as SessionType)}
-                    className="w-full bg-slate-900 border border-border rounded-xl p-2.5 text-xs text-white"
+                    className="w-full bg-[#fdfbf9] border-[1.5px] border-[#171717] rounded-[8px] p-2.5 text-xs text-[#171717]"
                   >
                     <option value="محاضرة نظري">محاضرة نظري</option>
                     <option value="سكشن عملي">سكشن عملي</option>
@@ -794,11 +794,11 @@ export default function AdminDashboard() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-300 mb-1.5">الفئة / السكشن:</label>
+                  <label className="block text-xs font-bold text-[#171717] mb-1.5">الفئة / السكشن:</label>
                   <select
                     value={schSection}
                     onChange={(e) => setSchSection(e.target.value as SectionNumber)}
-                    className="w-full bg-slate-900 border border-border rounded-xl p-2.5 text-xs text-white"
+                    className="w-full bg-[#fdfbf9] border-[1.5px] border-[#171717] rounded-[8px] p-2.5 text-xs text-[#171717]"
                   >
                     <option value="عام">عام (كل الدفعة)</option>
                     <option value="سكشن 1">سكشن 1</option>
@@ -809,54 +809,54 @@ export default function AdminDashboard() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-300 mb-1.5">وقت البدء:</label>
+                  <label className="block text-xs font-bold text-[#171717] mb-1.5">وقت البدء:</label>
                   <input
                     type="time"
                     value={schStart}
                     onChange={(e) => setSchStart(e.target.value)}
-                    className="w-full bg-slate-900 border border-border rounded-xl p-2.5 text-xs text-white"
+                    className="w-full bg-[#fdfbf9] border-[1.5px] border-[#171717] rounded-[8px] p-2.5 text-xs text-[#171717]"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-300 mb-1.5">وقت الانتهاء:</label>
+                  <label className="block text-xs font-bold text-[#171717] mb-1.5">وقت الانتهاء:</label>
                   <input
                     type="time"
                     value={schEnd}
                     onChange={(e) => setSchEnd(e.target.value)}
-                    className="w-full bg-slate-900 border border-border rounded-xl p-2.5 text-xs text-white"
+                    className="w-full bg-[#fdfbf9] border-[1.5px] border-[#171717] rounded-[8px] p-2.5 text-xs text-[#171717]"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-bold text-slate-300 mb-1.5">المكان بالتفصيل:</label>
+                  <label className="block text-xs font-bold text-[#171717] mb-1.5">المكان بالتفصيل:</label>
                   <input
                     type="text"
                     required
                     value={schRoom}
                     onChange={(e) => setSchRoom(e.target.value)}
                     placeholder="مثال: مدرج 2، صالة الرسم المساحي، معمل المساحة الدقيقة..."
-                    className="w-full bg-slate-900 border border-border rounded-xl p-2.5 text-xs text-white"
+                    className="w-full bg-[#fdfbf9] border-[1.5px] border-[#171717] rounded-[8px] p-2.5 text-xs text-[#171717]"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-300 mb-1.5">اسم الدكتور / المهندس المحاضر:</label>
+                  <label className="block text-xs font-bold text-[#171717] mb-1.5">اسم الدكتور / المهندس المحاضر:</label>
                   <input
                     type="text"
                     value={schInstructor}
                     onChange={(e) => setSchInstructor(e.target.value)}
                     placeholder="مثال: د. إبراهيم عبد العزيز / م. حسام الدين"
-                    className="w-full bg-slate-900 border border-border rounded-xl p-2.5 text-xs text-white"
+                    className="w-full bg-[#fdfbf9] border-[1.5px] border-[#171717] rounded-[8px] p-2.5 text-xs text-[#171717]"
                   />
                 </div>
               </div>
 
               <button
                 type="submit"
-                className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-extrabold text-sm shadow-lg shadow-emerald-500/20"
+                className="w-full py-3 px-4 rounded-full bg-[#171717] hover:bg-[#171717]/90 text-white font-extrabold text-sm border-[1.5px] border-[#171717] shadow-[0_1px_2px_rgba(0,0,0,0.25)] transition-all cursor-pointer"
               >
                 إضافة الفترة للجدول
               </button>
@@ -864,11 +864,11 @@ export default function AdminDashboard() {
           </div>
 
           {/* Current Schedules Table */}
-          <div className="bg-surface border border-border rounded-3xl p-6 shadow-xl space-y-4">
-            <h3 className="font-bold text-white text-base">قائمة الفترات والمحاضرات المسجلة حالياً ({schedules.length}):</h3>
+          <div className="bg-[#fdfbf9] border-[1.5px] border-[#171717] rounded-[16px] p-6 shadow-[0_1px_2px_rgba(0,0,0,0.15)] space-y-4">
+            <h3 className="font-bold text-[#2b1a07] text-base">قائمة الفترات والمحاضرات المسجلة حالياً ({schedules.length}):</h3>
             <div className="overflow-x-auto">
               <table className="w-full text-xs text-right">
-                <thead className="bg-slate-900 text-slate-400 font-bold border-b border-border">
+                <thead className="bg-[#f7efe9] text-[#2b1a07] font-bold border-b-[1.5px] border-[#171717]">
                   <tr>
                     <th className="p-3">اليوم</th>
                     <th className="p-3">المادة</th>
@@ -879,19 +879,19 @@ export default function AdminDashboard() {
                     <th className="p-3">إجراء</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-border/60">
+                <tbody className="divide-y divide-[#171717]/10">
                   {schedules.map((s) => (
-                    <tr key={s.id} className="hover:bg-slate-800/40">
-                      <td className="p-3 font-bold text-white">{s.day_of_week}</td>
-                      <td className="p-3 text-cyan-300 font-semibold">{s.subject?.name_ar || 'مادة تخصصية'}</td>
-                      <td className="p-3">{s.session_type}</td>
-                      <td className="p-3">{s.section_number}</td>
+                    <tr key={s.id} className="hover:bg-[#f7efe9]">
+                      <td className="p-3 font-bold text-[#171717]">{s.day_of_week}</td>
+                      <td className="p-3 text-[#2b1a07] font-bold">{s.subject?.name_ar || 'مادة تخصصية'}</td>
+                      <td className="p-3 text-[#171717]">{s.session_type}</td>
+                      <td className="p-3 text-[#171717]">{s.section_number}</td>
                       <td className="p-3 font-mono dir-ltr">{s.start_time} - {s.end_time}</td>
-                      <td className="p-3 text-slate-300">{s.location_room}</td>
+                      <td className="p-3 text-[#171717]/80">{s.location_room}</td>
                       <td className="p-3">
                         <button
                           onClick={() => handleDeleteSchedule(s.id)}
-                          className="p-1.5 text-rose-400 hover:bg-rose-500/10 rounded-lg transition-colors"
+                          className="p-1.5 text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
                           title="حذف"
                         >
                           <Trash2 className="w-4 h-4" />
@@ -910,13 +910,13 @@ export default function AdminDashboard() {
       {/* TAB 3: ANNOUNCEMENTS */}
       {/* ---------------------------------------------------- */}
       {activeTab === 'announcements' && (
-        <div className="bg-surface border border-border rounded-3xl p-6 sm:p-8 shadow-xl space-y-6">
-          <div className="border-b border-border/70 pb-4">
-            <h2 className="text-lg font-black text-white flex items-center gap-2">
-              <Bell className="w-5 h-5 text-brand-amber" />
+        <div className="bg-[#f7efe9] border-[1.5px] border-[#171717] rounded-[16px] p-6 sm:p-8 shadow-[0_1px_2px_rgba(0,0,0,0.15)] space-y-6">
+          <div className="border-b-[1.5px] border-[#171717]/15 pb-4">
+            <h2 className="text-lg font-black text-[#2b1a07] flex items-center gap-2">
+              <Bell className="w-5 h-5 text-[#ff6f1e]" />
               <span>نشر تنبيه أو موعد تسليم عاجل</span>
             </h2>
-            <p className="text-xs text-slate-400 mt-1">
+            <p className="text-xs text-[#171717]/70 mt-1">
               التنبيهات العاجلة جداً ستظهر في الشريط العلوي للموقع فوراً
             </p>
           </div>
@@ -924,11 +924,11 @@ export default function AdminDashboard() {
           <form onSubmit={handleCreateAnnouncement} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
-                <label className="block text-xs font-bold text-slate-300 mb-1.5">توجيه التنبيه إلى:</label>
+                <label className="block text-xs font-bold text-[#171717] mb-1.5">توجيه التنبيه إلى:</label>
                 <select
                   value={annDeptId}
                   onChange={(e) => setAnnDeptId(e.target.value)}
-                  className="w-full bg-slate-900 border border-border rounded-xl p-2.5 text-xs text-white"
+                  className="w-full bg-[#fdfbf9] border-[1.5px] border-[#171717] rounded-[8px] p-2.5 text-xs text-[#171717]"
                 >
                   <option value="all">إعلان عام لجميع شعب وطلاب المعهد</option>
                   {departments.map((d) => (
@@ -938,11 +938,11 @@ export default function AdminDashboard() {
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-300 mb-1.5">التصنيف:</label>
+                <label className="block text-xs font-bold text-[#171717] mb-1.5">التصنيف:</label>
                 <select
                   value={annCategory}
                   onChange={(e) => setAnnCategory(e.target.value as AnnouncementCategory)}
-                  className="w-full bg-slate-900 border border-border rounded-xl p-2.5 text-xs text-white"
+                  className="w-full bg-[#fdfbf9] border-[1.5px] border-[#171717] rounded-[8px] p-2.5 text-xs text-[#171717]"
                 >
                   <option value="تسليم شيت">تسليم شيت وتكليف</option>
                   <option value="امتحان عملي">امتحان عملي معملي</option>
@@ -952,11 +952,11 @@ export default function AdminDashboard() {
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-300 mb-1.5">مستوى الأهمية والسرعة:</label>
+                <label className="block text-xs font-bold text-[#171717] mb-1.5">مستوى الأهمية والسرعة:</label>
                 <select
                   value={annUrgency}
                   onChange={(e) => setAnnUrgency(e.target.value as UrgencyLevel)}
-                  className="w-full bg-slate-900 border border-border rounded-xl p-2.5 text-xs text-white"
+                  className="w-full bg-[#fdfbf9] border-[1.5px] border-[#171717] rounded-[8px] p-2.5 text-xs text-[#171717]"
                 >
                   <option value="عاجل جداً">عاجل جداً (شريط أحمر علوي)</option>
                   <option value="هام">هام</option>
@@ -966,42 +966,42 @@ export default function AdminDashboard() {
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-300 mb-1.5">عنوان التنبيه:</label>
+              <label className="block text-xs font-bold text-[#171717] mb-1.5">عنوان التنبيه:</label>
               <input
                 type="text"
                 required
                 value={annTitle}
                 onChange={(e) => setAnnTitle(e.target.value)}
                 placeholder="مثال: آخر موعد لتسليم شيت 2 ميزانيات معملية وتوقيع دفاتر الحقل"
-                className="w-full bg-slate-900 border border-border rounded-xl p-2.5 text-xs sm:text-sm text-white"
+                className="w-full bg-[#fdfbf9] border-[1.5px] border-[#171717] rounded-[8px] p-2.5 text-xs sm:text-sm text-[#171717]"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-300 mb-1.5">تفاصيل التنبيه:</label>
+              <label className="block text-xs font-bold text-[#171717] mb-1.5">تفاصيل التنبيه:</label>
               <textarea
                 required
                 rows={3}
                 value={annDetails}
                 onChange={(e) => setAnnDetails(e.target.value)}
                 placeholder="اكتب التوجيهات بالتفصيل والمكان ومواعيد السكاشن..."
-                className="w-full bg-slate-900 border border-border rounded-xl p-2.5 text-xs sm:text-sm text-white"
+                className="w-full bg-[#fdfbf9] border-[1.5px] border-[#171717] rounded-[8px] p-2.5 text-xs sm:text-sm text-[#171717]"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-300 mb-1.5">تاريخ الحدث / آخر موعد للتسليم:</label>
+              <label className="block text-xs font-bold text-[#171717] mb-1.5">تاريخ الحدث / آخر موعد للتسليم:</label>
               <input
                 type="date"
                 value={annDate}
                 onChange={(e) => setAnnDate(e.target.value)}
-                className="w-full bg-slate-900 border border-border rounded-xl p-2.5 text-xs text-white"
+                className="w-full bg-[#fdfbf9] border-[1.5px] border-[#171717] rounded-[8px] p-2.5 text-xs text-[#171717]"
               />
             </div>
 
             <button
               type="submit"
-              className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white font-extrabold text-sm shadow-lg shadow-amber-500/20"
+              className="w-full py-3 px-4 rounded-full bg-[#ff6f1e] hover:bg-[#ff6f1e]/90 text-[#2b1a07] font-extrabold text-sm border-[1.5px] border-[#171717] shadow-[0_1px_2px_rgba(0,0,0,0.25)] cursor-pointer"
             >
               نشر التنبيه الفوري
             </button>
@@ -1015,10 +1015,10 @@ export default function AdminDashboard() {
       {activeTab === 'manage' && (
         <div className="space-y-6">
           {/* Backup Actions Card */}
-          <div className="bg-surface border border-border rounded-3xl p-6 shadow-xl flex flex-col md:flex-row items-center justify-between gap-4">
+          <div className="bg-[#f7efe9] border-[1.5px] border-[#171717] rounded-[16px] p-6 shadow-[0_1px_2px_rgba(0,0,0,0.15)] flex flex-col md:flex-row items-center justify-between gap-4">
             <div>
-              <h3 className="font-extrabold text-white text-base">النسخ الاحتياطي واستيراد البيانات (JSON Backup)</h3>
-              <p className="text-xs text-slate-400 mt-1">
+              <h3 className="font-extrabold text-[#2b1a07] text-base">النسخ الاحتياطي واستيراد البيانات (JSON Backup)</h3>
+              <p className="text-xs text-[#171717]/70 mt-1">
                 يمكنك تحميل نسخة كاملة من جميع التلخيصات والشيتات والجداول والاحتفاظ بها كملف أو استعادتها لاحقاً
               </p>
             </div>
@@ -1026,14 +1026,14 @@ export default function AdminDashboard() {
             <div className="flex items-center gap-3 w-full md:w-auto">
               <button
                 onClick={handleExportBackup}
-                className="flex-1 md:flex-initial inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs border border-border transition-colors"
+                className="flex-1 md:flex-initial inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-full bg-[#fdfbf9] hover:bg-[#f7efe9] text-[#171717] font-bold text-xs border-[1.5px] border-[#171717] shadow-[0_1px_2px_rgba(0,0,0,0.25)] transition-colors cursor-pointer"
               >
-                <Download className="w-4 h-4 text-cyan-400" />
+                <Download className="w-4 h-4 text-[#ff6f1e]" />
                 <span>تصدير نسخة JSON</span>
               </button>
 
-              <label className="flex-1 md:flex-initial inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs border border-border transition-colors cursor-pointer">
-                <Upload className="w-4 h-4 text-emerald-400" />
+              <label className="flex-1 md:flex-initial inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-full bg-[#fdfbf9] hover:bg-[#f7efe9] text-[#171717] font-bold text-xs border-[1.5px] border-[#171717] shadow-[0_1px_2px_rgba(0,0,0,0.25)] transition-colors cursor-pointer">
+                <Upload className="w-4 h-4 text-[#ff6f1e]" />
                 <span>استيراد نسخة JSON</span>
                 <input
                   type="file"
@@ -1046,11 +1046,11 @@ export default function AdminDashboard() {
           </div>
 
           {/* Published Resources List */}
-          <div className="bg-surface border border-border rounded-3xl p-6 shadow-xl space-y-4">
-            <h3 className="font-bold text-white text-base">المذكرات والشيتات المنشورة ({resources.length}):</h3>
+          <div className="bg-[#fdfbf9] border-[1.5px] border-[#171717] rounded-[16px] p-6 shadow-[0_1px_2px_rgba(0,0,0,0.15)] space-y-4">
+            <h3 className="font-bold text-[#2b1a07] text-base">المذكرات والشيتات المنشورة ({resources.length}):</h3>
             <div className="overflow-x-auto">
               <table className="w-full text-xs text-right">
-                <thead className="bg-slate-900 text-slate-400 font-bold border-b border-border">
+                <thead className="bg-[#f7efe9] text-[#2b1a07] font-bold border-b-[1.5px] border-[#171717]">
                   <tr>
                     <th className="p-3">العنوان</th>
                     <th className="p-3">النوع</th>
@@ -1060,18 +1060,18 @@ export default function AdminDashboard() {
                     <th className="p-3">إجراء</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-border/60">
+                <tbody className="divide-y divide-[#171717]/10">
                   {resources.map((r) => (
-                    <tr key={r.id} className="hover:bg-slate-800/40">
-                      <td className="p-3 font-bold text-white line-clamp-1 max-w-xs">{r.title}</td>
-                      <td className="p-3 text-cyan-400 font-semibold">{r.type}</td>
-                      <td className="p-3 text-slate-300">{r.subject?.name_ar || 'مادة تخصصية'}</td>
-                      <td className="p-3 text-slate-400">{r.academic_year}</td>
+                    <tr key={r.id} className="hover:bg-[#f7efe9]">
+                      <td className="p-3 font-bold text-[#171717] line-clamp-1 max-w-xs">{r.title}</td>
+                      <td className="p-3 text-[#ff6f1e] font-bold">{r.type}</td>
+                      <td className="p-3 text-[#171717]">{r.subject?.name_ar || 'مادة تخصصية'}</td>
+                      <td className="p-3 text-[#171717]/70">{r.academic_year}</td>
                       <td className="p-3 font-mono">{r.views_count}</td>
                       <td className="p-3">
                         <button
                           onClick={() => handleDeleteResource(r.id)}
-                          className="p-1.5 text-rose-400 hover:bg-rose-500/10 rounded-lg transition-colors"
+                          className="p-1.5 text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
                           title="حذف"
                         >
                           <Trash2 className="w-4 h-4" />
