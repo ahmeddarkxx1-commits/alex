@@ -11,7 +11,8 @@ import {
   ResourceType, 
   DayOfWeek,
   SectionNumber,
-  SessionType
+  SessionType,
+  StudentUser
 } from '@/types/database';
 import { 
   INITIAL_DEPARTMENTS, 
@@ -29,6 +30,8 @@ const STORAGE_KEYS = {
   ANNOUNCEMENTS: 'iti_alex_announcements_v3',
   BOOKMARKS: 'iti_alex_bookmarks_v3',
   USER_PREFS: 'iti_alex_user_prefs_v3',
+  STUDENT_USER: 'iti_alex_student_user_v3',
+  STUDENT_ACCOUNTS: 'iti_alex_student_accounts_v3',
 };
 
 // Safe helper to get from LocalStorage (client side only)
@@ -402,4 +405,43 @@ export function saveUserPreferences(prefs: Partial<UserPreferences>): UserPrefer
   const updated = { ...current, ...prefs };
   setLocalItem(STORAGE_KEYS.USER_PREFS, updated);
   return updated;
+}
+
+// ----------------- STUDENT ACCOUNTS (Sync & Personalization) -----------------
+export function getCurrentStudent(): StudentUser | null {
+  return getLocalItem<StudentUser | null>(STORAGE_KEYS.STUDENT_USER, null);
+}
+
+export function saveCurrentStudent(student: StudentUser): StudentUser {
+  setLocalItem(STORAGE_KEYS.STUDENT_USER, student);
+
+  // Keep in accounts directory for fast switching / persistence
+  const accounts = getLocalItem<StudentUser[]>(STORAGE_KEYS.STUDENT_ACCOUNTS, []);
+  const existingIdx = accounts.findIndex((a) => a.id === student.id || (student.student_code && a.student_code === student.student_code));
+  if (existingIdx >= 0) {
+    accounts[existingIdx] = student;
+  } else {
+    accounts.push(student);
+  }
+  setLocalItem(STORAGE_KEYS.STUDENT_ACCOUNTS, accounts);
+
+  // Sync preferences immediately
+  saveUserPreferences({
+    departmentId: student.department_id,
+    academicYear: student.academic_year,
+    semesterNumber: student.semester_number,
+    sectionNumber: student.section_number,
+  });
+
+  return student;
+}
+
+export function logoutStudent(): void {
+  if (typeof window !== 'undefined') {
+    localStorage.removeItem(STORAGE_KEYS.STUDENT_USER);
+  }
+}
+
+export function getSavedStudentAccounts(): StudentUser[] {
+  return getLocalItem<StudentUser[]>(STORAGE_KEYS.STUDENT_ACCOUNTS, []);
 }

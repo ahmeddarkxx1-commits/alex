@@ -104,6 +104,19 @@ export interface AdminUser {
   created_at: string;
 }
 
+export interface StudentUser {
+  id: string;
+  name: string;
+  student_code?: string;
+  phone?: string;
+  department_id: string;
+  department_name?: string;
+  academic_year: AcademicYear;
+  semester_number: SemesterNumber;
+  section_number: SectionNumber;
+  created_at: string;
+}
+
 export interface Database {
   public: {
     Tables: {

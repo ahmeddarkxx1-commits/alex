@@ -9,7 +9,8 @@ import {
   AcademicYear,
   SemesterNumber, 
   SectionNumber, 
-  ResourceType 
+  ResourceType,
+  StudentUser
 } from '@/types/database';
 import { 
   getSubjects, 
@@ -19,17 +20,34 @@ import {
   getBookmarks, 
   toggleBookmark, 
   getUserPreferences, 
-  saveUserPreferences 
+  saveUserPreferences,
+  getCurrentStudent,
+  logoutStudent
 } from '@/lib/dataService';
 import UrgentBanner from '@/components/UrgentBanner';
 import SemesterSelector from '@/components/SemesterSelector';
+import StudentAuthModal from '@/components/StudentAuthModal';
 import CourseCard from '@/components/CourseCard';
 import CourseDetailModal from '@/components/CourseDetailModal';
 import ResourceCard from '@/components/ResourceCard';
 import StudyReaderModal from '@/components/StudyReaderModal';
 import SchedulesTab from '@/components/SchedulesTab';
 import DeadlinesTab from '@/components/DeadlinesTab';
-import { Search, BookOpen, Calendar, Clock, Bookmark, Layers } from 'lucide-react';
+import { 
+  Search, 
+  BookOpen, 
+  Calendar, 
+  Clock, 
+  Bookmark, 
+  Layers, 
+  GraduationCap, 
+  Sparkles, 
+  User, 
+  Settings, 
+  LogOut, 
+  Lock, 
+  Globe 
+} from 'lucide-react';
 
 export default function SurveyingPortal() {
   const [subjects, setSubjects] = useState<Subject[]>([]);
@@ -38,6 +56,11 @@ export default function SurveyingPortal() {
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [bookmarks, setBookmarks] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Student Account State
+  const [currentStudent, setCurrentStudent] = useState<StudentUser | null>(null);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [isPersonalizedOnly, setIsPersonalizedOnly] = useState(true);
 
   // Active Preferences
   const [activeYear, setActiveYear] = useState<AcademicYear | 'all'>('الفرقة الأولى');
@@ -59,12 +82,22 @@ export default function SurveyingPortal() {
   useEffect(() => {
     async function loadInitialData() {
       setLoading(true);
-      const savedPrefs = getUserPreferences();
-      const prefYear = savedPrefs.academicYear || 'الفرقة الأولى';
-      const prefSem = savedPrefs.semesterNumber || 1;
-      setActiveYear(prefYear);
-      setActiveSemester(prefSem);
-      setActiveSection(savedPrefs.sectionNumber || 'عام');
+      const student = getCurrentStudent();
+      if (student) {
+        setCurrentStudent(student);
+        setActiveYear(student.academic_year);
+        setActiveSemester(student.semester_number);
+        setActiveSection(student.section_number);
+        setIsPersonalizedOnly(true);
+      } else {
+        const savedPrefs = getUserPreferences();
+        const prefYear = savedPrefs.academicYear || 'الفرقة الأولى';
+        const prefSem = savedPrefs.semesterNumber || 1;
+        setActiveYear(prefYear);
+        setActiveSemester(prefSem);
+        setActiveSection(savedPrefs.sectionNumber || 'عام');
+      }
+
       setBookmarks(getBookmarks());
 
       const [anns] = await Promise.all([
@@ -137,6 +170,20 @@ export default function SurveyingPortal() {
   const handleSelectSection = (sec: SectionNumber) => {
     setActiveSection(sec);
     saveUserPreferences({ sectionNumber: sec });
+  };
+
+  const handleStudentLoginSuccess = (student: StudentUser) => {
+    setCurrentStudent(student);
+    setActiveYear(student.academic_year);
+    setActiveSemester(student.semester_number);
+    setActiveSection(student.section_number);
+    setIsPersonalizedOnly(true);
+  };
+
+  const handleStudentLogout = () => {
+    logoutStudent();
+    setCurrentStudent(null);
+    setIsPersonalizedOnly(false);
   };
 
   const handleToggleBookmark = (id: string) => {
@@ -224,16 +271,124 @@ export default function SurveyingPortal() {
           </div>
         </div>
 
-        {/* 4 Semesters Selector Controller with Year 1 & Year 2 Division */}
-        <SemesterSelector
-          activeYear={activeYear}
-          activeSemester={activeSemester}
-          activeSection={activeSection}
-          onSelectYear={handleSelectYear}
-          onSelectSemester={handleSelectSemester}
-          onSelectSection={handleSelectSection}
-          totalCoursesCount={subjects.length}
-        />
+        {/* ==================================================== */}
+        {/* STUDENT ACCOUNT SYNC & PERSONALIZATION CARD */}
+        {/* ==================================================== */}
+        {currentStudent ? (
+          <div className="bg-[#f7efe9] border-[1.5px] border-[#171717] rounded-[16px] p-4 sm:p-5 shadow-[0_2px_12px_rgba(0,0,0,0.06)] flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+            <div className="flex items-center gap-3.5">
+              <div className="w-12 h-12 rounded-full bg-[#fdfbf9] border-[1.5px] border-[#171717] flex items-center justify-center font-black text-lg text-[#2b1a07] shadow-[0_1px_2px_rgba(0,0,0,0.15)]">
+                {currentStudent.name.charAt(0)}
+              </div>
+              <div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h2 className="font-black text-[#2b1a07] text-base sm:text-lg">
+                    أهلاً، {currentStudent.name}
+                  </h2>
+                  <span className="text-[11px] font-extrabold px-2.5 py-0.5 rounded-full bg-[#ff6f1e] text-[#2b1a07] border-[1px] border-[#171717]">
+                    طالب مفعل
+                  </span>
+                </div>
+                <p className="text-xs text-[#171717]/80 mt-0.5 font-bold">
+                  {currentStudent.department_name || 'شعبة المساحة العامة'} • {currentStudent.academic_year} ({getSemesterLabel(currentStudent.semester_number)}) • {currentStudent.section_number}
+                </p>
+              </div>
+            </div>
+
+            {/* Quick Action Buttons for the Student */}
+            <div className="flex items-center gap-2 flex-wrap self-end md:self-auto text-xs">
+              <button
+                onClick={() => setIsPersonalizedOnly(!isPersonalizedOnly)}
+                className={`px-3.5 py-1.5 rounded-full border-[1.5px] font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                  isPersonalizedOnly
+                    ? 'bg-[#171717] text-white border-[#171717] shadow-[0_1px_2px_rgba(0,0,0,0.2)]'
+                    : 'bg-[#fdfbf9] text-[#171717] border-[#171717] hover:bg-[#f7efe9]'
+                }`}
+              >
+                {isPersonalizedOnly ? (
+                  <>
+                    <Lock className="w-3.5 h-3.5 text-[#ff6f1e]" />
+                    <span>موادي وترمي فقط</span>
+                  </>
+                ) : (
+                  <>
+                    <Globe className="w-3.5 h-3.5 text-[#ff6f1e]" />
+                    <span>وضع التصفح العام</span>
+                  </>
+                )}
+              </button>
+
+              <button
+                onClick={() => setShowAuthModal(true)}
+                className="px-3.5 py-1.5 rounded-full bg-[#fdfbf9] hover:bg-[#f7efe9] text-[#171717] border-[1.5px] border-[#171717] font-bold shadow-[0_1px_2px_rgba(0,0,0,0.15)] transition-all cursor-pointer flex items-center gap-1.5"
+              >
+                <Settings className="w-3.5 h-3.5 text-[#ff6f1e]" />
+                <span>تعديل الترم / السكشن</span>
+              </button>
+
+              <button
+                onClick={handleStudentLogout}
+                className="px-3.5 py-1.5 rounded-full bg-[#fdfbf9] hover:bg-rose-50 text-rose-700 border-[1.5px] border-[#171717] font-bold shadow-[0_1px_2px_rgba(0,0,0,0.15)] transition-all cursor-pointer flex items-center gap-1.5"
+              >
+                <LogOut className="w-3.5 h-3.5" />
+                <span>خروج</span>
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="bg-[#f7efe9] border-[1.5px] border-[#171717] rounded-[16px] p-4 sm:p-5 shadow-[0_2px_12px_rgba(0,0,0,0.06)] flex flex-col md:flex-row items-center justify-between gap-4">
+            <div className="flex items-center gap-3 text-right">
+              <div className="w-10 h-10 rounded-full bg-[#fdfbf9] border-[1.5px] border-[#171717] flex items-center justify-center text-[#2b1a07] shadow-[0_1px_2px_rgba(0,0,0,0.15)]">
+                <GraduationCap className="w-5 h-5 text-[#ff6f1e]" />
+              </div>
+              <div>
+                <h3 className="font-extrabold text-[#2b1a07] text-sm sm:text-base">
+                  هل أنت طالب في المعهد الفني الصناعي بالإسكندرية؟
+                </h3>
+                <p className="text-xs text-[#171717]/70">
+                  سجل حسابك وحدد شعبتك وسنتك الدراسية ليفتح الموقع مباشرة على مقرراتك وجدولك وتكليفاتك الخاصة فقط!
+                </p>
+              </div>
+            </div>
+
+            <button
+              onClick={() => setShowAuthModal(true)}
+              className="btn-pill inline-flex items-center gap-2 text-xs font-bold whitespace-nowrap cursor-pointer hover:bg-[#ff6f1e] hover:text-[#2b1a07] transition-all"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-[#ff6f1e]" />
+              <span>تسجيل دخول / إنشاء حساب طالب 🎓</span>
+            </button>
+          </div>
+        )}
+
+        {/* Personalized Mode Status Tag or Full Selector */}
+        {currentStudent && isPersonalizedOnly ? (
+          <div className="bg-[#fdfbf9] border-[1.5px] border-[#171717] rounded-[12px] p-3.5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 shadow-[0_1px_2px_rgba(0,0,0,0.08)]">
+            <div className="flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-[#ff6f1e]"></span>
+              <span className="text-xs font-black text-[#2b1a07]">
+                وضع الطالب المخصص: أنت تشاهد الآن فقط الـ 8 مواد وجدول وسكاشن ({currentStudent.academic_year} - {getSemesterLabel(currentStudent.semester_number)})
+              </span>
+            </div>
+            <button
+              onClick={() => setIsPersonalizedOnly(false)}
+              className="text-xs font-extrabold text-[#ff6f1e] hover:underline cursor-pointer"
+            >
+              عرض كافة فصول وسنوات المعهد ←
+            </button>
+          </div>
+        ) : (
+          /* 4 Semesters Selector Controller with Year 1 & Year 2 Division */
+          <SemesterSelector
+            activeYear={activeYear}
+            activeSemester={activeSemester}
+            activeSection={activeSection}
+            onSelectYear={handleSelectYear}
+            onSelectSemester={handleSelectSemester}
+            onSelectSection={handleSelectSection}
+            totalCoursesCount={subjects.length}
+          />
+        )}
 
         {/* LMS Academic Navigation Tabs - Superr Pill Style */}
         <div className="flex items-center gap-2 overflow-x-auto border-b-[1.5px] border-[#171717]/15 pb-3 scrollbar-none text-xs sm:text-sm">
@@ -511,6 +666,14 @@ export default function SurveyingPortal() {
       <StudyReaderModal
         resource={readingResource}
         onClose={() => setReadingResource(null)}
+      />
+
+      {/* Student Account & Onboarding Modal */}
+      <StudentAuthModal
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+        onSuccess={handleStudentLoginSuccess}
+        initialStudent={currentStudent}
       />
     </div>
   );
