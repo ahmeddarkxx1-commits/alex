@@ -1,48 +1,28 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import Link from "next/link";
-import { GraduationCap, ShieldCheck, Compass, BookOpen, Calendar, Clock } from "lucide-react";
+import { BookOpen, Calendar, Clock, Shield, Compass } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "منصة المعهد الفني الصناعي بالإسكندرية | ITI Alex Academic Hub",
-  description: "المنصة الطلابية الرسمية المتكاملة لطلاب المعهد الفني الصناعي بالإسكندرية (كامب شيزار والمحرم بك) - تلخيصات المحاضرات، شيتات وتكليفات، مذكرات السكاشن والورش، جداول المحاضرات وبنوك الأسئلة لجميع الشعب.",
+  title: "شعبة المساحة العامة | المعهد الفني الصناعي بالإسكندرية",
+  description: "المنصة الأكاديمية لشعبة المساحة العامة - المعهد الفني الصناعي بالإسكندرية. المقررات الدراسية، المحاضرات، الشيتات والتكليفات، وجدول المحاضرات والسكاشن.",
   keywords: [
     "المعهد الفني الصناعي بالإسكندرية",
-    "ITI Alex",
-    "شعبة مساحة",
-    "شعبة عمارة ومدني",
-    "شعبة كهرباء",
-    "شعبة إلكترونيات",
-    "شعبة تبريد وتكييف",
-    "شعبة ميكانيكا",
-    "شعبة سيارات",
-    "مذكرات المعهد الفني",
-    "شيتات المعهد الفني الصناعي",
+    "شعبة المساحة العامة",
+    "مساحة عامة",
+    "مقررات المساحة",
+    "جدول شعبة المساحة",
+    "شيتات المساحة",
   ],
-  authors: [{ name: "فريق تطوير منصة المعهد" }],
-  creator: "ITI Alexandria Students Tech Team",
   manifest: "/manifest.json",
   icons: {
     icon: "/favicon.ico",
     apple: "/icons/icon-192x192.png",
   },
-  openGraph: {
-    title: "منصة المعهد الفني الصناعي بالإسكندرية | ITI Alex Hub",
-    description: "كل ما يحتاجه طالب المعهد الفني الصناعي في مكان واحد: تلخيصات، شيتات، جداول سكاشن، وتنبيهات فورية بدون تسجيل دخول.",
-    url: "https://iti-alex.vercel.app",
-    siteName: "ITI Alex Hub",
-    locale: "ar_EG",
-    type: "website",
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "منصة المعهد الفني الصناعي بالإسكندرية",
-    description: "ملخصات، شيتات، ومواعيد تسليم لجميع شعب المعهد الفني الصناعي بالإسكندرية.",
-  },
 };
 
 export const viewport: Viewport = {
-  themeColor: "#070B14",
+  themeColor: "#0B0F19",
   width: "device-width",
   initialScale: 1,
   maximumScale: 5,
@@ -55,84 +35,84 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ar" dir="rtl" className="dark">
-      <head>
-        <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏛️</text></svg>" />
-        <meta name="apple-mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-      </head>
-      <body className="bg-background text-slate-100 antialiased selection:bg-brand-cyan/20 selection:text-brand-cyan flex flex-col min-h-screen">
-        {/* Header / Navbar */}
-        <header className="sticky top-0 z-50 glass-panel border-b border-border/80 bg-background/90 backdrop-blur-md">
+      <body className="bg-[#0B0F19] text-slate-100 antialiased selection:bg-blue-600/30 selection:text-blue-300 flex flex-col min-h-screen">
+        {/* Navigation Header */}
+        <header className="sticky top-0 z-50 bg-[#0B0F19]/90 backdrop-blur-md border-b border-slate-800/80">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-            {/* Brand Logo & Name */}
-            <Link href="/" className="flex items-center gap-3 group">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center shadow-lg shadow-cyan-500/20 group-hover:scale-105 transition-transform">
-                <GraduationCap className="w-6 h-6 text-white" />
+            {/* Institution Brand */}
+            <Link href="/" className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-slate-800 border border-slate-700/80 flex items-center justify-center text-blue-400">
+                <Compass className="w-5 h-5" />
               </div>
               <div className="flex flex-col">
-                <span className="font-extrabold text-base sm:text-lg leading-tight bg-gradient-to-l from-white via-slate-100 to-cyan-300 bg-clip-text text-transparent">
-                  منصة المعهد الفني الصناعي
+                <span className="font-bold text-sm sm:text-base text-white tracking-wide">
+                  المعهد الفني الصناعي بالإسكندرية
                 </span>
-                <span className="text-[11px] text-slate-400 font-medium tracking-wide">
-                  الإسكندرية • ITI Alex Academic Hub
+                <span className="text-[11px] text-slate-400 font-medium">
+                  شعبة المساحة العامة
                 </span>
               </div>
             </Link>
 
-            {/* Navigation links & Admin Action */}
-            <div className="flex items-center gap-2 sm:gap-4">
+            {/* Main Navigation */}
+            <div className="flex items-center gap-1 sm:gap-2">
+              <Link
+                href="/#courses"
+                className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800/70 transition-colors"
+              >
+                <BookOpen className="w-3.5 h-3.5 text-slate-400" />
+                المقررات
+              </Link>
               <Link
                 href="/#resources"
-                className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-300 hover:text-white hover:bg-surface/80 transition-colors"
+                className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800/70 transition-colors"
               >
-                <BookOpen className="w-4 h-4 text-brand-cyan" />
-                المذكرات والشيتات
+                الملخصات والشيتات
               </Link>
               <Link
                 href="/#schedules"
-                className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-300 hover:text-white hover:bg-surface/80 transition-colors"
+                className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800/70 transition-colors"
               >
-                <Calendar className="w-4 h-4 text-brand-emerald" />
-                الجداول والسكاشن
+                <Calendar className="w-3.5 h-3.5 text-slate-400" />
+                الجدول الدراسي
               </Link>
               <Link
                 href="/#deadlines"
-                className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-300 hover:text-white hover:bg-surface/80 transition-colors"
+                className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800/70 transition-colors"
               >
-                <Clock className="w-4 h-4 text-brand-amber" />
+                <Clock className="w-3.5 h-3.5 text-slate-400" />
                 مواعيد التسليم
               </Link>
 
-              {/* Admin Portal Button */}
+              <div className="h-4 w-px bg-slate-800 mx-1 hidden sm:block"></div>
+
+              {/* Admin Access Button */}
               <Link
                 href="/admin"
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-surface hover:bg-surface-hover border border-border text-cyan-400 hover:text-cyan-300 transition-all shadow-sm"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700 text-slate-200 transition-colors"
               >
-                <ShieldCheck className="w-4 h-4" />
-                <span>بوابة الإدارة والمندوبين</span>
+                <Shield className="w-3.5 h-3.5 text-slate-400" />
+                <span>لوحة المشرف</span>
               </Link>
             </div>
           </div>
         </header>
 
-        {/* Main Application Body */}
+        {/* Page Content */}
         <main className="flex-1">
           {children}
         </main>
 
-        {/* Global Footer */}
-        <footer className="border-t border-border/60 bg-surface/40 mt-16 py-8 px-4 text-center text-xs text-slate-400">
-          <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
+        {/* Professional Academic Footer */}
+        <footer className="border-t border-slate-800/60 bg-[#080B12] py-8 px-4 text-xs text-slate-400 mt-16">
+          <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-2">
-              <Compass className="w-4 h-4 text-cyan-400" />
-              <span>منصة المعهد الفني الصناعي بالإسكندرية — خدمة طلابية مفتوحة بدون تسجيل دخول</span>
+              <Compass className="w-4 h-4 text-slate-400" />
+              <span>المعهد الفني الصناعي بالإسكندرية — شعبة المساحة العامة</span>
             </div>
             <p className="text-slate-400">
-              شعب المعهد: مساحة • عمارة وإنشاءات • كهرباء • إلكترونيات وحاسبات • تبريد وتكييف • ميكانيكا • سيارات
+              بوابة أكاديمية لمتابعة المحاضرات والشيتات والجداول الدراسية لجميع الفصول
             </p>
-            <div className="flex items-center gap-1 text-slate-400">
-              <span>تطوير طلابي حر • 2026</span>
-            </div>
           </div>
         </footer>
       </body>

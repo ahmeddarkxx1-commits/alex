@@ -22,13 +22,13 @@ import {
 } from '@/lib/mockData';
 
 const STORAGE_KEYS = {
-  DEPARTMENTS: 'iti_alex_departments_v2',
-  SUBJECTS: 'iti_alex_subjects_v2',
-  RESOURCES: 'iti_alex_resources_v2',
-  SCHEDULES: 'iti_alex_schedules_v2',
-  ANNOUNCEMENTS: 'iti_alex_announcements_v2',
-  BOOKMARKS: 'iti_alex_bookmarks_v2',
-  USER_PREFS: 'iti_alex_user_prefs_v2',
+  DEPARTMENTS: 'iti_alex_departments_v3',
+  SUBJECTS: 'iti_alex_subjects_v3',
+  RESOURCES: 'iti_alex_resources_v3',
+  SCHEDULES: 'iti_alex_schedules_v3',
+  ANNOUNCEMENTS: 'iti_alex_announcements_v3',
+  BOOKMARKS: 'iti_alex_bookmarks_v3',
+  USER_PREFS: 'iti_alex_user_prefs_v3',
 };
 
 // Safe helper to get from LocalStorage (client side only)

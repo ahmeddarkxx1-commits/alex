@@ -161,7 +161,7 @@ export default function AdminDashboard() {
       setCurrentUser({
         id: 'rep-survey',
         email: 'survey-rep@iti-alex.edu.eg',
-        full_name: 'مندوب شعبة المساحة والخرائط',
+        full_name: 'مندوب شعبة المساحة العامة',
         role: 'dept_rep',
         assigned_department_id: surveyDept ? surveyDept.id : null,
         created_at: new Date().toISOString(),

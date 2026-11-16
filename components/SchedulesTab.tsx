@@ -2,17 +2,7 @@
 
 import React, { useState } from 'react';
 import { Schedule, DayOfWeek, SectionNumber, SessionType } from '@/types/database';
-import { 
-  Calendar, 
-  Clock, 
-  MapPin, 
-  User, 
-  BookOpen, 
-  Wrench, 
-  FlaskConical, 
-  CheckCircle,
-  AlertCircle
-} from 'lucide-react';
+import { Clock, MapPin, User, Calendar } from 'lucide-react';
 
 interface SchedulesTabProps {
   schedules: Schedule[];
@@ -23,10 +13,8 @@ interface SchedulesTabProps {
 const DAYS_OF_WEEK: DayOfWeek[] = ['السبت', 'الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس'];
 
 export default function SchedulesTab({ schedules, activeDeptName, activeYear }: SchedulesTabProps) {
-  // Determine today in Arabic
   const getTodayArabic = (): DayOfWeek => {
     const dayIndex = new Date().getDay();
-    // 0 = Sunday, 1 = Monday, 2 = Tuesday, 3 = Wednesday, 4 = Thursday, 5 = Friday, 6 = Saturday
     const map: Record<number, DayOfWeek> = {
       6: 'السبت',
       0: 'الأحد',
@@ -44,7 +32,6 @@ export default function SchedulesTab({ schedules, activeDeptName, activeYear }: 
   const [selectedSection, setSelectedSection] = useState<SectionNumber | 'الكل'>('الكل');
   const [selectedType, setSelectedType] = useState<SessionType | 'الكل'>('الكل');
 
-  // Filtered schedules
   const filtered = schedules.filter((s) => {
     if (selectedDay !== 'الكل' && s.day_of_week !== selectedDay) return false;
     if (selectedSection !== 'الكل') {
@@ -54,65 +41,47 @@ export default function SchedulesTab({ schedules, activeDeptName, activeYear }: 
     return true;
   });
 
-  const getSessionBadge = (type: SessionType) => {
+  const getBadgeStyle = (type: SessionType) => {
     switch (type) {
       case 'محاضرة نظري':
-        return {
-          icon: <BookOpen className="w-3.5 h-3.5" />,
-          classes: 'bg-cyan-500/15 text-cyan-300 border-cyan-500/30',
-        };
+        return 'bg-blue-950/60 text-blue-300 border-blue-900/60';
       case 'سكشن عملي':
-        return {
-          icon: <FlaskConical className="w-3.5 h-3.5" />,
-          classes: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30',
-        };
+        return 'bg-emerald-950/60 text-emerald-300 border-emerald-900/60';
       case 'ورشة':
-        return {
-          icon: <Wrench className="w-3.5 h-3.5" />,
-          classes: 'bg-amber-500/15 text-amber-300 border-amber-500/30',
-        };
+        return 'bg-amber-950/60 text-amber-300 border-amber-900/60';
       case 'معمل':
-        return {
-          icon: <FlaskConical className="w-3.5 h-3.5" />,
-          classes: 'bg-purple-500/15 text-purple-300 border-purple-500/30',
-        };
+        return 'bg-purple-950/60 text-purple-300 border-purple-900/60';
       default:
-        return {
-          icon: <Calendar className="w-3.5 h-3.5" />,
-          classes: 'bg-slate-500/15 text-slate-300 border-slate-500/30',
-        };
+        return 'bg-slate-800 text-slate-300 border-slate-700';
     }
   };
 
   return (
-    <div className="space-y-6">
-      {/* 1. Header info */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-surface/80 border border-border p-4 rounded-2xl">
+    <div className="space-y-5">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-[#0F1422] border border-slate-800 p-4 rounded-2xl">
         <div>
-          <h2 className="text-lg sm:text-xl font-black text-white flex items-center gap-2">
-            <Calendar className="w-5 h-5 text-brand-emerald" />
-            <span>جدول المحاضرات والسكاشن العملية والورش</span>
+          <h2 className="text-base sm:text-lg font-bold text-white">
+            جدول المحاضرات والسكاشن
           </h2>
-          <p className="text-xs text-slate-400 mt-1">
-            جدول {activeDeptName} — {activeYear} (مع تمييز يوم اليوم الحالي تلقائياً)
+          <p className="text-xs text-slate-400 mt-0.5">
+            {activeDeptName} — {activeYear}
           </p>
         </div>
 
-        {/* Today Indicator */}
-        <div className="flex items-center gap-2 text-xs font-bold px-3 py-1.5 rounded-xl bg-slate-900 border border-border text-slate-300">
-          <span>اليوم:</span>
-          <span className="text-emerald-400">{todayArabic}</span>
+        <div className="text-xs font-semibold px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-300">
+          اليوم: <span className="text-blue-400 font-bold">{todayArabic}</span>
         </div>
       </div>
 
-      {/* 2. Days Filter Bar */}
-      <div className="flex items-center gap-1.5 overflow-x-auto pb-2 scrollbar-none">
+      {/* Days Bar */}
+      <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
         <button
           onClick={() => setSelectedDay('الكل')}
-          className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap transition-all ${
+          className={`px-3.5 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-colors ${
             selectedDay === 'الكل'
-              ? 'bg-slate-100 text-slate-950 shadow-md font-black'
-              : 'bg-slate-900/80 text-slate-400 hover:text-white border border-border'
+              ? 'bg-blue-600 text-white'
+              : 'bg-slate-900/80 text-slate-400 hover:text-white border border-slate-800'
           }`}
         >
           كل الأسبوع ({schedules.length})
@@ -121,29 +90,27 @@ export default function SchedulesTab({ schedules, activeDeptName, activeYear }: 
         {DAYS_OF_WEEK.map((day) => {
           const isSelected = selectedDay === day;
           const isToday = todayArabic === day;
-          const dayCount = schedules.filter((s) => s.day_of_week === day).length;
+          const count = schedules.filter((s) => s.day_of_week === day).length;
 
           return (
             <button
               key={day}
               onClick={() => setSelectedDay(day)}
-              className={`relative px-4 py-2 rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap transition-all border flex items-center gap-1.5 ${
+              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-colors border flex items-center gap-1.5 ${
                 isSelected
-                  ? 'bg-brand-emerald text-slate-950 border-emerald-400 shadow-lg shadow-emerald-500/20 font-black'
-                  : 'bg-slate-900/80 text-slate-300 hover:text-white border-border hover:border-slate-700'
+                  ? 'bg-blue-600 border-blue-500 text-white'
+                  : 'bg-slate-900/80 text-slate-400 hover:text-white border-slate-800'
               }`}
             >
               <span>{day}</span>
-              <span className={`text-[10px] px-1.5 py-0.2 rounded-full ${
-                isSelected ? 'bg-slate-950 text-white' : 'bg-slate-800 text-slate-400'
+              <span className={`text-[10px] px-1 rounded ${
+                isSelected ? 'bg-blue-800 text-white' : 'bg-slate-800 text-slate-500'
               }`}>
-                {dayCount}
+                {count}
               </span>
               {isToday && (
-                <span className={`text-[10px] px-1 rounded font-extrabold ${
-                  isSelected ? 'bg-black/30 text-slate-950' : 'text-emerald-400 bg-emerald-950/60 border border-emerald-800/40'
-                }`}>
-                  اليوم
+                <span className="text-[10px] text-blue-300 font-bold">
+                  (اليوم)
                 </span>
               )}
             </button>
@@ -151,20 +118,19 @@ export default function SchedulesTab({ schedules, activeDeptName, activeYear }: 
         })}
       </div>
 
-      {/* 3. Sub-filters: Section & Session Type */}
-      <div className="flex flex-wrap items-center justify-between gap-3 text-xs bg-slate-900/60 p-3 rounded-xl border border-border">
-        {/* Section filter */}
+      {/* Sub-filters */}
+      <div className="flex flex-wrap items-center justify-between gap-3 text-xs bg-slate-900/60 p-3 rounded-xl border border-slate-800/80">
         <div className="flex items-center gap-2">
-          <span className="font-bold text-slate-400">تصفية بالسكشن:</span>
-          <div className="flex items-center gap-1 bg-surface p-1 rounded-lg border border-border">
+          <span className="text-slate-400 font-medium">السكشن:</span>
+          <div className="flex items-center gap-1">
             {(['الكل', 'عام', 'سكشن 1', 'سكشن 2', 'سكشن 3', 'سكشن 4'] as (SectionNumber | 'الكل')[]).map((sec) => (
               <button
                 key={sec}
                 onClick={() => setSelectedSection(sec)}
-                className={`px-2.5 py-1 rounded text-xs font-semibold transition-all ${
+                className={`px-2 py-0.5 rounded text-xs transition-colors ${
                   selectedSection === sec
-                    ? 'bg-brand-cyan text-slate-950 font-bold'
-                    : 'text-slate-400 hover:text-white'
+                    ? 'bg-slate-700 text-white font-bold'
+                    : 'text-slate-400 hover:text-slate-200'
                 }`}
               >
                 {sec}
@@ -173,18 +139,17 @@ export default function SchedulesTab({ schedules, activeDeptName, activeYear }: 
           </div>
         </div>
 
-        {/* Type filter */}
         <div className="flex items-center gap-2">
-          <span className="font-bold text-slate-400">نوع الفترة:</span>
-          <div className="flex items-center gap-1 bg-surface p-1 rounded-lg border border-border">
+          <span className="text-slate-400 font-medium">النوع:</span>
+          <div className="flex items-center gap-1">
             {(['الكل', 'محاضرة نظري', 'سكشن عملي', 'ورشة', 'معمل'] as (SessionType | 'الكل')[]).map((t) => (
               <button
                 key={t}
                 onClick={() => setSelectedType(t)}
-                className={`px-2.5 py-1 rounded text-xs font-semibold transition-all ${
+                className={`px-2 py-0.5 rounded text-xs transition-colors ${
                   selectedType === t
-                    ? 'bg-brand-emerald text-slate-950 font-bold'
-                    : 'text-slate-400 hover:text-white'
+                    ? 'bg-slate-700 text-white font-bold'
+                    : 'text-slate-400 hover:text-slate-200'
                 }`}
               >
                 {t}
@@ -194,77 +159,61 @@ export default function SchedulesTab({ schedules, activeDeptName, activeYear }: 
         </div>
       </div>
 
-      {/* 4. Schedules Cards List */}
+      {/* Schedules Cards */}
       {filtered.length === 0 ? (
-        <div className="text-center py-12 bg-surface/50 rounded-2xl border border-border p-6">
-          <Calendar className="w-12 h-12 text-slate-600 mx-auto mb-3" />
-          <h3 className="text-base font-bold text-slate-200">لا توجد محاضرات أو سكاشن مسجلة لهذا اليوم بالفلتر المختار</h3>
-          <p className="text-xs text-slate-400 mt-1">جرب التبديل ليوم آخر أو اختيار كل الأيام لمعاينة الجدول الأسبوعي كاملاً.</p>
+        <div className="text-center py-10 bg-[#0F1422] rounded-2xl border border-slate-800 p-6">
+          <Calendar className="w-8 h-8 text-slate-600 mx-auto mb-2" />
+          <p className="text-xs font-bold text-slate-300">لا توجد فترات مسجلة لهذا اليوم بالفلتر المختار</p>
+          <p className="text-[11px] text-slate-400 mt-0.5">يمكنك اختيار يوم آخر أو اختيار كل الأسبوع لمعاينة الجدول كاملاً.</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
-          {filtered.map((item) => {
-            const badge = getSessionBadge(item.session_type);
-            return (
-              <div
-                key={item.id}
-                className="bg-surface border border-border hover:border-emerald-500/40 rounded-2xl p-4 sm:p-5 transition-all hover:-translate-y-0.5 hover:shadow-lg space-y-3"
-              >
-                {/* Header: Day & Session type */}
-                <div className="flex items-center justify-between gap-2">
-                  <span className="text-xs font-black text-slate-300 bg-slate-900 px-2.5 py-1 rounded-lg border border-border">
-                    {item.day_of_week}
-                  </span>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+          {filtered.map((item) => (
+            <div
+              key={item.id}
+              className="bg-[#0F1422] border border-slate-800 rounded-2xl p-4 space-y-3"
+            >
+              <div className="flex items-center justify-between text-xs">
+                <span className="font-bold text-slate-300 bg-slate-900 px-2 py-0.5 rounded border border-slate-800">
+                  {item.day_of_week}
+                </span>
 
-                  <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold border ${badge.classes}`}>
-                    {badge.icon}
-                    {item.session_type}
-                  </span>
-                </div>
+                <span className={`text-[11px] font-semibold px-2 py-0.5 rounded border ${getBadgeStyle(item.session_type)}`}>
+                  {item.session_type}
+                </span>
+              </div>
 
-                {/* Subject Name & Section */}
-                <div>
-                  <h4 className="text-base font-extrabold text-white leading-snug line-clamp-1">
-                    {item.subject?.name_ar || 'مادة تخصصية'}
-                  </h4>
-                  <div className="flex items-center gap-2 text-xs text-cyan-400 font-bold mt-1">
-                    <span>الفئة: {item.section_number}</span>
-                    {item.subject?.code && (
-                      <>
-                        <span className="text-slate-500">•</span>
-                        <span className="text-slate-400 font-mono">{item.subject.code}</span>
-                      </>
-                    )}
-                  </div>
-                </div>
-
-                {/* Timing & Location */}
-                <div className="space-y-1.5 text-xs text-slate-300 bg-slate-900/60 p-3 rounded-xl border border-border/50">
-                  <div className="flex items-center gap-2">
-                    <Clock className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                    <span className="font-bold font-mono dir-ltr">
-                      {item.start_time} - {item.end_time}
-                    </span>
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <MapPin className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
-                    <span className="font-semibold text-slate-200 line-clamp-1">{item.location_room}</span>
-                  </div>
-
-                  {item.instructor_name && (
-                    <div className="flex items-center gap-2 pt-1 border-t border-border/40 text-slate-400">
-                      <User className="w-3.5 h-3.5 text-slate-500 shrink-0" />
-                      <span className="line-clamp-1">{item.instructor_name}</span>
-                    </div>
-                  )}
+              <div>
+                <h4 className="text-sm sm:text-base font-bold text-white">
+                  {item.subject?.name_ar || 'مادة تخصصية'}
+                </h4>
+                <div className="text-xs text-slate-400 mt-0.5">
+                  الفئة: <span className="text-slate-300">{item.section_number}</span>
                 </div>
               </div>
-            );
-          })}
+
+              <div className="space-y-1.5 text-xs text-slate-300 bg-slate-900/60 p-3 rounded-xl border border-slate-800/60">
+                <div className="flex items-center gap-2">
+                  <Clock className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                  <span className="font-mono dir-ltr font-medium">{item.start_time} - {item.end_time}</span>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                  <span className="text-slate-300">{item.location_room}</span>
+                </div>
+
+                {item.instructor_name && (
+                  <div className="flex items-center gap-2 pt-1 border-t border-slate-800 text-slate-400">
+                    <User className="w-3.5 h-3.5 text-slate-500 shrink-0" />
+                    <span>{item.instructor_name}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          ))}
         </div>
       )}
     </div>
   );
 }
-

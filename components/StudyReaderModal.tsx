@@ -184,14 +184,14 @@ export default function StudyReaderModal({ resource, onClose }: StudyReaderModal
 
           {/* PDF Viewer / Attachment Box */}
           {resource.file_url && (
-            <div className="mt-6 bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 border border-cyan-500/30 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row items-center justify-between gap-4">
-              <div className="flex items-center gap-3.5">
-                <div className="w-12 h-12 rounded-xl bg-cyan-500/15 border border-cyan-500/40 flex items-center justify-center text-cyan-300">
-                  <FileText className="w-6 h-6" />
+            <div className="mt-6 bg-slate-900/90 border border-slate-800 rounded-xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-blue-950/60 border border-blue-900/60 flex items-center justify-center text-blue-400">
+                  <FileText className="w-5 h-5" />
                 </div>
                 <div>
-                  <h4 className="font-bold text-white text-sm sm:text-base">ملف PDF مرفق أصلي</h4>
-                  <p className="text-xs text-slate-400">ملف جاهز للطباعة والتحميل عالي الجودة</p>
+                  <h4 className="font-bold text-white text-sm">ملف PDF مرفق</h4>
+                  <p className="text-xs text-slate-400">ملف جاهز للطباعة والتحميل</p>
                 </div>
               </div>
 
@@ -200,7 +200,7 @@ export default function StudyReaderModal({ resource, onClose }: StudyReaderModal
                   href={resource.file_url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-brand-cyan text-slate-950 font-extrabold text-xs sm:text-sm hover:bg-cyan-400 transition-colors shadow-lg shadow-cyan-500/20"
+                  className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg bg-blue-600 text-white font-bold text-xs hover:bg-blue-500 transition-colors shadow-sm"
                 >
                   <Download className="w-4 h-4" />
                   <span>تحميل ملف PDF</span>
@@ -211,11 +211,11 @@ export default function StudyReaderModal({ resource, onClose }: StudyReaderModal
         </div>
 
         {/* Modal Footer */}
-        <div className="p-4 border-t border-border/70 bg-slate-900/70 flex items-center justify-between text-xs text-slate-400">
-          <span>المعهد الفني الصناعي بالإسكندرية • مكتبة المواد الرقمية</span>
+        <div className="p-4 border-t border-slate-800 bg-[#0B0F19] flex items-center justify-between text-xs text-slate-400">
+          <span>شعبة المساحة العامة • المعهد الفني الصناعي بالإسكندرية</span>
           <button
             onClick={onClose}
-            className="px-4 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold transition-colors"
+            className="px-4 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-white font-bold transition-colors"
           >
             إغلاق
           </button>

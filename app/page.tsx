@@ -28,24 +28,9 @@ import ResourceCard from '@/components/ResourceCard';
 import StudyReaderModal from '@/components/StudyReaderModal';
 import SchedulesTab from '@/components/SchedulesTab';
 import DeadlinesTab from '@/components/DeadlinesTab';
-import { 
-  Search, 
-  BookOpen, 
-  Calendar, 
-  Clock, 
-  Bookmark, 
-  Sparkles, 
-  Layers, 
-  Compass, 
-  FileText,
-  GraduationCap,
-  ChevronLeft,
-  CheckCircle2,
-  FolderOpen
-} from 'lucide-react';
+import { Search, BookOpen, Calendar, Clock, Bookmark, Layers } from 'lucide-react';
 
-export default function StudentSurveyingHub() {
-  // 1. Core State
+export default function SurveyingPortal() {
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [resources, setResources] = useState<Resource[]>([]);
   const [schedules, setSchedules] = useState<Schedule[]>([]);
@@ -69,7 +54,6 @@ export default function StudentSurveyingHub() {
   const [selectedCourse, setSelectedCourse] = useState<Subject | null>(null);
   const [readingResource, setReadingResource] = useState<Resource | null>(null);
 
-  // 2. Initial Data Loading
   useEffect(() => {
     async function loadInitialData() {
       setLoading(true);
@@ -88,11 +72,8 @@ export default function StudentSurveyingHub() {
     loadInitialData();
   }, []);
 
-  // Update subjects, resources and schedules when active semester changes
   useEffect(() => {
     async function updateSemesterData() {
-      const year = activeSemester <= 2 ? 'الفرقة الأولى' : 'الفرقة الثانية';
-
       const [subjs, res, sch] = await Promise.all([
         getSubjects({ departmentId: 'dept-surveying', semesterNumber: activeSemester }),
         getResources({ departmentId: 'dept-surveying', semesterNumber: activeSemester }),
@@ -107,11 +88,13 @@ export default function StudentSurveyingHub() {
     updateSemesterData();
   }, [activeSemester]);
 
-  // Handle Semester Switch
   const handleSelectSemester = (sem: SemesterNumber) => {
     setActiveSemester(sem);
     setSelectedSubjectFilter('all');
-    saveUserPreferences({ semesterNumber: sem, academicYear: sem <= 2 ? 'الفرقة الأولى' : 'الفرقة الثانية' });
+    saveUserPreferences({ 
+      semesterNumber: sem, 
+      academicYear: sem <= 2 ? 'الفرقة الأولى' : 'الفرقة الثانية' 
+    });
   };
 
   const handleSelectSection = (sec: SectionNumber) => {
@@ -119,7 +102,6 @@ export default function StudentSurveyingHub() {
     saveUserPreferences({ sectionNumber: sec });
   };
 
-  // Toggle Bookmark
   const handleToggleBookmark = (id: string) => {
     const isNowBookmarked = toggleBookmark(id);
     setBookmarks((prev) =>
@@ -127,17 +109,15 @@ export default function StudentSurveyingHub() {
     );
   };
 
-  // Semester Titles
-  const getSemesterTitle = (sem: SemesterNumber) => {
+  const getSemesterLabel = (sem: SemesterNumber) => {
     switch (sem) {
-      case 1: return 'الفصل الدراسي الأول (الفرقة الأولى)';
-      case 2: return 'الفصل الدراسي الثاني (الفرقة الأولى)';
-      case 3: return 'الفصل الدراسي الثالث (الفرقة الثانية)';
-      case 4: return 'الفصل الدراسي الرابع (الفرقة الثانية - التخرج)';
+      case 1: return 'الفصل الدراسي الأول';
+      case 2: return 'الفصل الدراسي الثاني';
+      case 3: return 'الفصل الدراسي الثالث';
+      case 4: return 'الفصل الدراسي الرابع';
     }
   };
 
-  // Filtered resources for feed view
   const filteredResources = useMemo(() => {
     let list = resources;
 
@@ -168,58 +148,36 @@ export default function StudentSurveyingHub() {
   }, [resources, activeTab, bookmarks, selectedTypeFilter, selectedSubjectFilter, searchQuery]);
 
   return (
-    <div className="min-h-screen flex flex-col space-y-6 pb-16 bg-[#070B14]">
-      {/* 1. Urgent Top Announcements Banner */}
+    <div className="min-h-screen flex flex-col space-y-6 pb-16 bg-[#0B0F19]">
+      {/* Top Academic Notification Banner */}
       <UrgentBanner 
         announcements={announcements} 
         onSelectAnnouncement={() => setActiveTab('deadlines')}
       />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full space-y-6">
-        {/* 2. Hero Section: Surveying Engineering Identity */}
-        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#0F172A] via-[#111C33] to-[#0A0F1D] border border-slate-800 p-6 sm:p-8 shadow-2xl">
-          <div className="absolute top-0 left-0 w-80 h-80 bg-cyan-500/10 rounded-full blur-3xl -z-10 pointer-events-none"></div>
-          <div className="absolute bottom-0 right-0 w-80 h-80 bg-blue-600/10 rounded-full blur-3xl -z-10 pointer-events-none"></div>
-
-          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-            <div className="space-y-3 max-w-2xl">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-black bg-cyan-500/10 text-cyan-400 border border-cyan-500/30">
-                <Compass className="w-3.5 h-3.5" />
-                <span>المعهد الفني الصناعي بالإسكندرية • كامب شيزار والمحرم بك</span>
-              </div>
-              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-white tracking-tight leading-snug">
-                منصة شعبة المساحة العامة والخرائط
-              </h1>
-              <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
-                البوابة الأكاديمية الرسمية المعتمدة لطلاب المساحة العامة: المقررات الـ 32 لجميع الفصول الدراسية، ملخصات المحاضرات، شيتات التكليفات العملية، ومواعيد التسليم وجداول السكاشن.
-              </p>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full space-y-6 pt-2">
+        {/* Clean Academic Page Header (Dignified, no glowing bloat) */}
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-slate-800/80 pb-5">
+          <div className="space-y-1">
+            <div className="text-xs font-semibold text-slate-400">
+              المعهد الفني الصناعي بالإسكندرية
             </div>
+            <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
+              شعبة المساحة العامة
+            </h1>
+            <p className="text-xs sm:text-sm text-slate-400 max-w-2xl leading-relaxed">
+              المقررات الدراسية والمحاضرات والشيتات والتكليفات العملية لجميع الفصول الدراسية.
+            </p>
+          </div>
 
-            {/* Quick Metrics */}
-            <div className="grid grid-cols-3 gap-3 w-full md:w-auto shrink-0">
-              <div className="bg-slate-900/80 border border-slate-800 p-3.5 rounded-2xl text-center">
-                <span className="block text-2xl font-black text-cyan-400 font-mono">
-                  32
-                </span>
-                <span className="text-[11px] font-bold text-slate-400">مقرراً (سنتين)</span>
-              </div>
-              <div className="bg-slate-900/80 border border-slate-800 p-3.5 rounded-2xl text-center">
-                <span className="block text-2xl font-black text-emerald-400 font-mono">
-                  {subjects.length}
-                </span>
-                <span className="text-[11px] font-bold text-slate-400">مواد الفصل الحالي</span>
-              </div>
-              <div className="bg-slate-900/80 border border-slate-800 p-3.5 rounded-2xl text-center">
-                <span className="block text-2xl font-black text-amber-400 font-mono">
-                  {resources.length}
-                </span>
-                <span className="text-[11px] font-bold text-slate-400">ملخصات وشيتات</span>
-              </div>
-            </div>
+          <div className="flex items-center gap-2 text-xs text-slate-400 bg-slate-900 px-3 py-1.5 rounded-xl border border-slate-800 self-start md:self-auto">
+            <span className="font-semibold text-slate-300">32 مقرراً دراسياً</span>
+            <span>•</span>
+            <span>4 فصول دراسية</span>
           </div>
         </div>
 
-        {/* 3. 4-Semester Selector Controller */}
+        {/* 4 Semesters Selector Controller */}
         <SemesterSelector
           activeSemester={activeSemester}
           activeSection={activeSection}
@@ -228,90 +186,82 @@ export default function StudentSurveyingHub() {
           totalCoursesCount={subjects.length}
         />
 
-        {/* 4. Elegant Main Navigation Tabs */}
-        <div className="flex items-center gap-2 overflow-x-auto border-b border-slate-800/80 pb-2 scrollbar-none">
+        {/* LMS Academic Navigation Tabs */}
+        <div className="flex items-center gap-1 overflow-x-auto border-b border-slate-800 pb-2 scrollbar-none text-xs sm:text-sm">
           <button
             onClick={() => setActiveTab('courses')}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs sm:text-sm font-black transition-all whitespace-nowrap ${
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl font-bold transition-colors whitespace-nowrap ${
               activeTab === 'courses'
-                ? 'bg-cyan-500 text-slate-950 shadow-lg shadow-cyan-500/20'
+                ? 'bg-blue-600 text-white'
                 : 'text-slate-400 hover:text-white hover:bg-slate-900'
             }`}
           >
-            <FolderOpen className="w-4 h-4" />
-            <span>المقررات الدراسية الـ 8 ({subjects.length})</span>
+            <Layers className="w-4 h-4" />
+            <span>المقررات الدراسية ({subjects.length})</span>
           </button>
 
           <button
             onClick={() => setActiveTab('resources')}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs sm:text-sm font-black transition-all whitespace-nowrap ${
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl font-bold transition-colors whitespace-nowrap ${
               activeTab === 'resources'
-                ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/20'
+                ? 'bg-blue-600 text-white'
                 : 'text-slate-400 hover:text-white hover:bg-slate-900'
             }`}
           >
             <BookOpen className="w-4 h-4" />
-            <span>المذكرات والشيتات وبنك الأسئلة ({resources.length})</span>
+            <span>الملخصات والشيتات ({resources.length})</span>
           </button>
 
           <button
             onClick={() => setActiveTab('schedules')}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs sm:text-sm font-black transition-all whitespace-nowrap ${
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl font-bold transition-colors whitespace-nowrap ${
               activeTab === 'schedules'
-                ? 'bg-emerald-500 text-slate-950 shadow-lg shadow-emerald-500/20'
+                ? 'bg-blue-600 text-white'
                 : 'text-slate-400 hover:text-white hover:bg-slate-900'
             }`}
           >
             <Calendar className="w-4 h-4" />
-            <span>جدول المحاضرات والسكاشن والورش ({schedules.length})</span>
+            <span>الجدول الدراسي ({schedules.length})</span>
           </button>
 
           <button
             onClick={() => setActiveTab('deadlines')}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs sm:text-sm font-black transition-all whitespace-nowrap ${
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl font-bold transition-colors whitespace-nowrap ${
               activeTab === 'deadlines'
-                ? 'bg-amber-500 text-slate-950 shadow-lg shadow-amber-500/20'
+                ? 'bg-blue-600 text-white'
                 : 'text-slate-400 hover:text-white hover:bg-slate-900'
             }`}
           >
             <Clock className="w-4 h-4" />
-            <span>مواعيد التسليم والتنبيهات ({announcements.length})</span>
+            <span>مواعيد التسليم ({announcements.length})</span>
           </button>
 
           <button
             onClick={() => setActiveTab('bookmarks')}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs sm:text-sm font-black transition-all whitespace-nowrap ${
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl font-bold transition-colors whitespace-nowrap ${
               activeTab === 'bookmarks'
-                ? 'bg-purple-600 text-white shadow-lg shadow-purple-500/20'
+                ? 'bg-slate-800 text-white'
                 : 'text-slate-400 hover:text-white hover:bg-slate-900'
             }`}
           >
             <Bookmark className="w-4 h-4" />
-            <span>المفضلة المحفوظة ({bookmarks.length})</span>
+            <span>المحفوظات ({bookmarks.length})</span>
           </button>
         </div>
 
         {/* ---------------------------------------------------- */}
-        {/* VIEW 1: COURSES GRID (المقررات الدراسية الـ 8) */}
+        {/* TAB 1: COURSES GRID */}
         {/* ---------------------------------------------------- */}
         {activeTab === 'courses' && (
-          <div className="space-y-6">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-[#0F172A]/70 border border-slate-800 p-4 rounded-2xl">
-              <div>
-                <h3 className="text-base sm:text-lg font-black text-white">
-                  المقررات الدراسية المعتمدة لـ {getSemesterTitle(activeSemester)}
-                </h3>
-                <p className="text-xs text-slate-400 mt-0.5">
-                  اضغط على أي مادة لاستعراض الشيتات، المحاضرات، دليل المعمل العملي، ونماذج الامتحانات الخاصة بها.
-                </p>
-              </div>
-
-              <span className="text-xs font-black text-cyan-400 bg-cyan-950/70 border border-cyan-800 px-3 py-1 rounded-xl">
-                8 مواد دراسية متوفرة
+          <div className="space-y-4">
+            <div className="flex items-center justify-between text-xs text-slate-400">
+              <span className="font-semibold text-slate-300">
+                مواد {getSemesterLabel(activeSemester)} ({subjects.length} مواد معتمدة):
               </span>
+              <span>اضغط على أي مادة لعرض الملفات والشيتات المرفوعة</span>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
               {subjects.map((sub) => {
                 const subResources = resources.filter((r) => r.subject_id === sub.id);
                 const subSheets = subResources.filter((r) => r.type === 'شيت وتكليف');
@@ -330,41 +280,39 @@ export default function StudentSurveyingHub() {
         )}
 
         {/* ---------------------------------------------------- */}
-        {/* VIEW 2: RESOURCES & NOTES FEED */}
+        {/* TAB 2: RESOURCES FEED */}
         {/* ---------------------------------------------------- */}
         {(activeTab === 'resources' || activeTab === 'bookmarks') && (
-          <div className="space-y-6">
+          <div className="space-y-4">
             {/* Search & Subject Filter Bar */}
-            <div className="bg-[#0F172A]/80 border border-slate-800 p-4 rounded-2xl space-y-3.5">
-              <div className="flex flex-col md:flex-row items-center gap-3">
-                {/* Search input */}
+            <div className="bg-[#0F1422] border border-slate-800 p-3.5 rounded-2xl space-y-3">
+              <div className="flex flex-col sm:flex-row items-center gap-2.5">
                 <div className="relative w-full flex-1">
-                  <Search className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                  <Search className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
                   <input
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="ابحث في عنوان التلخيص، اسم المقرر المساحي، أو اسم الدكتور/المحاضر..."
-                    className="w-full bg-slate-900/90 border border-slate-800 focus:border-cyan-500 text-xs sm:text-sm rounded-xl py-2.5 pr-10 pl-4 text-white placeholder-slate-500 focus:outline-none transition-colors"
+                    placeholder="بحث في المذكرات والشيتات والمحاضرات..."
+                    className="w-full bg-slate-900 border border-slate-800 focus:border-blue-500 text-xs sm:text-sm rounded-xl py-2 pr-9 pl-3 text-white placeholder-slate-500 focus:outline-none"
                   />
                   {searchQuery && (
                     <button
                       onClick={() => setSearchQuery('')}
-                      className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-slate-500 hover:text-white font-bold"
+                      className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-slate-400 hover:text-white"
                     >
                       مسح
                     </button>
                   )}
                 </div>
 
-                {/* Filter by Subject */}
-                <div className="w-full md:w-72">
+                <div className="w-full sm:w-64">
                   <select
                     value={selectedSubjectFilter}
                     onChange={(e) => setSelectedSubjectFilter(e.target.value)}
-                    className="w-full bg-slate-900/90 border border-slate-800 focus:border-cyan-500 text-xs sm:text-sm rounded-xl py-2.5 px-3 text-slate-200 focus:outline-none cursor-pointer"
+                    className="w-full bg-slate-900 border border-slate-800 text-xs rounded-xl py-2 px-3 text-slate-300 focus:outline-none cursor-pointer"
                   >
-                    <option value="all">كل مواد الفصل الدراسي ({subjects.length})</option>
+                    <option value="all">كل مواد الفصل ({subjects.length})</option>
                     {subjects.map((s) => (
                       <option key={s.id} value={s.id}>
                         {s.name_ar} ({s.code})
@@ -374,9 +322,8 @@ export default function StudentSurveyingHub() {
                 </div>
               </div>
 
-              {/* Type Filter Chips */}
-              <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none text-xs">
-                <span className="text-slate-400 font-bold ml-1 hidden sm:inline">التصنيف:</span>
+              {/* Type Filter */}
+              <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 scrollbar-none text-xs">
                 {(
                   [
                     'الكل',
@@ -389,10 +336,10 @@ export default function StudentSurveyingHub() {
                   <button
                     key={type}
                     onClick={() => setSelectedTypeFilter(type)}
-                    className={`px-3 py-1.5 rounded-xl font-bold whitespace-nowrap transition-all ${
+                    className={`px-3 py-1 rounded-lg font-medium whitespace-nowrap transition-colors ${
                       selectedTypeFilter === type
-                        ? 'bg-cyan-500 text-slate-950 shadow-md font-black'
-                        : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-800'
+                        ? 'bg-blue-600 text-white font-bold'
+                        : 'bg-slate-900 text-slate-400 hover:text-slate-200 border border-slate-800'
                     }`}
                   >
                     {type}
@@ -401,27 +348,24 @@ export default function StudentSurveyingHub() {
               </div>
             </div>
 
-            {/* Resources Grid */}
+            {/* Resources List */}
             {filteredResources.length === 0 ? (
-              <div className="text-center py-16 bg-[#0F172A]/40 rounded-3xl border border-dashed border-slate-800 p-8 space-y-3">
-                <FileText className="w-12 h-12 text-slate-600 mx-auto" />
-                <h3 className="text-lg font-bold text-white">لا توجد ملخصات أو شيتات تطابق هذا البحث</h3>
-                <p className="text-xs text-slate-400 max-w-md mx-auto">
-                  جرب تغيير كلمات البحث أو اختيار مادة أخرى من مواد {getSemesterTitle(activeSemester)}.
-                </p>
+              <div className="text-center py-12 bg-[#0F1422] rounded-2xl border border-slate-800 p-6 space-y-2">
+                <BookOpen className="w-8 h-8 text-slate-600 mx-auto" />
+                <p className="text-xs font-bold text-slate-300">لا توجد مذكرات أو شيتات مطابقة</p>
                 <button
                   onClick={() => {
                     setSearchQuery('');
                     setSelectedTypeFilter('الكل');
                     setSelectedSubjectFilter('all');
                   }}
-                  className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-xs font-bold transition-colors"
+                  className="text-xs text-blue-400 hover:underline"
                 >
-                  إعادة ضبط الفلاتر
+                  إعادة ضبط البحث
                 </button>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
                 {filteredResources.map((res) => (
                   <ResourceCard
                     key={res.id}
@@ -437,18 +381,18 @@ export default function StudentSurveyingHub() {
         )}
 
         {/* ---------------------------------------------------- */}
-        {/* VIEW 3: SCHEDULES (جدول السكاشن والورش) */}
+        {/* TAB 3: SCHEDULES */}
         {/* ---------------------------------------------------- */}
         {activeTab === 'schedules' && (
           <SchedulesTab
             schedules={schedules}
             activeDeptName="شعبة المساحة العامة"
-            activeYear={getSemesterTitle(activeSemester)}
+            activeYear={getSemesterLabel(activeSemester)}
           />
         )}
 
         {/* ---------------------------------------------------- */}
-        {/* VIEW 4: DEADLINES (تسليمات الشيتات والتنبيهات) */}
+        {/* TAB 4: DEADLINES */}
         {/* ---------------------------------------------------- */}
         {activeTab === 'deadlines' && (
           <DeadlinesTab
@@ -459,7 +403,7 @@ export default function StudentSurveyingHub() {
         )}
       </div>
 
-      {/* 5. Course Detail Modal */}
+      {/* Course Detail Modal */}
       <CourseDetailModal
         subject={selectedCourse}
         resources={resources}
@@ -467,7 +411,7 @@ export default function StudentSurveyingHub() {
         onOpenResource={setReadingResource}
       />
 
-      {/* 6. Study & PDF Reader Modal */}
+      {/* Study Reader Modal */}
       <StudyReaderModal
         resource={readingResource}
         onClose={() => setReadingResource(null)}
