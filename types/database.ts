@@ -15,7 +15,7 @@ export type SectionNumber = 'عام' | 'سكشن 1' | 'سكشن 2' | 'سكشن 3
 export type DayOfWeek = 'السبت' | 'الأحد' | 'الاثنين' | 'الثلاثاء' | 'الأربعاء' | 'الخميس';
 export type AnnouncementCategory = 'تسليم شيت' | 'امتحان عملي' | 'ميدتيرم' | 'تنبيه إداري';
 export type UrgencyLevel = 'عاجل جداً' | 'هام' | 'عادي';
-export type AdminRole = 'super_admin' | 'dept_rep';
+export type AdminRole = 'super_admin' | 'dept_rep' | 'reviewer_admin';
 
 export interface Department {
   id: string;
@@ -57,6 +57,9 @@ export interface Resource {
   author_name: string;
   is_pinned: boolean;
   views_count: number;
+  review_status?: 'approved' | 'pending_review' | 'rejected';
+  reviewer_name?: string;
+  reviewed_at?: string;
   created_at: string;
   // Joins
   department?: Department;

@@ -129,7 +129,8 @@ export default function SurveyingPortal() {
         getResources({
           departmentId: 'dept-surveying',
           academicYear: activeYear !== 'all' ? activeYear : undefined,
-          semesterNumber: activeSemester !== 'all' ? activeSemester : undefined
+          semesterNumber: activeSemester !== 'all' ? activeSemester : undefined,
+          reviewStatus: 'approved',
         }),
         getSchedules({
           departmentId: 'dept-surveying',

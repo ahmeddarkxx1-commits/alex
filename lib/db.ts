@@ -208,6 +208,7 @@ export function dbGetResources(params?: {
   type?: ResourceType | 'الكل';
   subjectId?: string;
   search?: string;
+  reviewStatus?: 'approved' | 'pending_review' | 'rejected' | 'all';
 }): Resource[] {
   const db = initDb();
   let list = db.resources || [];
@@ -236,6 +237,13 @@ export function dbGetResources(params?: {
   if (params?.subjectId && params.subjectId !== 'all') {
     list = list.filter((r) => r.subject_id === params.subjectId);
   }
+  if (params?.reviewStatus && params.reviewStatus !== 'all') {
+    if (params.reviewStatus === 'approved') {
+      list = list.filter((r) => !r.review_status || r.review_status === 'approved');
+    } else {
+      list = list.filter((r) => r.review_status === params.reviewStatus);
+    }
+  }
   if (params?.search && params.search.trim()) {
     const q = params.search.toLowerCase().trim();
     list = list.filter((r) => 
@@ -250,8 +258,19 @@ export function dbGetResources(params?: {
 
 export function dbCreateResource(item: Omit<Resource, 'id' | 'views_count' | 'created_at'>): Resource {
   const db = initDb();
+  let semNumber = item.semester_number;
+  if (!semNumber && item.subject_id) {
+    const subj = db.subjects?.find((s) => s.id === item.subject_id);
+    if (subj?.semester_number) semNumber = subj.semester_number;
+  }
+  if (!semNumber) {
+    semNumber = item.academic_year === 'الفرقة الثانية' ? 3 : 1;
+  }
+
   const newRecord: Resource = {
     ...item,
+    semester_number: semNumber,
+    review_status: item.review_status || 'approved',
     id: `res-${Date.now()}`,
     views_count: 0,
     created_at: new Date().toISOString(),
@@ -260,6 +279,19 @@ export function dbCreateResource(item: Omit<Resource, 'id' | 'views_count' | 'cr
   db.resources.unshift(newRecord);
   writeDb(db);
   return newRecord;
+}
+
+export function dbUpdateResource(id: string, updates: Partial<Resource>): Resource | null {
+  const db = initDb();
+  const idx = db.resources.findIndex((r) => r.id === id);
+  if (idx === -1) return null;
+
+  db.resources[idx] = {
+    ...db.resources[idx],
+    ...updates,
+  };
+  writeDb(db);
+  return db.resources[idx];
 }
 
 export function dbDeleteResource(id: string): boolean {

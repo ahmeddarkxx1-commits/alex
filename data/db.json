@@ -57,43 +57,7 @@
       "icon_name": "Car"
     }
   ],
-  "students": [
-    {
-      "id": "student-1794804709713",
-      "name": "احمد",
-      "student_code": "01556533745",
-      "department_id": "dept-surveying",
-      "department_name": "شعبة المساحة العامة",
-      "academic_year": "الفرقة الأولى",
-      "semester_number": 1,
-      "section_number": "سكشن 1",
-      "created_at": "2026-11-16T18:39:18.449Z"
-    },
-    {
-      "id": "student-demo-1",
-      "name": "محمد أحمد إبراهيم",
-      "student_code": "20241001",
-      "phone": "01012345678",
-      "department_id": "dept-surveying",
-      "department_name": "شعبة المساحة العامة",
-      "academic_year": "الفرقة الأولى",
-      "semester_number": 1,
-      "section_number": "سكشن 1",
-      "created_at": "2026-11-16T18:29:42.914Z"
-    },
-    {
-      "id": "student-demo-2",
-      "name": "علي حسن علي",
-      "student_code": "20242002",
-      "phone": "01123456789",
-      "department_id": "dept-surveying",
-      "department_name": "شعبة المساحة العامة",
-      "academic_year": "الفرقة الثانية",
-      "semester_number": 3,
-      "section_number": "سكشن 2",
-      "created_at": "2026-11-16T18:29:42.914Z"
-    }
-  ],
+  "students": [],
   "subjects": [
     {
       "id": "subj-sem1-1",
@@ -497,7 +461,7 @@
       "author_name": "م. حسام الدين (مندوب مساحة)",
       "is_pinned": true,
       "views_count": 520,
-      "created_at": "2026-11-14T18:29:42.886Z"
+      "created_at": "2026-11-14T20:13:34.075Z"
     },
     {
       "id": "res-surv-101-2",
@@ -510,12 +474,12 @@
       "summary": "مطلوب تفريغ 14 قراءة قامة وإجراء التحقيق الحسابي الثلاثي ورسم القطاع الطولي لمسار خط مياه.",
       "content_markdown": "### بيانات شيت (1) لمادة أجهزة مساحية ومساحة مستوية:\n\n- **القراءات الحقلية المعطاة:**\n  - النقطة 1 (روبير منسوبه 12.450 م): مؤخرة 1.820 م.\n  - متوسطات: 2.150 ، 1.940 ، 2.680 ، 1.450 م.\n  - نقطة دوران: مقدمة 0.850 م ، ومؤخرة 2.300 م.\n  - مقدمة ختامية: 1.120 م.\n\n#### المطلوب تنفيذه:\n1. تفريغ القراءات بجدول **ارتفاع الجهاز (HI Method)**.\n2. تفريغ نفس القراءات بجدول **الارتفاع والانخفاض (Rise & Fall Method)**.\n3. كتابة معادلة التحقيق الحسابي والتأكد من صحتها:\n   $$\\sum \\text{Backsight} - \\sum \\text{Foresight} = \\text{Last RL} - \\text{First RL}$$\n4. تسليم الكراسة باليد في معمل المساحة.",
       "file_url": "https://example.com/iti-notes/sheet1-leveling.pdf",
-      "due_date": "2026-11-18T18:29:42.887Z",
+      "due_date": "2026-11-18T20:13:34.075Z",
       "week_number": 4,
       "author_name": "مكتب تدريب المساحة",
       "is_pinned": true,
       "views_count": 730,
-      "created_at": "2026-11-15T18:29:42.887Z"
+      "created_at": "2026-11-15T20:13:34.075Z"
     },
     {
       "id": "res-surv-103-1",
@@ -533,7 +497,7 @@
       "author_name": "د. محمد أبو العز",
       "is_pinned": false,
       "views_count": 410,
-      "created_at": "2026-11-11T18:29:42.887Z"
+      "created_at": "2026-11-11T20:13:34.075Z"
     },
     {
       "id": "res-surv-101-3",
@@ -551,7 +515,7 @@
       "author_name": "م. سارة محمود",
       "is_pinned": false,
       "views_count": 380,
-      "created_at": "2026-11-10T18:29:42.887Z"
+      "created_at": "2026-11-10T20:13:34.075Z"
     },
     {
       "id": "res-surv-201-1",
@@ -569,7 +533,7 @@
       "author_name": "د. مدحت الشناوي",
       "is_pinned": true,
       "views_count": 490,
-      "created_at": "2026-11-08T18:29:42.887Z"
+      "created_at": "2026-11-08T20:13:34.075Z"
     },
     {
       "id": "res-surv-204-1",
@@ -582,12 +546,12 @@
       "summary": "مسائل حصر مكعبات التربة للطرق والقطاعات العرضية المختلطة وجداول المستخلصات.",
       "content_markdown": "### مطلوب تسليم شيت كميات ومواصفات:\nحساب مكعبات الحفر والردم لطريق بطول 240 متراً مقسم لمحطات كل 40 متراً:\n$$V = \\frac{L}{2} \\times (A_1 + 2A_2 + \\dots + A_n)$$\nتسليم الحسابات في جدول حصر رسمي مختوم.",
       "file_url": "https://example.com/iti-notes/earthwork-sheet.pdf",
-      "due_date": "2026-11-20T18:29:42.887Z",
+      "due_date": "2026-11-20T20:13:34.075Z",
       "week_number": 6,
       "author_name": "م. أحمد الشريف",
       "is_pinned": false,
       "views_count": 510,
-      "created_at": "2026-11-13T18:29:42.887Z"
+      "created_at": "2026-11-13T20:13:34.075Z"
     },
     {
       "id": "res-surv-301-1",
@@ -605,7 +569,7 @@
       "author_name": "د. خالد عبد السميع",
       "is_pinned": true,
       "views_count": 630,
-      "created_at": "2026-11-12T18:29:42.887Z"
+      "created_at": "2026-11-12T20:13:34.075Z"
     },
     {
       "id": "res-surv-401-1",
@@ -623,7 +587,7 @@
       "author_name": "لجنة المراجعة الطلابية",
       "is_pinned": true,
       "views_count": 890,
-      "created_at": "2026-11-06T18:29:42.887Z"
+      "created_at": "2026-11-06T20:13:34.075Z"
     },
     {
       "id": "res-surv-404-1",
@@ -641,7 +605,7 @@
       "author_name": "د. طارق السعيد",
       "is_pinned": false,
       "views_count": 570,
-      "created_at": "2026-11-09T18:29:42.887Z"
+      "created_at": "2026-11-09T20:13:34.075Z"
     }
   ],
   "schedules": [
@@ -752,9 +716,9 @@
       "details": "لطلاب الفرقة الأولى: آخر موعد لتسليم شيت (1) ميزانيات معملية وتوقيع دفاتر الحقل العملي يوم الأحد القادم بمكتب د. إبراهيم. لن يتم قبول شيتات بعد هذا الموعد.",
       "category": "تسليم شيت",
       "urgency": "عاجل جداً",
-      "event_date": "2026-11-18T18:29:42.887Z",
+      "event_date": "2026-11-18T20:13:34.075Z",
       "is_active": true,
-      "created_at": "2026-11-15T18:29:42.887Z"
+      "created_at": "2026-11-15T20:13:34.075Z"
     },
     {
       "id": "ann-2",
@@ -763,9 +727,9 @@
       "details": "يبدأ الاختبار الميداني الشفوي والعملي لقياس السرعة والدقة في ضبط أفقية الأجهزة وقراءة القامة ابتداءً من السبت القادم بأرض الرفع المساحي.",
       "category": "امتحان عملي",
       "urgency": "هام",
-      "event_date": "2026-11-22T18:29:42.887Z",
+      "event_date": "2026-11-22T20:13:34.075Z",
       "is_active": true,
-      "created_at": "2026-11-14T18:29:42.887Z"
+      "created_at": "2026-11-14T20:13:34.075Z"
     },
     {
       "id": "ann-3",
@@ -774,9 +738,9 @@
       "details": "تهيب إدارة المعهد الفني الصناعي بالإسكندرية بجميع طلاب الفرق الأولى والثانية سرعة استلام الكارنيهات من صالة الشئون ومراجعة أرقام الجلوس.",
       "category": "تنبيه إداري",
       "urgency": "عادي",
-      "event_date": "2026-11-26T18:29:42.887Z",
+      "event_date": "2026-11-26T20:13:34.075Z",
       "is_active": true,
-      "created_at": "2026-11-13T18:29:42.887Z"
+      "created_at": "2026-11-13T20:13:34.075Z"
     }
   ]
 }

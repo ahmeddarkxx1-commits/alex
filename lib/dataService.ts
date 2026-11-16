@@ -121,6 +121,7 @@ export async function getResources(params?: {
   type?: ResourceType | 'الكل';
   subjectId?: string;
   search?: string;
+  reviewStatus?: 'approved' | 'pending_review' | 'rejected' | 'all';
 }): Promise<Resource[]> {
   if (typeof window !== 'undefined') {
     try {
@@ -131,6 +132,7 @@ export async function getResources(params?: {
       if (params?.type && params.type !== 'الكل') q.set('type', params.type);
       if (params?.subjectId && params.subjectId !== 'all') q.set('subjectId', params.subjectId);
       if (params?.search) q.set('search', params.search);
+      if (params?.reviewStatus) q.set('reviewStatus', params.reviewStatus);
       const res = await fetch(`/api/resources?${q.toString()}`);
       if (res.ok) {
         const data = await res.json();
@@ -257,6 +259,35 @@ export async function deleteResource(id: string): Promise<boolean> {
   const filtered = list.filter((r) => r.id !== id);
   setLocalItem(STORAGE_KEYS.RESOURCES, filtered);
   return true;
+}
+
+export async function updateResource(id: string, updates: Partial<Resource>): Promise<Resource | null> {
+  // Sync update with Backend Server DB
+  if (typeof window !== 'undefined') {
+    fetch('/api/resources', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, ...updates }),
+    }).catch((e) => console.warn('Backend resource update error:', e));
+  }
+
+  if (isSupabaseConfigured) {
+    try {
+      const { data, error } = await (supabase.from('resources') as any).update(updates).eq('id', id).select().single();
+      if (!error && data) return data as Resource;
+    } catch (e) {
+      console.error('Supabase update resource failed:', e);
+    }
+  }
+
+  const list = getLocalItem<Resource[]>(STORAGE_KEYS.RESOURCES, INITIAL_RESOURCES);
+  const idx = list.findIndex((r) => r.id === id);
+  if (idx !== -1) {
+    list[idx] = { ...list[idx], ...updates };
+    setLocalItem(STORAGE_KEYS.RESOURCES, list);
+    return list[idx];
+  }
+  return null;
 }
 
 // ----------------- SCHEDULES -----------------

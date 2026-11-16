@@ -63,11 +63,12 @@ export async function POST(request: NextRequest) {
     const sizeInMb = (file.size / (1024 * 1024)).toFixed(1);
     const formattedSize = `${sizeInMb} MB`;
 
-    const publicUrl = `/uploads/${finalFilename}`;
+    const publicUrl = `/api/files/${finalFilename}`;
 
     return NextResponse.json({
       success: true,
       url: publicUrl,
+      legacy_url: `/uploads/${finalFilename}`,
       filename: file.name,
       stored_name: finalFilename,
       file_size: formattedSize,

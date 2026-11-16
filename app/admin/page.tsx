@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { 
   Department, 
@@ -15,7 +15,8 @@ import {
   SectionNumber, 
   SessionType,
   AnnouncementCategory,
-  UrgencyLevel
+  UrgencyLevel,
+  SemesterNumber
 } from '@/types/database';
 import { 
   getDepartments, 
@@ -24,7 +25,8 @@ import {
   getSchedules, 
   getAnnouncements, 
   createResource, 
-  deleteResource, 
+  deleteResource,
+  updateResource,
   createSchedule, 
   deleteSchedule, 
   createAnnouncement 
@@ -48,7 +50,10 @@ import {
   ArrowRight,
   Clock,
   Sparkles,
-  Users
+  Users,
+  Eye,
+  CheckCheck,
+  XCircle
 } from 'lucide-react';
 
 export default function AdminDashboard() {
@@ -65,7 +70,10 @@ export default function AdminDashboard() {
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
 
   // Navigation Tab
-  const [activeTab, setActiveTab] = useState<'create-resource' | 'schedules' | 'announcements' | 'manage'>('create-resource');
+  const [activeTab, setActiveTab] = useState<'create-resource' | 'schedules' | 'announcements' | 'manage' | 'review'>('create-resource');
+
+  // PDF File Input Ref
+  const pdfInputRef = useRef<HTMLInputElement>(null);
 
   // Feedback Toast
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
@@ -85,6 +93,9 @@ export default function AdminDashboard() {
   const [resTgTarget, setResTgTarget] = useState<'year1' | 'year2' | 'both'>('year1');
   const [uploadingPdf, setUploadingPdf] = useState(false);
   const [uploadedPdfName, setUploadedPdfName] = useState('');
+
+  // Review Queue Filter State
+  const [reviewFilter, setReviewFilter] = useState<'all' | 'pending_review' | 'approved' | 'rejected'>('all');
 
   // Tab 2: New Schedule Form State
   const [schDeptId, setSchDeptId] = useState('');
@@ -151,7 +162,7 @@ export default function AdminDashboard() {
   }, [newResDeptId, newResYear]);
 
   // Login handler
-  const handleLogin = (role: 'super' | 'rep') => {
+  const handleLogin = (role: 'super' | 'rep' | 'reviewer') => {
     if (role === 'super') {
       setCurrentUser({
         id: 'admin-super',
@@ -162,12 +173,23 @@ export default function AdminDashboard() {
         created_at: new Date().toISOString(),
       });
       showToast('مرحباً بك! تم تسجيل الدخول بصلاحيات Super Admin كاملة.');
+    } else if (role === 'reviewer') {
+      setCurrentUser({
+        id: 'admin-reviewer',
+        email: 'reviewer@iti-alex.edu.eg',
+        full_name: 'د. المشرف والمدقق الأكاديمي (Reviewer Admin)',
+        role: 'reviewer_admin',
+        assigned_department_id: null,
+        created_at: new Date().toISOString(),
+      });
+      setActiveTab('review');
+      showToast('مرحباً بك! تم الدخول بصلاحيات المشرف والمدقق لمراجعة واعتماد المحتوى.');
     } else {
       const surveyDept = departments.find((d) => d.slug === 'surveying') || departments[0];
       setCurrentUser({
         id: 'rep-survey',
         email: 'survey-rep@iti-alex.edu.eg',
-        full_name: 'مندوب شعبة المساحة العامة',
+        full_name: 'مندوب شعبة المساحة العامة (Uploader)',
         role: 'dept_rep',
         assigned_department_id: surveyDept ? surveyDept.id : null,
         created_at: new Date().toISOString(),
@@ -176,7 +198,7 @@ export default function AdminDashboard() {
         setNewResDeptId(surveyDept.id);
         setSchDeptId(surveyDept.id);
       }
-      showToast('تم تسجيل الدخول كمندوب لشعبة المساحة العامة.');
+      showToast('تم تسجيل الدخول كمندوب لشعبة المساحة العامة (رفع المحتوى).');
     }
   };
 
@@ -244,10 +266,21 @@ export default function AdminDashboard() {
     const dept = departments.find((d) => d.id === newResDeptId);
     const subj = subjects.find((s) => s.id === newResSubjectId);
 
+    // Compute semester number so that the student filter always finds this resource!
+    let semNumber: SemesterNumber = 1;
+    if (subj?.semester_number) {
+      semNumber = subj.semester_number;
+    } else {
+      semNumber = newResYear === 'الفرقة الثانية' ? 3 : 1;
+    }
+
+    const isAutoApproved = currentUser?.role === 'super_admin';
+
     const created = await createResource({
-      department_id: newResDeptId,
+      department_id: newResDeptId || 'dept-surveying',
       subject_id: newResSubjectId,
       academic_year: newResYear,
+      semester_number: semNumber,
       type: newResType,
       title: newResTitle.trim(),
       summary: newResSummary.trim(),
@@ -257,12 +290,17 @@ export default function AdminDashboard() {
       week_number: Number(newResWeek) || 1,
       author_name: currentUser?.full_name || 'مندوب الشعبة',
       is_pinned: false,
+      review_status: isAutoApproved ? 'approved' : 'pending_review',
     });
 
-    showToast('تم نشر المحتوى الأكاديمي وحفظه بقاعدة البيانات بنجاح!');
+    showToast(
+      isAutoApproved
+        ? 'تم نشر واعتماد المحتوى الأكاديمي للطلاب بنجاح!'
+        : 'تم رفع المحتوى الأكاديمي وحفظه بقاعدة البيانات، وهو الآن بانتظار مراجعة واعتماد المشرف.'
+    );
 
     // Send Telegram broadcast if checked with specific channel (Year 1 or Year 2)
-    if (notifyTelegram) {
+    if (notifyTelegram && isAutoApproved) {
       triggerTelegramBroadcast({
         type: 'resource',
         title: created.title,
@@ -284,6 +322,44 @@ export default function AdminDashboard() {
     setUploadedPdfName('');
     setNewResDueDate('');
     refreshAllData();
+  };
+
+  // Approve a resource in review
+  const handleApproveResource = async (resItem: Resource) => {
+    await updateResource(resItem.id, {
+      review_status: 'approved',
+      reviewer_name: currentUser?.full_name || 'المشرف العام',
+      reviewed_at: new Date().toISOString(),
+    });
+    showToast(`تم اعتماد ونشر "${resItem.title}" للطلاب بنجاح!`);
+
+    // Broadcast to the respective Telegram channel upon approval!
+    triggerTelegramBroadcast({
+      type: 'resource',
+      title: resItem.title,
+      departmentName: resItem.department?.name_ar || 'شعبة المساحة العامة',
+      academicYear: resItem.academic_year,
+      subjectName: resItem.subject?.name_ar || '',
+      details: `[تم اعتماد المذكرة/الشيت رسمياً]\n${resItem.summary}`,
+      dueDate: resItem.due_date || undefined,
+      resourceType: resItem.type,
+      targetChannel: resItem.academic_year === 'الفرقة الأولى' ? 'year1' : 'year2',
+    });
+
+    refreshAllData();
+  };
+
+  // Reject a resource
+  const handleRejectResource = async (id: string) => {
+    if (confirm('هل أنت متأكد من رفض هذا المحتوى وطلب تعديله من المندوب؟')) {
+      await updateResource(id, {
+        review_status: 'rejected',
+        reviewer_name: currentUser?.full_name || 'المشرف العام',
+        reviewed_at: new Date().toISOString(),
+      });
+      showToast('تم تحديث حالة المحتوى إلى مرفوض.');
+      refreshAllData();
+    }
   };
 
   // Submit New Schedule
@@ -442,12 +518,23 @@ export default function AdminDashboard() {
             </button>
 
             <button
+              onClick={() => handleLogin('reviewer')}
+              className="w-full flex items-center justify-between p-3.5 rounded-full bg-[#fdfbf9] hover:bg-[#f7efe9] border-[1.5px] border-[#171717] text-[#171717] font-bold text-sm shadow-[0_1px_2px_rgba(0,0,0,0.25)] transition-all"
+            >
+              <div className="flex items-center gap-2.5">
+                <CheckCheck className="w-5 h-5 text-[#22c55e]" />
+                <span>دخول كـ المشرف والمدقق الأكاديمي (Reviewer Admin)</span>
+              </div>
+              <ArrowRight className="w-4 h-4 rotate-180" />
+            </button>
+
+            <button
               onClick={() => handleLogin('rep')}
               className="w-full flex items-center justify-between p-3.5 rounded-full bg-[#fdfbf9] hover:bg-[#f7efe9] border-[1.5px] border-[#171717] text-[#171717] font-bold text-sm shadow-[0_1px_2px_rgba(0,0,0,0.25)] transition-all"
             >
               <div className="flex items-center gap-2.5">
                 <Users className="w-5 h-5 text-[#ff6f1e]" />
-                <span>دخول سريع كـ مندوب شعبة المساحة العامة</span>
+                <span>دخول سريع كـ مندوب شعبة المساحة العامة (رافع الملفات)</span>
               </div>
               <ArrowRight className="w-4 h-4 rotate-180" />
             </button>
@@ -496,7 +583,7 @@ export default function AdminDashboard() {
                 لوحة تحكم المنصة الأكاديمية
               </h1>
               <span className="text-[11px] font-extrabold px-2.5 py-0.5 rounded-full bg-[#fdfbf9] text-[#2b1a07] border-[1.5px] border-[#171717]">
-                {currentUser.role === 'super_admin' ? 'Super Admin' : 'مندوب شعبة'}
+                {currentUser.role === 'super_admin' ? 'Super Admin' : currentUser.role === 'reviewer_admin' ? 'مشرف ومدقق أكاديمي' : 'مندوب شعبة'}
               </span>
             </div>
             <p className="text-xs text-[#171717]/70 mt-0.5">
@@ -522,8 +609,8 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      {/* 4 Dashboard Tabs Buttons */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5">
+      {/* 5 Dashboard Tabs Buttons */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5">
         <button
           onClick={() => setActiveTab('create-resource')}
           className={`flex items-center justify-center gap-2 p-3.5 rounded-full text-xs sm:text-sm font-bold border-[1.5px] border-[#171717] transition-all ${
@@ -533,7 +620,24 @@ export default function AdminDashboard() {
           }`}
         >
           <PlusCircle className={`w-4 h-4 ${activeTab === 'create-resource' ? 'text-[#ff6f1e]' : 'text-[#171717]'}`} />
-          <span>نشر تلخيص / شيت جديد</span>
+          <span>نشر تلخيص / شيت</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('review')}
+          className={`flex items-center justify-center gap-2 p-3.5 rounded-full text-xs sm:text-sm font-bold border-[1.5px] border-[#171717] transition-all relative ${
+            activeTab === 'review'
+              ? 'bg-[#171717] text-white shadow-[0_2px_4px_rgba(0,0,0,0.2)]'
+              : 'bg-[#fdfbf9] text-[#171717] hover:bg-[#f7efe9] shadow-[0_1px_2px_rgba(0,0,0,0.25)]'
+          }`}
+        >
+          <CheckCheck className={`w-4 h-4 ${activeTab === 'review' ? 'text-[#22c55e]' : 'text-[#171717]'}`} />
+          <span>مراجعة واعتماد المحتوى</span>
+          {resources.filter((r) => r.review_status === 'pending_review').length > 0 && (
+            <span className="w-5 h-5 rounded-full bg-[#ff6f1e] text-[#2b1a07] text-[10px] font-black flex items-center justify-center border border-[#171717]">
+              {resources.filter((r) => r.review_status === 'pending_review').length}
+            </span>
+          )}
         </button>
 
         <button
@@ -750,21 +854,39 @@ export default function AdminDashboard() {
                   <label className="block text-xs font-bold text-[#171717] mb-1">
                     1. رفع ملف PDF من جهازك:
                   </label>
-                  <label className="flex items-center justify-center gap-2 px-4 py-2.5 bg-[#f7efe9] hover:bg-[#ff6f1e]/10 border-[1.5px] border-dashed border-[#171717] rounded-[8px] cursor-pointer text-xs font-bold text-[#2b1a07] transition-all">
+                  <button
+                    type="button"
+                    onClick={() => pdfInputRef.current?.click()}
+                    disabled={uploadingPdf}
+                    className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-[#f7efe9] hover:bg-[#ff6f1e]/10 border-[1.5px] border-dashed border-[#171717] rounded-[8px] cursor-pointer text-xs font-bold text-[#2b1a07] transition-all disabled:opacity-50"
+                  >
                     <Upload className="w-4 h-4 text-[#ff6f1e]" />
-                    <span>{uploadingPdf ? 'جاري رفع ملف الـ PDF...' : 'اختر ملف PDF للرفع 📄'}</span>
-                    <input
-                      type="file"
-                      accept=".pdf,application/pdf"
-                      disabled={uploadingPdf}
-                      onChange={handlePdfUpload}
-                      className="hidden"
-                    />
-                  </label>
+                    <span>{uploadingPdf ? 'جاري رفع ملف الـ PDF وتأمينه...' : 'اختر ملف PDF للرفع من جهازك 📄'}</span>
+                  </button>
+                  <input
+                    ref={pdfInputRef}
+                    type="file"
+                    accept=".pdf,application/pdf"
+                    disabled={uploadingPdf}
+                    onChange={handlePdfUpload}
+                    className="hidden"
+                  />
                   {uploadedPdfName && (
-                    <div className="text-[11px] font-bold text-emerald-700 mt-1 flex items-center gap-1">
-                      <CheckCircle2 className="w-3.5 h-3.5" />
-                      <span>تم رفع: {uploadedPdfName}</span>
+                    <div className="text-[11px] font-bold text-emerald-800 mt-1.5 flex items-center justify-between gap-1 bg-emerald-50 p-2 rounded-[6px] border border-emerald-300">
+                      <div className="flex items-center gap-1.5 truncate">
+                        <CheckCircle2 className="w-3.5 h-3.5 flex-shrink-0 text-emerald-600" />
+                        <span className="truncate">تم إرفاق: {uploadedPdfName}</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setUploadedPdfName('');
+                          setNewResFileUrl('');
+                        }}
+                        className="text-rose-600 hover:text-rose-800 text-[10px] font-black underline flex-shrink-0 cursor-pointer"
+                      >
+                        إلغاء الملف
+                      </button>
                     </div>
                   )}
                 </div>
@@ -862,6 +984,260 @@ export default function AdminDashboard() {
               <span>نشر التلخيص / مستند الـ PDF الآن</span>
             </button>
           </form>
+        </div>
+      )}
+
+      {/* ---------------------------------------------------- */}
+      {/* TAB: REVIEW & APPROVAL QUEUE (مشرف ومدقق أكاديمي) */}
+      {/* ---------------------------------------------------- */}
+      {activeTab === 'review' && (
+        <div className="space-y-6">
+          {/* Header Card */}
+          <div className="bg-[#f7efe9] border-[1.5px] border-[#171717] rounded-[16px] p-6 shadow-[0_1px_2px_rgba(0,0,0,0.15)] space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b-[1.5px] border-[#171717]/15 pb-4">
+              <div>
+                <h2 className="text-lg font-black text-[#2b1a07] flex items-center gap-2">
+                  <CheckCheck className="w-6 h-6 text-[#22c55e]" />
+                  <span>مركز مراجعة واعتماد المحتوى الأكاديمي (Academic Review Queue)</span>
+                </h2>
+                <p className="text-xs text-[#171717]/70 mt-1 leading-relaxed">
+                  نظام التدقيق والجودة: يقوم مناديب الشعب برفع التلخيصات والشيتات كملفات PDF، وتبقى قيد المراجعة حتى يعتمدها المشرف الأكاديمي، وعند الاعتماد تُتاح للطلاب فوراً ويُرسل إشعار تلقائي إلى قناة التليجرام.
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2 self-start sm:self-auto">
+                <span className="px-3 py-1 rounded-full bg-[#fdfbf9] border-[1.5px] border-[#171717] text-xs font-black text-[#2b1a07]">
+                  {resources.filter((r) => r.review_status === 'pending_review').length} بانتظار الاعتماد
+                </span>
+              </div>
+            </div>
+
+            {/* Status Statistics */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+              <button
+                type="button"
+                onClick={() => setReviewFilter('all')}
+                className={`p-3 rounded-[12px] border-[1.5px] font-bold text-center transition-all cursor-pointer ${
+                  reviewFilter === 'all'
+                    ? 'bg-[#171717] text-white border-[#171717]'
+                    : 'bg-[#fdfbf9] text-[#171717] border-[#171717]/30 hover:bg-[#f7efe9]'
+                }`}
+              >
+                <div className="text-lg font-black">{resources.length}</div>
+                <div className="text-[11px] opacity-80">إجمالي المحتويات</div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setReviewFilter('pending_review')}
+                className={`p-3 rounded-[12px] border-[1.5px] font-bold text-center transition-all cursor-pointer ${
+                  reviewFilter === 'pending_review'
+                    ? 'bg-[#ff6f1e] text-[#2b1a07] border-[#171717]'
+                    : 'bg-[#fdfbf9] text-[#ce500a] border-[#171717]/30 hover:bg-amber-50'
+                }`}
+              >
+                <div className="text-lg font-black">{resources.filter((r) => r.review_status === 'pending_review').length}</div>
+                <div className="text-[11px] font-bold">⏳ قيد المراجعة (Pending)</div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setReviewFilter('approved')}
+                className={`p-3 rounded-[12px] border-[1.5px] font-bold text-center transition-all cursor-pointer ${
+                  reviewFilter === 'approved'
+                    ? 'bg-[#22c55e] text-white border-[#171717]'
+                    : 'bg-[#fdfbf9] text-emerald-800 border-[#171717]/30 hover:bg-emerald-50'
+                }`}
+              >
+                <div className="text-lg font-black">{resources.filter((r) => !r.review_status || r.review_status === 'approved').length}</div>
+                <div className="text-[11px] font-bold">✅ معتمد ومنشور للطلاب</div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setReviewFilter('rejected')}
+                className={`p-3 rounded-[12px] border-[1.5px] font-bold text-center transition-all cursor-pointer ${
+                  reviewFilter === 'rejected'
+                    ? 'bg-rose-600 text-white border-[#171717]'
+                    : 'bg-[#fdfbf9] text-rose-700 border-[#171717]/30 hover:bg-rose-50'
+                }`}
+              >
+                <div className="text-lg font-black">{resources.filter((r) => r.review_status === 'rejected').length}</div>
+                <div className="text-[11px] font-bold">❌ مرفوض للتعديل</div>
+              </button>
+            </div>
+          </div>
+
+          {/* Resources Review Cards List */}
+          <div className="space-y-4">
+            {resources
+              .filter((r) => {
+                if (reviewFilter === 'all') return true;
+                if (reviewFilter === 'approved') return !r.review_status || r.review_status === 'approved';
+                return r.review_status === reviewFilter;
+              })
+              .map((r) => {
+                const isPending = r.review_status === 'pending_review';
+                const isApproved = !r.review_status || r.review_status === 'approved';
+                const isRejected = r.review_status === 'rejected';
+
+                return (
+                  <div
+                    key={r.id}
+                    className={`bg-[#fdfbf9] border-[1.5px] border-[#171717] rounded-[16px] p-5 sm:p-6 shadow-[0_1px_2px_rgba(0,0,0,0.12)] space-y-4 transition-all ${
+                      isPending ? 'border-amber-400 bg-amber-50/20' : ''
+                    }`}
+                  >
+                    {/* Top Row Badges */}
+                    <div className="flex flex-wrap items-center justify-between gap-2 border-b-[1px] border-[#171717]/15 pb-3">
+                      <div className="flex flex-wrap items-center gap-2">
+                        {/* Status Badge */}
+                        {isPending && (
+                          <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-black bg-amber-100 text-amber-900 border border-amber-300">
+                            <Clock className="w-3.5 h-3.5 text-amber-700" />
+                            <span>⏳ قيد انتظار الاعتماد والمراجعة</span>
+                          </span>
+                        )}
+                        {isApproved && (
+                          <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-black bg-emerald-100 text-emerald-900 border border-emerald-300">
+                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-700" />
+                            <span>✅ معتمد ومنشور للطلاب</span>
+                          </span>
+                        )}
+                        {isRejected && (
+                          <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-black bg-rose-100 text-rose-900 border border-rose-300">
+                            <XCircle className="w-3.5 h-3.5 text-rose-700" />
+                            <span>❌ مرفوض (يتطلب تعديل من المندوب)</span>
+                          </span>
+                        )}
+
+                        <span className="px-2.5 py-0.5 rounded-full text-[11px] font-extrabold bg-[#f7efe9] text-[#2b1a07] border border-[#171717]/30">
+                          {r.type}
+                        </span>
+
+                        <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#f7efe9] text-[#171717] border border-[#171717]/30">
+                          {r.academic_year}
+                        </span>
+
+                        {r.semester_number && (
+                          <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#f7efe9] text-[#171717] border border-[#171717]/30">
+                            الترم {r.semester_number === 1 || r.semester_number === 3 ? 'الأول' : 'الثاني'}
+                          </span>
+                        )}
+
+                        <span className="px-2.5 py-0.5 rounded-full text-[11px] font-extrabold bg-[#171717] text-white">
+                          {r.subject?.name_ar || 'مادة تخصصية'}
+                        </span>
+                      </div>
+
+                      <div className="text-[11px] text-[#171717]/60 font-mono">
+                        {new Date(r.created_at).toLocaleDateString('ar-EG', {
+                          year: 'numeric',
+                          month: 'short',
+                          day: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })}
+                      </div>
+                    </div>
+
+                    {/* Title & Summary */}
+                    <div>
+                      <h3 className="text-base sm:text-lg font-black text-[#2b1a07]">
+                        {r.title}
+                      </h3>
+                      {r.summary && (
+                        <p className="text-xs sm:text-sm text-[#171717]/80 mt-1.5 leading-relaxed">
+                          {r.summary}
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Metadata & PDF Link */}
+                    <div className="flex flex-wrap items-center justify-between gap-3 pt-2 text-xs border-t-[1px] border-[#171717]/10">
+                      <div className="flex flex-wrap items-center gap-4 text-[#171717]/70 text-[11px]">
+                        <span>
+                          <strong>الرافع / المندوب:</strong> {r.author_name || 'مندوب الشعبة'}
+                        </span>
+                        {r.reviewer_name && (
+                          <span>
+                            <strong>تم التدقيق بواسطة:</strong> {r.reviewer_name}
+                          </span>
+                        )}
+                        {r.due_date && (
+                          <span className="text-rose-700 font-bold">
+                            <strong>آخر موعد تسليم:</strong> {new Date(r.due_date).toLocaleDateString('ar-EG')}
+                          </span>
+                        )}
+                      </div>
+
+                      {/* PDF View / Download */}
+                      {r.file_url ? (
+                        <a
+                          href={r.file_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[#f7efe9] hover:bg-[#ff6f1e]/15 border-[1.5px] border-[#171717] text-xs font-bold text-[#2b1a07] transition-all shadow-[0_1px_2px_rgba(0,0,0,0.15)]"
+                        >
+                          <FileText className="w-3.5 h-3.5 text-[#ff6f1e]" />
+                          <span>معاينة وتحميل مستند الـ PDF ↗</span>
+                        </a>
+                      ) : (
+                        <span className="text-[11px] text-[#171717]/40 font-bold">
+                          لا يوجد ملف PDF مرفق
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Review Decision Controls */}
+                    <div className="flex flex-wrap items-center justify-end gap-2.5 pt-3 border-t-[1.5px] border-[#171717]/15">
+                      {!isApproved && (
+                        <button
+                          type="button"
+                          onClick={() => handleApproveResource(r)}
+                          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-[#22c55e] hover:bg-[#22c55e]/90 text-white font-black text-xs border-[1.5px] border-[#171717] shadow-[0_2px_4px_rgba(0,0,0,0.2)] transition-all cursor-pointer"
+                        >
+                          <CheckCircle2 className="w-4 h-4" />
+                          <span>اعتماد ونشر للطلاب وبث لقناة التليجرام ✓</span>
+                        </button>
+                      )}
+
+                      {!isRejected && (
+                        <button
+                          type="button"
+                          onClick={() => handleRejectResource(r.id)}
+                          className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-rose-50 hover:bg-rose-100 text-rose-800 font-bold text-xs border-[1.5px] border-rose-300 transition-all cursor-pointer"
+                        >
+                          <XCircle className="w-4 h-4 text-rose-600" />
+                          <span>رفض وطلب تعديل ❌</span>
+                        </button>
+                      )}
+
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteResource(r.id)}
+                        className="p-2 text-rose-600 hover:bg-rose-50 rounded-full border border-rose-200 transition-colors cursor-pointer"
+                        title="حذف المحتوى نهائياً"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+
+            {resources.filter((r) => {
+              if (reviewFilter === 'all') return true;
+              if (reviewFilter === 'approved') return !r.review_status || r.review_status === 'approved';
+              return r.review_status === reviewFilter;
+            }).length === 0 && (
+              <div className="text-center py-12 bg-[#fdfbf9] border-[1.5px] border-dashed border-[#171717]/30 rounded-[16px] space-y-2">
+                <CheckCircle2 className="w-10 h-10 text-emerald-600 mx-auto" />
+                <h4 className="font-extrabold text-[#2b1a07] text-sm">لا توجد عناصر في هذا التصنيف حالياً</h4>
+                <p className="text-xs text-[#171717]/60">كل المحتويات معتمدة أو تم فحصها بالكامل.</p>
+              </div>
+            )}
+          </div>
         </div>
       )}
 
