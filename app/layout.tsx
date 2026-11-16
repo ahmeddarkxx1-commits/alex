@@ -107,13 +107,6 @@ export default function RootLayout({
                 <div className="bg-[#fdfbf9] border-[1.5px] border-[#171717] px-4 py-2 rounded-[20px] shadow-[0_1px_2px_rgba(0,0,0,0.15)]">
                   دفعة 2026
                 </div>
-                <Link
-                  href="/admin"
-                  className="bg-[#fdfbf9]/70 hover:bg-[#fdfbf9] border-[1.5px] border-[#171717] px-3.5 py-2 rounded-[20px] shadow-[0_1px_2px_rgba(0,0,0,0.15)] text-xs text-[#2b1a07] transition-all flex items-center gap-1.5"
-                >
-                  <Shield className="w-3.5 h-3.5 text-[#ff6f1e]" />
-                  <span>بوابة المشرفين والإدارة 🔒</span>
-                </Link>
               </div>
             </div>
           </div>

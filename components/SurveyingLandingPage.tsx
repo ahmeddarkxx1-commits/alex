@@ -231,36 +231,6 @@ export default function SurveyingLandingPage({
             </p>
           </div>
 
-          {/* Quick Saved Accounts (If Any) */}
-          {savedAccounts.length > 0 && (
-            <div className="bg-[#fdfbf9] border-[1.5px] border-[#171717] rounded-[14px] p-3.5 space-y-2">
-              <div className="flex items-center justify-between text-xs font-bold text-[#2b1a07]">
-                <span>الحسابات المسجلة على هذا الجهاز:</span>
-                <span className="text-[#ff6f1e] text-[11px]">نقرة واحدة للدخول</span>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                {savedAccounts.map((acc) => (
-                  <button
-                    key={acc.id}
-                    type="button"
-                    onClick={() => handleSelectSaved(acc)}
-                    className="p-2.5 rounded-[10px] bg-[#f7efe9] hover:bg-[#ff6f1e]/10 border-[1px] border-[#171717] text-right transition-all flex items-center justify-between cursor-pointer"
-                  >
-                    <div>
-                      <div className="text-xs font-extrabold text-[#2b1a07]">{acc.name}</div>
-                      <div className="text-[11px] text-[#171717]/70">
-                        {acc.academic_year} • الترم {acc.semester_number} ({acc.section_number})
-                      </div>
-                    </div>
-                    <div className="w-6 h-6 rounded-full bg-[#171717] text-white flex items-center justify-center text-[10px] font-bold">
-                      ←
-                    </div>
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
           {/* FORM: REGISTER NEW STUDENT */}
           {formMode === 'register' ? (
             <form onSubmit={handleRegister} className="space-y-5">
