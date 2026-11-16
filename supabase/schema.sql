@@ -190,3 +190,24 @@ FOR ALL USING (public.is_super_admin());
 CREATE POLICY "Super admin can manage subjects" ON public.subjects
 FOR ALL USING (public.is_super_admin());
 
+
+-- ====================================================================
+-- 7. جدول حسابات الطلاب (students)
+-- ====================================================================
+CREATE TABLE IF NOT EXISTS public.students (
+    id VARCHAR(128) PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    student_code VARCHAR(64),
+    phone VARCHAR(32),
+    department_id VARCHAR(64) DEFAULT 'dept-surveying',
+    department_name VARCHAR(255) DEFAULT 'شعبة المساحة العامة',
+    academic_year VARCHAR(32) NOT NULL CHECK (academic_year IN ('الفرقة الأولى', 'الفرقة الثانية')),
+    semester_number INT NOT NULL CHECK (semester_number IN (1, 2, 3, 4)),
+    section_number VARCHAR(32) DEFAULT 'سكشن 1',
+    created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
+);
+
+ALTER TABLE public.students ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Public read for registered students" ON public.students FOR SELECT USING (true);
+CREATE POLICY "Public insert for registered students" ON public.students FOR INSERT WITH CHECK (true);
+CREATE POLICY "Public update for registered students" ON public.students FOR UPDATE USING (true);

@@ -77,6 +77,22 @@ export async function getSubjects(params?: {
   academicYear?: AcademicYear;
   semesterNumber?: SemesterNumber;
 }): Promise<Subject[]> {
+  if (typeof window !== 'undefined') {
+    try {
+      const q = new URLSearchParams();
+      if (params?.departmentId) q.set('departmentId', params.departmentId);
+      if (params?.academicYear) q.set('academicYear', params.academicYear);
+      if (params?.semesterNumber) q.set('semesterNumber', String(params.semesterNumber));
+      const res = await fetch(`/api/subjects?${q.toString()}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data) && data.length > 0) return data as Subject[];
+      }
+    } catch (e) {
+      // fallback
+    }
+  }
+
   if (isSupabaseConfigured) {
     try {
       let query = supabase.from('subjects').select('*');
@@ -106,6 +122,25 @@ export async function getResources(params?: {
   subjectId?: string;
   search?: string;
 }): Promise<Resource[]> {
+  if (typeof window !== 'undefined') {
+    try {
+      const q = new URLSearchParams();
+      if (params?.departmentId) q.set('departmentId', params.departmentId);
+      if (params?.academicYear) q.set('academicYear', params.academicYear);
+      if (params?.semesterNumber) q.set('semesterNumber', String(params.semesterNumber));
+      if (params?.type && params.type !== 'الكل') q.set('type', params.type);
+      if (params?.subjectId && params.subjectId !== 'all') q.set('subjectId', params.subjectId);
+      if (params?.search) q.set('search', params.search);
+      const res = await fetch(`/api/resources?${q.toString()}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data)) return data as Resource[];
+      }
+    } catch (e) {
+      // fallback
+    }
+  }
+
   let resources: Resource[] = [];
 
   if (isSupabaseConfigured) {
@@ -217,6 +252,25 @@ export async function getSchedules(params?: {
   sectionNumber?: SectionNumber | 'الكل';
   sessionType?: SessionType | 'الكل';
 }): Promise<Schedule[]> {
+  if (typeof window !== 'undefined') {
+    try {
+      const q = new URLSearchParams();
+      if (params?.departmentId) q.set('departmentId', params.departmentId);
+      if (params?.academicYear) q.set('academicYear', params.academicYear);
+      if (params?.dayOfWeek && params.dayOfWeek !== 'الكل') q.set('dayOfWeek', params.dayOfWeek);
+      if (params?.sectionNumber && params.sectionNumber !== 'الكل' && params.sectionNumber !== 'عام') {
+        q.set('sectionNumber', params.sectionNumber);
+      }
+      const res = await fetch(`/api/schedules?${q.toString()}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data)) return data as Schedule[];
+      }
+    } catch (e) {
+      // fallback
+    }
+  }
+
   let schedules: Schedule[] = [];
 
   if (isSupabaseConfigured) {
@@ -310,6 +364,19 @@ export async function deleteSchedule(id: string): Promise<boolean> {
 
 // ----------------- ANNOUNCEMENTS -----------------
 export async function getAnnouncements(departmentId?: string): Promise<Announcement[]> {
+  if (typeof window !== 'undefined') {
+    try {
+      const url = departmentId ? `/api/announcements?departmentId=${encodeURIComponent(departmentId)}` : '/api/announcements';
+      const res = await fetch(url);
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data)) return data as Announcement[];
+      }
+    } catch (e) {
+      // fallback
+    }
+  }
+
   let announcements: Announcement[] = [];
 
   if (isSupabaseConfigured) {
@@ -433,6 +500,32 @@ export function saveCurrentStudent(student: StudentUser): StudentUser {
     sectionNumber: student.section_number,
   });
 
+  // Asynchronously sync with the backend database
+  if (typeof window !== 'undefined') {
+    fetch('/api/students', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(student),
+    }).catch((err) => console.warn('Could not sync student with backend database:', err));
+  }
+
+  return student;
+}
+
+export async function loginStudentApi(query: string): Promise<StudentUser> {
+  const res = await fetch('/api/auth/student-login', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ query }),
+  });
+
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.error || 'تعذر تسجيل الدخول، يرجى التحقق من البيانات.');
+  }
+
+  const student = (await res.json()) as StudentUser;
+  saveCurrentStudent(student);
   return student;
 }
 

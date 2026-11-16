@@ -262,44 +262,19 @@ export default function SurveyingPortal() {
       />
 
       {/* ==================================================== */}
-      {/* CONDITIONAL: LANDING PAGE OR PERSONALIZED PORTAL */}
+      {/* ZERO-CONTENT GATE: BEFORE REGISTRATION / LOGIN */}
       {/* ==================================================== */}
-      {viewMode === 'landing' ? (
+      {!currentStudent ? (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full space-y-6 pt-2">
-          {/* If already registered student, show direct jump card */}
-          {currentStudent && (
-            <div className="bg-[#f7efe9] border-[1.5px] border-[#171717] rounded-[16px] p-4 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-[0_1px_3px_rgba(0,0,0,0.1)]">
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-full bg-[#ff6f1e] text-[#2b1a07] font-black flex items-center justify-center text-xs border-[1px] border-[#171717]">
-                  {currentStudent.name.charAt(0)}
-                </div>
-                <span className="text-xs sm:text-sm font-bold text-[#2b1a07]">
-                  أنت مسجل حالياً كـ <strong className="text-[#ff6f1e]">{currentStudent.name}</strong> • {currentStudent.academic_year} ({getSemesterLabel(currentStudent.semester_number)})
-                </span>
-              </div>
-              <button
-                onClick={() => setViewMode('portal')}
-                className="px-5 py-2 rounded-full bg-[#171717] hover:bg-[#171717]/90 text-white font-bold text-xs border-[1.5px] border-[#171717] shadow-[0_1px_2px_rgba(0,0,0,0.2)] transition-all cursor-pointer"
-              >
-                الذهاب لمقرراتي وجدولي المخصص ←
-              </button>
-            </div>
-          )}
-
           <SurveyingLandingPage
             onStudentRegistered={(student) => {
               handleStudentLoginSuccess(student);
-            }}
-            onExploreCurriculum={() => {
-              setIsPersonalizedOnly(false);
-              setActiveSemester('all');
-              setViewMode('portal');
             }}
           />
         </div>
       ) : (
         /* ==================================================== */
-        /* PORTAL VIEW (STUDENT WORKSPACE) */
+        /* PORTAL VIEW (PERSONALIZED STUDENT WORKSPACE) */
         /* ==================================================== */
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full space-y-6 pt-2">
           {/* Clean Academic Page Header */}
@@ -318,17 +293,23 @@ export default function SurveyingPortal() {
 
             <div className="flex items-center gap-2 self-start md:self-auto flex-wrap">
               <button
-                onClick={() => setViewMode('landing')}
+                onClick={() => setShowAuthModal(true)}
                 className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[#fdfbf9] hover:bg-[#f7efe9] text-xs font-bold text-[#171717] border-[1.5px] border-[#171717] shadow-[0_1px_2px_rgba(0,0,0,0.15)] transition-all cursor-pointer"
               >
-                <Compass className="w-3.5 h-3.5 text-[#ff6f1e]" />
-                <span>صفحة الهبوط للمعهد</span>
+                <Settings className="w-3.5 h-3.5 text-[#ff6f1e]" />
+                <span>تعديل الفرقة / الترم</span>
+              </button>
+
+              <button
+                onClick={handleStudentLogout}
+                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[#fdfbf9] hover:bg-rose-50 text-xs font-bold text-rose-700 border-[1.5px] border-[#171717] shadow-[0_1px_2px_rgba(0,0,0,0.15)] transition-all cursor-pointer"
+              >
+                <LogOut className="w-3.5 h-3.5" />
+                <span>تسجيل خروج</span>
               </button>
 
               <div className="flex items-center gap-2 text-xs text-[#2b1a07] bg-[#f7efe9] px-3.5 py-1.5 rounded-full border-[1.5px] border-[#171717] shadow-[0_1px_2px_rgba(0,0,0,0.15)] font-bold">
-                <span className="font-extrabold text-[#2b1a07]">32 مقرراً دراسياً</span>
-                <span>•</span>
-                <span>4 فصول دراسية</span>
+                <span className="font-extrabold text-[#2b1a07]">8 مقررات في الفصل الحالي</span>
               </div>
             </div>
           </div>
@@ -360,7 +341,15 @@ export default function SurveyingPortal() {
             {/* Quick Action Buttons for the Student */}
             <div className="flex items-center gap-2 flex-wrap self-end md:self-auto text-xs">
               <button
-                onClick={() => setIsPersonalizedOnly(!isPersonalizedOnly)}
+                onClick={() => {
+                  const nextVal = !isPersonalizedOnly;
+                  setIsPersonalizedOnly(nextVal);
+                  if (nextVal && currentStudent) {
+                    setActiveYear(currentStudent.academic_year);
+                    setActiveSemester(currentStudent.semester_number);
+                    setActiveSection(currentStudent.section_number);
+                  }
+                }}
                 className={`px-3.5 py-1.5 rounded-full border-[1.5px] font-bold transition-all cursor-pointer flex items-center gap-1.5 ${isPersonalizedOnly
                     ? 'bg-[#171717] text-white border-[#171717] shadow-[0_1px_2px_rgba(0,0,0,0.2)]'
                     : 'bg-[#fdfbf9] text-[#171717] border-[#171717] hover:bg-[#f7efe9]'
@@ -369,12 +358,12 @@ export default function SurveyingPortal() {
                 {isPersonalizedOnly ? (
                   <>
                     <Lock className="w-3.5 h-3.5 text-[#ff6f1e]" />
-                    <span>موادي وترمي فقط</span>
+                    <span>موادي وترمي فقط (8 مواد)</span>
                   </>
                 ) : (
                   <>
                     <Globe className="w-3.5 h-3.5 text-[#ff6f1e]" />
-                    <span>وضع التصفح العام</span>
+                    <span>تصفح باقي الفصول</span>
                   </>
                 )}
               </button>
