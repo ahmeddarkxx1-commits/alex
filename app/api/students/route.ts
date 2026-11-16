@@ -49,7 +49,7 @@ export async function POST(request: NextRequest) {
     const { isSupabaseConfigured, supabase } = await import('@/lib/supabase');
     if (isSupabaseConfigured) {
       try {
-        await supabase.from('students').upsert(saved);
+        await (supabase.from('students') as any).upsert(saved);
       } catch (syncErr) {
         console.warn('Supabase student sync warning:', syncErr);
       }
