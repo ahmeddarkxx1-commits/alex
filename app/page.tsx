@@ -1,25 +1,25 @@
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { 
-  Subject, 
-  Resource, 
-  Schedule, 
-  Announcement, 
+import {
+  Subject,
+  Resource,
+  Schedule,
+  Announcement,
   AcademicYear,
-  SemesterNumber, 
-  SectionNumber, 
+  SemesterNumber,
+  SectionNumber,
   ResourceType,
   StudentUser
 } from '@/types/database';
-import { 
-  getSubjects, 
-  getResources, 
-  getSchedules, 
-  getAnnouncements, 
-  getBookmarks, 
-  toggleBookmark, 
-  getUserPreferences, 
+import {
+  getSubjects,
+  getResources,
+  getSchedules,
+  getAnnouncements,
+  getBookmarks,
+  toggleBookmark,
+  getUserPreferences,
   saveUserPreferences,
   getCurrentStudent,
   logoutStudent
@@ -27,26 +27,28 @@ import {
 import UrgentBanner from '@/components/UrgentBanner';
 import SemesterSelector from '@/components/SemesterSelector';
 import StudentAuthModal from '@/components/StudentAuthModal';
+import SurveyingLandingPage from '@/components/SurveyingLandingPage';
 import CourseCard from '@/components/CourseCard';
 import CourseDetailModal from '@/components/CourseDetailModal';
 import ResourceCard from '@/components/ResourceCard';
 import StudyReaderModal from '@/components/StudyReaderModal';
 import SchedulesTab from '@/components/SchedulesTab';
 import DeadlinesTab from '@/components/DeadlinesTab';
-import { 
-  Search, 
-  BookOpen, 
-  Calendar, 
-  Clock, 
-  Bookmark, 
-  Layers, 
-  GraduationCap, 
-  Sparkles, 
-  User, 
-  Settings, 
-  LogOut, 
-  Lock, 
-  Globe 
+import {
+  Search,
+  BookOpen,
+  Calendar,
+  Clock,
+  Bookmark,
+  Layers,
+  GraduationCap,
+  Sparkles,
+  User,
+  Settings,
+  LogOut,
+  Lock,
+  Globe,
+  Compass
 } from 'lucide-react';
 
 export default function SurveyingPortal() {
@@ -56,6 +58,9 @@ export default function SurveyingPortal() {
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [bookmarks, setBookmarks] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // View Mode: 'landing' (for introduction / landing page) | 'portal' (student workspace)
+  const [viewMode, setViewMode] = useState<'landing' | 'portal'>('landing');
 
   // Student Account State
   const [currentStudent, setCurrentStudent] = useState<StudentUser | null>(null);
@@ -89,6 +94,7 @@ export default function SurveyingPortal() {
         setActiveSemester(student.semester_number);
         setActiveSection(student.section_number);
         setIsPersonalizedOnly(true);
+        setViewMode('portal');
       } else {
         const savedPrefs = getUserPreferences();
         const prefYear = savedPrefs.academicYear || 'الفرقة الأولى';
@@ -96,6 +102,7 @@ export default function SurveyingPortal() {
         setActiveYear(prefYear);
         setActiveSemester(prefSem);
         setActiveSection(savedPrefs.sectionNumber || 'عام');
+        setViewMode('landing');
       }
 
       setBookmarks(getBookmarks());
@@ -113,19 +120,19 @@ export default function SurveyingPortal() {
   useEffect(() => {
     async function updateSemesterData() {
       const [subjs, res, sch] = await Promise.all([
-        getSubjects({ 
-          departmentId: 'dept-surveying', 
+        getSubjects({
+          departmentId: 'dept-surveying',
           academicYear: activeYear !== 'all' ? activeYear : undefined,
-          semesterNumber: activeSemester !== 'all' ? activeSemester : undefined 
+          semesterNumber: activeSemester !== 'all' ? activeSemester : undefined
         }),
-        getResources({ 
-          departmentId: 'dept-surveying', 
+        getResources({
+          departmentId: 'dept-surveying',
           academicYear: activeYear !== 'all' ? activeYear : undefined,
-          semesterNumber: activeSemester !== 'all' ? activeSemester : undefined 
+          semesterNumber: activeSemester !== 'all' ? activeSemester : undefined
         }),
-        getSchedules({ 
-          departmentId: 'dept-surveying', 
-          academicYear: activeYear !== 'all' ? activeYear : undefined 
+        getSchedules({
+          departmentId: 'dept-surveying',
+          academicYear: activeYear !== 'all' ? activeYear : undefined
         }),
       ]);
 
@@ -160,9 +167,9 @@ export default function SurveyingPortal() {
     setActiveSemester(sem);
     setSelectedSubjectFilter('all');
     if (sem !== 'all') {
-      saveUserPreferences({ 
-        semesterNumber: sem, 
-        academicYear: sem <= 2 ? 'الفرقة الأولى' : 'الفرقة الثانية' 
+      saveUserPreferences({
+        semesterNumber: sem,
+        academicYear: sem <= 2 ? 'الفرقة الأولى' : 'الفرقة الثانية'
       });
     }
   };
@@ -178,12 +185,14 @@ export default function SurveyingPortal() {
     setActiveSemester(student.semester_number);
     setActiveSection(student.section_number);
     setIsPersonalizedOnly(true);
+    setViewMode('portal');
   };
 
   const handleStudentLogout = () => {
     logoutStudent();
     setCurrentStudent(null);
     setIsPersonalizedOnly(false);
+    setViewMode('landing');
   };
 
   const handleToggleBookmark = (id: string) => {
@@ -199,7 +208,7 @@ export default function SurveyingPortal() {
       case 2: return 'الفصل الدراسي الثاني (الترم 2)';
       case 3: return 'الفصل الدراسي الثالث (الترم 1 لسنة ثانية)';
       case 4: return 'الفصل الدراسي الرابع (ترم التخرج)';
-      case 'all': 
+      case 'all':
         if (activeYear === 'الفرقة الأولى') return 'سنة أولى كاملة (الترمين الأول والثاني)';
         if (activeYear === 'الفرقة الثانية') return 'سنة ثانية كاملة (الترمين الثالث والرابع)';
         return 'جميع فصول السنتين';
@@ -244,32 +253,85 @@ export default function SurveyingPortal() {
   return (
     <div className="min-h-screen flex flex-col space-y-6 pb-16 bg-[#fdfbf9] text-[#171717]">
       {/* Top Academic Notification Banner */}
-      <UrgentBanner 
-        announcements={announcements} 
-        onSelectAnnouncement={() => setActiveTab('deadlines')}
+      <UrgentBanner
+        announcements={announcements}
+        onSelectAnnouncement={() => {
+          setViewMode('portal');
+          setActiveTab('deadlines');
+        }}
       />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full space-y-6 pt-2">
-        {/* Clean Academic Page Header (Superr Warm Paper Aesthetic) */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b-[1.5px] border-[#171717]/15 pb-5">
-          <div className="space-y-1">
-            <div className="text-xs font-bold text-[#171717]/70">
-              المعهد الفني الصناعي بالإسكندرية
+      {/* ==================================================== */}
+      {/* CONDITIONAL: LANDING PAGE OR PERSONALIZED PORTAL */}
+      {/* ==================================================== */}
+      {viewMode === 'landing' ? (
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full space-y-6 pt-2">
+          {/* If already registered student, show direct jump card */}
+          {currentStudent && (
+            <div className="bg-[#f7efe9] border-[1.5px] border-[#171717] rounded-[16px] p-4 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-[0_1px_3px_rgba(0,0,0,0.1)]">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-full bg-[#ff6f1e] text-[#2b1a07] font-black flex items-center justify-center text-xs border-[1px] border-[#171717]">
+                  {currentStudent.name.charAt(0)}
+                </div>
+                <span className="text-xs sm:text-sm font-bold text-[#2b1a07]">
+                  أنت مسجل حالياً كـ <strong className="text-[#ff6f1e]">{currentStudent.name}</strong> • {currentStudent.academic_year} ({getSemesterLabel(currentStudent.semester_number)})
+                </span>
+              </div>
+              <button
+                onClick={() => setViewMode('portal')}
+                className="px-5 py-2 rounded-full bg-[#171717] hover:bg-[#171717]/90 text-white font-bold text-xs border-[1.5px] border-[#171717] shadow-[0_1px_2px_rgba(0,0,0,0.2)] transition-all cursor-pointer"
+              >
+                الذهاب لمقرراتي وجدولي المخصص ←
+              </button>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-[#2b1a07] tracking-tight">
-              شعبة <span className="marker-highlight">المساحة العامة</span>
-            </h1>
-            <p className="text-xs sm:text-sm text-[#171717]/80 max-w-2xl leading-relaxed">
-              المقررات الدراسية والمحاضرات والشيتات والتكليفات لجميع الفصول الدراسية.
-            </p>
-          </div>
+          )}
 
-          <div className="flex items-center gap-2 text-xs text-[#2b1a07] bg-[#f7efe9] px-3.5 py-1.5 rounded-full border-[1.5px] border-[#171717] shadow-[0_1px_2px_rgba(0,0,0,0.15)] self-start md:self-auto font-bold">
-            <span className="font-extrabold text-[#2b1a07]">32 مقرراً دراسياً</span>
-            <span>•</span>
-            <span>4 فصول دراسية</span>
-          </div>
+          <SurveyingLandingPage
+            onStudentRegistered={(student) => {
+              handleStudentLoginSuccess(student);
+            }}
+            onExploreCurriculum={() => {
+              setIsPersonalizedOnly(false);
+              setActiveSemester('all');
+              setViewMode('portal');
+            }}
+          />
         </div>
+      ) : (
+        /* ==================================================== */
+        /* PORTAL VIEW (STUDENT WORKSPACE) */
+        /* ==================================================== */
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full space-y-6 pt-2">
+          {/* Clean Academic Page Header */}
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b-[1.5px] border-[#171717]/15 pb-5">
+            <div className="space-y-1">
+              <div className="text-xs font-bold text-[#171717]/70">
+                المعهد الفني الصناعي بالإسكندرية
+              </div>
+              <h1 className="text-2xl sm:text-3xl font-extrabold text-[#2b1a07] tracking-tight">
+                شعبة <span className="marker-highlight">المساحة العامة</span>
+              </h1>
+              <p className="text-xs sm:text-sm text-[#171717]/80 max-w-2xl leading-relaxed">
+                المقررات الدراسية والمحاضرات والشيتات والتكليفات لجميع الفصول الدراسية.
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2 self-start md:self-auto flex-wrap">
+              <button
+                onClick={() => setViewMode('landing')}
+                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[#fdfbf9] hover:bg-[#f7efe9] text-xs font-bold text-[#171717] border-[1.5px] border-[#171717] shadow-[0_1px_2px_rgba(0,0,0,0.15)] transition-all cursor-pointer"
+              >
+                <Compass className="w-3.5 h-3.5 text-[#ff6f1e]" />
+                <span>صفحة الهبوط للمعهد</span>
+              </button>
+
+              <div className="flex items-center gap-2 text-xs text-[#2b1a07] bg-[#f7efe9] px-3.5 py-1.5 rounded-full border-[1.5px] border-[#171717] shadow-[0_1px_2px_rgba(0,0,0,0.15)] font-bold">
+                <span className="font-extrabold text-[#2b1a07]">32 مقرراً دراسياً</span>
+                <span>•</span>
+                <span>4 فصول دراسية</span>
+              </div>
+            </div>
+          </div>
 
         {/* ==================================================== */}
         {/* STUDENT ACCOUNT SYNC & PERSONALIZATION CARD */}
@@ -299,11 +361,10 @@ export default function SurveyingPortal() {
             <div className="flex items-center gap-2 flex-wrap self-end md:self-auto text-xs">
               <button
                 onClick={() => setIsPersonalizedOnly(!isPersonalizedOnly)}
-                className={`px-3.5 py-1.5 rounded-full border-[1.5px] font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
-                  isPersonalizedOnly
+                className={`px-3.5 py-1.5 rounded-full border-[1.5px] font-bold transition-all cursor-pointer flex items-center gap-1.5 ${isPersonalizedOnly
                     ? 'bg-[#171717] text-white border-[#171717] shadow-[0_1px_2px_rgba(0,0,0,0.2)]'
                     : 'bg-[#fdfbf9] text-[#171717] border-[#171717] hover:bg-[#f7efe9]'
-                }`}
+                  }`}
               >
                 {isPersonalizedOnly ? (
                   <>
@@ -394,11 +455,10 @@ export default function SurveyingPortal() {
         <div className="flex items-center gap-2 overflow-x-auto border-b-[1.5px] border-[#171717]/15 pb-3 scrollbar-none text-xs sm:text-sm">
           <button
             onClick={() => setActiveTab('courses')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-full font-bold transition-all whitespace-nowrap border-[1.5px] ${
-              activeTab === 'courses'
+            className={`flex items-center gap-2 px-4 py-2 rounded-full font-bold transition-all whitespace-nowrap border-[1.5px] ${activeTab === 'courses'
                 ? 'bg-[#171717] text-white border-[#171717] shadow-[0_2px_4px_rgba(0,0,0,0.2)]'
                 : 'bg-[#fdfbf9] text-[#171717] border-[#171717] hover:bg-[#f7efe9] shadow-[0_1px_2px_rgba(0,0,0,0.25)]'
-            }`}
+              }`}
           >
             <Layers className={`w-4 h-4 ${activeTab === 'courses' ? 'text-[#ff6f1e]' : 'text-[#171717]'}`} />
             <span>المقررات الدراسية ({subjects.length})</span>
@@ -406,11 +466,10 @@ export default function SurveyingPortal() {
 
           <button
             onClick={() => setActiveTab('resources')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-full font-bold transition-all whitespace-nowrap border-[1.5px] ${
-              activeTab === 'resources'
+            className={`flex items-center gap-2 px-4 py-2 rounded-full font-bold transition-all whitespace-nowrap border-[1.5px] ${activeTab === 'resources'
                 ? 'bg-[#171717] text-white border-[#171717] shadow-[0_2px_4px_rgba(0,0,0,0.2)]'
                 : 'bg-[#fdfbf9] text-[#171717] border-[#171717] hover:bg-[#f7efe9] shadow-[0_1px_2px_rgba(0,0,0,0.25)]'
-            }`}
+              }`}
           >
             <BookOpen className={`w-4 h-4 ${activeTab === 'resources' ? 'text-[#ff6f1e]' : 'text-[#171717]'}`} />
             <span>الملخصات والشيتات ({resources.length})</span>
@@ -418,11 +477,10 @@ export default function SurveyingPortal() {
 
           <button
             onClick={() => setActiveTab('schedules')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-full font-bold transition-all whitespace-nowrap border-[1.5px] ${
-              activeTab === 'schedules'
+            className={`flex items-center gap-2 px-4 py-2 rounded-full font-bold transition-all whitespace-nowrap border-[1.5px] ${activeTab === 'schedules'
                 ? 'bg-[#171717] text-white border-[#171717] shadow-[0_2px_4px_rgba(0,0,0,0.2)]'
                 : 'bg-[#fdfbf9] text-[#171717] border-[#171717] hover:bg-[#f7efe9] shadow-[0_1px_2px_rgba(0,0,0,0.25)]'
-            }`}
+              }`}
           >
             <Calendar className={`w-4 h-4 ${activeTab === 'schedules' ? 'text-[#ff6f1e]' : 'text-[#171717]'}`} />
             <span>الجدول الدراسي ({schedules.length})</span>
@@ -430,11 +488,10 @@ export default function SurveyingPortal() {
 
           <button
             onClick={() => setActiveTab('deadlines')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-full font-bold transition-all whitespace-nowrap border-[1.5px] ${
-              activeTab === 'deadlines'
+            className={`flex items-center gap-2 px-4 py-2 rounded-full font-bold transition-all whitespace-nowrap border-[1.5px] ${activeTab === 'deadlines'
                 ? 'bg-[#171717] text-white border-[#171717] shadow-[0_2px_4px_rgba(0,0,0,0.2)]'
                 : 'bg-[#fdfbf9] text-[#171717] border-[#171717] hover:bg-[#f7efe9] shadow-[0_1px_2px_rgba(0,0,0,0.25)]'
-            }`}
+              }`}
           >
             <Clock className={`w-4 h-4 ${activeTab === 'deadlines' ? 'text-[#ff6f1e]' : 'text-[#171717]'}`} />
             <span>مواعيد التسليم ({announcements.length})</span>
@@ -442,11 +499,10 @@ export default function SurveyingPortal() {
 
           <button
             onClick={() => setActiveTab('bookmarks')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-full font-bold transition-all whitespace-nowrap border-[1.5px] ${
-              activeTab === 'bookmarks'
+            className={`flex items-center gap-2 px-4 py-2 rounded-full font-bold transition-all whitespace-nowrap border-[1.5px] ${activeTab === 'bookmarks'
                 ? 'bg-[#171717] text-white border-[#171717] shadow-[0_2px_4px_rgba(0,0,0,0.2)]'
                 : 'bg-[#fdfbf9] text-[#171717] border-[#171717] hover:bg-[#f7efe9] shadow-[0_1px_2px_rgba(0,0,0,0.25)]'
-            }`}
+              }`}
           >
             <Bookmark className={`w-4 h-4 ${activeTab === 'bookmarks' ? 'text-[#ff6f1e]' : 'text-[#171717]'}`} />
             <span>المحفوظات ({bookmarks.length})</span>
@@ -587,11 +643,10 @@ export default function SurveyingPortal() {
                   <button
                     key={type}
                     onClick={() => setSelectedTypeFilter(type)}
-                    className={`px-3 py-1 rounded-full font-bold whitespace-nowrap transition-all border-[1.5px] ${
-                      selectedTypeFilter === type
+                    className={`px-3 py-1 rounded-full font-bold whitespace-nowrap transition-all border-[1.5px] ${selectedTypeFilter === type
                         ? 'bg-[#ff6f1e] text-[#2b1a07] border-[#171717] shadow-[0_1px_2px_rgba(0,0,0,0.2)]'
                         : 'bg-[#fdfbf9] text-[#171717] border-[#171717] hover:bg-[#f7efe9]'
-                    }`}
+                      }`}
                   >
                     {type}
                   </button>
@@ -653,6 +708,7 @@ export default function SurveyingPortal() {
           />
         )}
       </div>
+      )}
 
       {/* Course Detail Modal */}
       <CourseDetailModal
