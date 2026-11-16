@@ -896,19 +896,24 @@ export default function AdminDashboard() {
                     2. أو رابط ملف PDF خارجي (Google Drive / Direct PDF):
                   </label>
                   <input
-                    type="url"
+                    type="text"
                     value={newResFileUrl}
                     onChange={(e) => {
-                      const val = e.target.value;
+                      const val = e.target.value.trim();
                       if (val.match(/\.(png|jpg|jpeg|webp|gif)$/i)) {
                         showToast('❌ غير مسموح بروابط الصور! يرجى إرفاق رابط مستند PDF فقط توفيراً للمساحة.', 'error');
                         return;
                       }
                       setNewResFileUrl(val);
                     }}
-                    placeholder="https://.../surveying-sheet.pdf"
+                    placeholder="https://.../surveying-sheet.pdf أو رابط مباشر"
                     className="w-full bg-[#fdfbf9] border-[1.5px] border-[#171717] rounded-[8px] p-2.5 text-xs text-[#171717] focus:outline-none focus:border-[#ff6f1e] dir-ltr text-left"
                   />
+                  {uploadedPdfName && (
+                    <span className="text-[10px] text-emerald-800 font-bold block mt-1">
+                      ✓ تم تعيين مسار الملف المرفوع تلقائياً وجاهز للنشر
+                    </span>
+                  )}
                 </div>
               </div>
             </div>
