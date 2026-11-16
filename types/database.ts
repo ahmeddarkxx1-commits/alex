@@ -104,6 +104,8 @@ export interface AdminUser {
   full_name: string;
   role: AdminRole;
   assigned_department_id?: string | null;
+  password?: string;
+  is_active?: boolean;
   created_at: string;
 }
 

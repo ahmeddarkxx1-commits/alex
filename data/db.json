@@ -472,12 +472,12 @@
       "semester_number": 1,
       "author_name": "مندوب شعبة المساحة العامة (Uploader)",
       "is_pinned": false,
-      "review_status": "approved",
+      "review_status": "rejected",
       "id": "res-1794861460805",
       "views_count": 0,
       "created_at": "2026-11-16T20:37:40.805Z",
-      "reviewer_name": "مندوب شعبة المساحة العامة (Uploader)",
-      "reviewed_at": "2026-11-16T20:38:12.201Z"
+      "reviewer_name": "المهندس المشرف (Super Admin)",
+      "reviewed_at": "2026-11-16T20:52:58.919Z"
     },
     {
       "id": "res-surv-101-2",
@@ -768,6 +768,38 @@
       "event_date": "2026-11-26T20:13:34.075Z",
       "is_active": true,
       "created_at": "2026-11-13T20:13:34.075Z"
+    }
+  ],
+  "admins": [
+    {
+      "id": "admin-super",
+      "email": "admin@iti-alex.edu.eg",
+      "full_name": "المهندس المشرف العام (Super Admin)",
+      "role": "super_admin",
+      "password": "admin",
+      "assigned_department_id": null,
+      "is_active": true,
+      "created_at": "2026-01-01T00:00:00.000Z"
+    },
+    {
+      "id": "admin-reviewer",
+      "email": "reviewer@iti-alex.edu.eg",
+      "full_name": "د. مراجع ومعتمد المحتوى الأكاديمي",
+      "role": "reviewer_admin",
+      "password": "reviewer123",
+      "assigned_department_id": null,
+      "is_active": true,
+      "created_at": "2026-01-01T00:00:00.000Z"
+    },
+    {
+      "id": "rep-survey",
+      "email": "survey-rep@iti-alex.edu.eg",
+      "full_name": "مندوب شعبة المساحة العامة",
+      "role": "dept_rep",
+      "password": "rep123",
+      "assigned_department_id": "dept-surveying",
+      "is_active": true,
+      "created_at": "2026-01-01T00:00:00.000Z"
     }
   ]
 }

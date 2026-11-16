@@ -53,6 +53,10 @@ import {
   Sparkles,
   Users,
   Eye,
+  EyeOff,
+  UserCheck,
+  UserPlus,
+  KeyRound,
   CheckCheck,
   XCircle,
   Search,
@@ -79,7 +83,23 @@ export default function AdminDashboard() {
   const [students, setStudents] = useState<StudentUser[]>([]);
 
   // Navigation Tab
-  const [activeTab, setActiveTab] = useState<'create-resource' | 'schedules' | 'announcements' | 'manage' | 'review' | 'students'>('create-resource');
+  const [activeTab, setActiveTab] = useState<'create-resource' | 'schedules' | 'announcements' | 'manage' | 'review' | 'students' | 'staff'>('create-resource');
+
+  // Real Authentication States
+  const [loginEmail, setLoginEmail] = useState('');
+  const [loginPassword, setLoginPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [loginLoading, setLoginLoading] = useState(false);
+  const [loginError, setLoginError] = useState('');
+
+  // Staff Management States (Super Admin)
+  const [staffList, setStaffList] = useState<AdminUser[]>([]);
+  const [newStaffName, setNewStaffName] = useState('');
+  const [newStaffEmail, setNewStaffEmail] = useState('');
+  const [newStaffPassword, setNewStaffPassword] = useState('');
+  const [newStaffRole, setNewStaffRole] = useState<'dept_rep' | 'reviewer_admin'>('dept_rep');
+  const [newStaffDeptId, setNewStaffDeptId] = useState('');
+  const [isStaffSubmitting, setIsStaffSubmitting] = useState(false);
 
   // PDF File Input Ref
   const pdfInputRef = useRef<HTMLInputElement>(null);
@@ -222,44 +242,181 @@ export default function AdminDashboard() {
     });
   }, [newResDeptId, newResYear]);
 
-  // Login handler
-  const handleLogin = (role: 'super' | 'rep' | 'reviewer') => {
-    if (role === 'super') {
-      setCurrentUser({
-        id: 'admin-super',
-        email: 'admin@iti-alex.edu.eg',
-        full_name: 'المهندس المشرف (Super Admin)',
-        role: 'super_admin',
-        assigned_department_id: null,
-        created_at: new Date().toISOString(),
-      });
-      showToast('مرحباً بك! تم تسجيل الدخول بصلاحيات Super Admin كاملة.');
-    } else if (role === 'reviewer') {
-      setCurrentUser({
-        id: 'admin-reviewer',
-        email: 'reviewer@iti-alex.edu.eg',
-        full_name: 'د. المشرف والمدقق الأكاديمي (Reviewer Admin)',
-        role: 'reviewer_admin',
-        assigned_department_id: null,
-        created_at: new Date().toISOString(),
-      });
-      setActiveTab('review');
-      showToast('مرحباً بك! تم الدخول بصلاحيات المشرف والمدقق لمراجعة واعتماد المحتوى.');
-    } else {
-      const surveyDept = departments.find((d) => d.slug === 'surveying') || departments[0];
-      setCurrentUser({
-        id: 'rep-survey',
-        email: 'survey-rep@iti-alex.edu.eg',
-        full_name: 'مندوب شعبة المساحة العامة (Uploader)',
-        role: 'dept_rep',
-        assigned_department_id: surveyDept ? surveyDept.id : null,
-        created_at: new Date().toISOString(),
-      });
-      if (surveyDept) {
-        setNewResDeptId(surveyDept.id);
-        setSchDeptId(surveyDept.id);
+  // Restore session from localStorage on mount
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem('iti_admin_session');
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (parsed && parsed.id && parsed.email) {
+          setCurrentUser(parsed);
+          if (parsed.role === 'reviewer_admin') setActiveTab('review');
+        }
       }
-      showToast('تم تسجيل الدخول كمندوب لشعبة المساحة العامة (رفع المحتوى).');
+    } catch (e) {
+      // ignore
+    }
+  }, []);
+
+  // Fetch staff list when logged in as super_admin
+  const refreshStaffList = async () => {
+    try {
+      const res = await fetch('/api/admins');
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data)) setStaffList(data);
+      }
+    } catch (e) {
+      console.warn('Failed to fetch staff list', e);
+    }
+  };
+
+  useEffect(() => {
+    if (currentUser?.role === 'super_admin') {
+      refreshStaffList();
+    }
+  }, [currentUser]);
+
+  // Real Login Handler
+  const handleRealLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoginError('');
+    if (!loginEmail.trim() || !loginPassword.trim()) {
+      setLoginError('يرجى كتابة البريد الإلكتروني وكلمة المرور');
+      return;
+    }
+
+    setLoginLoading(true);
+    try {
+      const res = await fetch('/api/auth/admin-login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: loginEmail.trim(), password: loginPassword.trim() }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'فشل تسجيل الدخول');
+      }
+
+      setCurrentUser(data.user);
+      localStorage.setItem('iti_admin_session', JSON.stringify(data.user));
+      showToast(data.message || `مرحباً بك يا ${data.user.full_name}`);
+
+      if (data.user.role === 'reviewer_admin') {
+        setActiveTab('review');
+      } else {
+        setActiveTab('create-resource');
+      }
+    } catch (err: any) {
+      setLoginError(err.message || 'بيانات الدخول غير صحيحة');
+      showToast(err.message || 'بيانات الدخول غير صحيحة', 'error');
+    } finally {
+      setLoginLoading(false);
+    }
+  };
+
+  // Real Logout Handler
+  const handleLogout = () => {
+    setCurrentUser(null);
+    localStorage.removeItem('iti_admin_session');
+    setLoginPassword('');
+    showToast('تم تسجيل الخروج بنجاح');
+  };
+
+  // Promote / Demote Staff Role
+  const handleToggleStaffRole = async (targetAdmin: AdminUser) => {
+    const nextRole = targetAdmin.role === 'dept_rep' ? 'reviewer_admin' : 'dept_rep';
+    const actionLabel = nextRole === 'reviewer_admin' ? 'ترقية لمراجع ومدقق أكاديمي' : 'تخفيض لمندوب رفع فقط';
+
+    try {
+      const res = await fetch('/api/admins', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: targetAdmin.id, role: nextRole }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'فشل تحديث الصلاحية');
+
+      showToast(`تم ${actionLabel} لـ "${targetAdmin.full_name}" بنجاح!`);
+      refreshStaffList();
+    } catch (err: any) {
+      showToast(err.message || 'فشل تحديث الصلاحية', 'error');
+    }
+  };
+
+  // Toggle Staff Active/Suspended Status
+  const handleToggleStaffStatus = async (targetAdmin: AdminUser) => {
+    const nextStatus = targetAdmin.is_active === false ? true : false;
+    try {
+      const res = await fetch('/api/admins', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: targetAdmin.id, is_active: nextStatus }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'فشل تحديث حالة الحساب');
+
+      showToast(nextStatus ? `تم تفعيل حساب "${targetAdmin.full_name}"` : `تم تعطيل حساب "${targetAdmin.full_name}"`);
+      refreshStaffList();
+    } catch (err: any) {
+      showToast(err.message || 'فشل تحديث حالة الحساب', 'error');
+    }
+  };
+
+  // Delete Staff Member
+  const handleDeleteStaff = async (targetAdmin: AdminUser) => {
+    if (targetAdmin.id === 'admin-super' || targetAdmin.role === 'super_admin') {
+      showToast('لا يمكن حذف حساب المشرف العام الرئيسي', 'error');
+      return;
+    }
+
+    if (!confirm(`هل أنت متأكد من حذف حساب "${targetAdmin.full_name}" نهائياً من المنصة؟`)) return;
+
+    try {
+      const res = await fetch(`/api/admins?id=${targetAdmin.id}`, { method: 'DELETE' });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'فشل حذف الحساب');
+
+      showToast(`تم حذف حساب "${targetAdmin.full_name}" بنجاح`);
+      refreshStaffList();
+    } catch (err: any) {
+      showToast(err.message || 'فشل حذف الحساب', 'error');
+    }
+  };
+
+  // Create New Staff Member
+  const handleCreateStaff = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newStaffName.trim() || !newStaffEmail.trim() || !newStaffPassword.trim()) {
+      showToast('يرجى ملء جميع بيانات المشرف أو المندوب الجديد', 'error');
+      return;
+    }
+
+    setIsStaffSubmitting(true);
+    try {
+      const res = await fetch('/api/admins', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          full_name: newStaffName.trim(),
+          email: newStaffEmail.trim(),
+          password: newStaffPassword.trim(),
+          role: newStaffRole,
+          assigned_department_id: newStaffDeptId || 'dept-surveying',
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'فشل إضافة المشرف');
+
+      showToast(`تمت إضافة ${newStaffRole === 'reviewer_admin' ? 'المراجع الأكاديمي' : 'مندوب الشعبة'} "${data.full_name}" بنجاح!`);
+      setNewStaffName('');
+      setNewStaffEmail('');
+      setNewStaffPassword('');
+      refreshStaffList();
+    } catch (err: any) {
+      showToast(err.message || 'فشل إضافة المشرف', 'error');
+    } finally {
+      setIsStaffSubmitting(false);
     }
   };
 
@@ -547,61 +704,104 @@ export default function AdminDashboard() {
   };
 
   // ----------------------------------------------------
-  // LOGIN SCREEN (If not logged in)
+  // LOGIN SCREEN (Real Secure Authentication)
   // ----------------------------------------------------
   if (!currentUser) {
     return (
-      <div className="min-h-[80vh] flex items-center justify-center px-4 py-12 bg-[#fdfbf9]">
-        <div className="w-full max-w-md bg-[#f7efe9] border-[1.5px] border-[#171717] rounded-[16px] p-6 sm:p-8 shadow-[0_2px_12px_rgba(0,0,0,0.08)] space-y-6">
+      <div className="min-h-[85vh] flex items-center justify-center px-4 py-12 bg-[#fdfbf9]">
+        <div className="w-full max-w-md bg-[#f7efe9] border-[1.5px] border-[#171717] rounded-[20px] p-6 sm:p-8 shadow-[0_4px_24px_rgba(0,0,0,0.08)] space-y-6">
           <div className="text-center space-y-2">
             <div className="w-14 h-14 rounded-full bg-[#fdfbf9] border-[1.5px] border-[#171717] flex items-center justify-center mx-auto text-[#2b1a07] shadow-[0_1px_2px_rgba(0,0,0,0.2)]">
               <ShieldCheck className="w-8 h-8 text-[#ff6f1e]" />
             </div>
             <h1 className="text-xl sm:text-2xl font-black text-[#2b1a07]">
-              بوابة إدارة المعهد الفني الصناعي
+              بوابة تسجيل دخول المشرفين والمناديب
             </h1>
             <p className="text-xs text-[#171717]/70">
-              تسجيل دخول الأدمن ومناديب الشعب الأكاديمية لنشر التلخيصات والشيتات وتحديث الجداول
+              سجل الدخول بحسابك المعتمد لإدارة المذكرات والشيتات والجداول وتدقيق المحتوى
             </p>
           </div>
 
-          {/* Quick Demo Access Options */}
-          <div className="space-y-3 pt-2">
-            <button
-              onClick={() => handleLogin('super')}
-              className="w-full flex items-center justify-between p-3.5 rounded-full bg-[#171717] hover:bg-[#171717]/90 text-white font-bold text-sm shadow-[0_2px_4px_rgba(0,0,0,0.2)] transition-all"
-            >
-              <div className="flex items-center gap-2.5">
-                <ShieldCheck className="w-5 h-5 text-[#ff6f1e]" />
-                <span>دخول سريع كـ Super Admin (مؤسس المنصة)</span>
+          {loginError && (
+            <div className="p-3 rounded-[12px] bg-rose-50 border-[1.5px] border-rose-300 text-rose-800 text-xs font-bold flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 text-rose-600 flex-shrink-0" />
+              <span>{loginError}</span>
+            </div>
+          )}
+
+          <form onSubmit={handleRealLogin} className="space-y-4">
+            <div>
+              <label className="block text-xs font-bold text-[#171717] mb-1.5">
+                البريد الإلكتروني:
+              </label>
+              <input
+                type="email"
+                required
+                value={loginEmail}
+                onChange={(e) => setLoginEmail(e.target.value)}
+                placeholder="admin@iti-alex.edu.eg"
+                className="w-full bg-[#fdfbf9] border-[1.5px] border-[#171717] rounded-[10px] p-3 text-xs sm:text-sm text-[#171717] focus:outline-none focus:border-[#ff6f1e] dir-ltr text-left"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-[#171717] mb-1.5">
+                كلمة المرور:
+              </label>
+              <div className="relative">
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  required
+                  value={loginPassword}
+                  onChange={(e) => setLoginPassword(e.target.value)}
+                  placeholder="••••••••"
+                  className="w-full bg-[#fdfbf9] border-[1.5px] border-[#171717] rounded-[10px] p-3 pr-10 text-xs sm:text-sm text-[#171717] focus:outline-none focus:border-[#ff6f1e] dir-ltr text-left"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[#171717]/60 hover:text-[#171717] cursor-pointer"
+                >
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
               </div>
-              <ArrowRight className="w-4 h-4 rotate-180" />
-            </button>
+            </div>
 
             <button
-              onClick={() => handleLogin('reviewer')}
-              className="w-full flex items-center justify-between p-3.5 rounded-full bg-[#fdfbf9] hover:bg-[#f7efe9] border-[1.5px] border-[#171717] text-[#171717] font-bold text-sm shadow-[0_1px_2px_rgba(0,0,0,0.25)] transition-all"
+              type="submit"
+              disabled={loginLoading}
+              className="w-full py-3.5 px-4 rounded-full bg-[#171717] hover:bg-[#171717]/90 text-white font-black text-sm border-[1.5px] border-[#171717] shadow-[0_2px_4px_rgba(0,0,0,0.25)] transition-all cursor-pointer flex items-center justify-center gap-2 disabled:opacity-60"
             >
-              <div className="flex items-center gap-2.5">
-                <CheckCheck className="w-5 h-5 text-[#22c55e]" />
-                <span>دخول كـ المشرف والمدقق الأكاديمي (Reviewer Admin)</span>
-              </div>
-              <ArrowRight className="w-4 h-4 rotate-180" />
+              {loginLoading ? (
+                <span>جاري التحقق وتأمين الجلسة...</span>
+              ) : (
+                <>
+                  <KeyRound className="w-4 h-4 text-[#ff6f1e]" />
+                  <span>تسجيل الدخول الآمن</span>
+                </>
+              )}
             </button>
+          </form>
 
-            <button
-              onClick={() => handleLogin('rep')}
-              className="w-full flex items-center justify-between p-3.5 rounded-full bg-[#fdfbf9] hover:bg-[#f7efe9] border-[1.5px] border-[#171717] text-[#171717] font-bold text-sm shadow-[0_1px_2px_rgba(0,0,0,0.25)] transition-all"
-            >
-              <div className="flex items-center gap-2.5">
-                <Users className="w-5 h-5 text-[#ff6f1e]" />
-                <span>دخول سريع كـ مندوب شعبة المساحة العامة (رافع الملفات)</span>
+          {/* Institutional Credentials Notice */}
+          <div className="pt-2 border-t border-[#171717]/15">
+            <div className="bg-[#fdfbf9] border border-[#171717]/20 rounded-[12px] p-3 space-y-1.5 text-[11px] text-[#171717]/80">
+              <span className="font-black text-[#2b1a07] flex items-center gap-1.5">
+                <Lock className="w-3.5 h-3.5 text-[#ff6f1e]" />
+                <span>حسابات النظام المسجلة بقاعدة البيانات:</span>
+              </span>
+              <div className="space-y-1 pr-1 font-mono text-[10px]">
+                <div>• المشرف العام: <code className="bg-amber-100 px-1 py-0.5 rounded text-amber-900">admin@iti-alex.edu.eg</code> (كلمة المرور: admin123)</div>
+                <div>• المراجع الأكاديمي: <code className="bg-emerald-100 px-1 py-0.5 rounded text-emerald-900">reviewer@iti-alex.edu.eg</code> (كلمة المرور: reviewer123)</div>
+                <div>• مندوب المساحة: <code className="bg-sky-100 px-1 py-0.5 rounded text-sky-900">survey-rep@iti-alex.edu.eg</code> (كلمة المرور: rep123)</div>
               </div>
-              <ArrowRight className="w-4 h-4 rotate-180" />
-            </button>
+              <p className="text-[10px] text-[#171717]/60 pt-1 border-t border-[#171717]/10">
+                💡 يستطيع المشرف العام إضافة مناديب ومراجعين جدد أو ترقيتهم وتعديل كلمات المرور من لوحة الإدارة.
+              </p>
+            </div>
           </div>
 
-          <div className="pt-4 border-t border-[#171717]/15 text-center">
+          <div className="pt-2 text-center">
             <Link
               href="/"
               className="inline-flex items-center gap-1.5 text-xs font-bold text-[#171717]/80 hover:text-[#ff6f1e] transition-colors"
@@ -644,7 +844,7 @@ export default function AdminDashboard() {
                 لوحة تحكم المنصة الأكاديمية
               </h1>
               <span className="text-[11px] font-extrabold px-2.5 py-0.5 rounded-full bg-[#fdfbf9] text-[#2b1a07] border-[1.5px] border-[#171717]">
-                {currentUser.role === 'super_admin' ? 'Super Admin' : currentUser.role === 'reviewer_admin' ? 'مشرف ومدقق أكاديمي' : 'مندوب شعبة'}
+                {currentUser.role === 'super_admin' ? 'Super Admin (المشرف العام)' : currentUser.role === 'reviewer_admin' ? 'مشرف ومدقق أكاديمي' : 'مندوب شعبة'}
               </span>
             </div>
             <p className="text-xs text-[#171717]/70 mt-0.5">
@@ -661,8 +861,8 @@ export default function AdminDashboard() {
             معاينة واجهة الطلاب
           </Link>
           <button
-            onClick={() => setCurrentUser(null)}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-[#fdfbf9] hover:bg-rose-50 border-[1.5px] border-[#171717] text-rose-700 text-xs font-bold transition-colors"
+            onClick={handleLogout}
+            className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-[#fdfbf9] hover:bg-rose-50 border-[1.5px] border-[#171717] text-rose-700 text-xs font-bold transition-colors cursor-pointer"
           >
             <LogOut className="w-3.5 h-3.5" />
             <span>تسجيل الخروج</span>
@@ -799,6 +999,20 @@ export default function AdminDashboard() {
           >
             <Bell className={`w-4 h-4 ${activeTab === 'announcements' ? 'text-[#ff6f1e]' : 'text-[#171717]'}`} />
             <span>نشر تنبيه أو موعد تسليم</span>
+          </button>
+        )}
+
+        {currentUser.role === 'super_admin' && (
+          <button
+            onClick={() => setActiveTab('staff')}
+            className={`flex items-center justify-center gap-2 px-4 py-3 rounded-full text-xs sm:text-sm font-bold border-[1.5px] border-[#171717] transition-all cursor-pointer ${
+              activeTab === 'staff'
+                ? 'bg-[#171717] text-white shadow-[0_2px_4px_rgba(0,0,0,0.2)]'
+                : 'bg-[#fdfbf9] text-[#171717] hover:bg-[#f7efe9] shadow-[0_1px_2px_rgba(0,0,0,0.25)]'
+            }`}
+          >
+            <UserCheck className={`w-4 h-4 ${activeTab === 'staff' ? 'text-[#ff6f1e]' : 'text-[#171717]'}`} />
+            <span>إدارة المشرفين والمناديب ({staffList.length})</span>
           </button>
         )}
 
@@ -2068,6 +2282,291 @@ export default function AdminDashboard() {
                       </td>
                     </tr>
                   ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ---------------------------------------------------- */}
+      {/* TAB: STAFF & ROLE MANAGEMENT (إدارة المشرفين والمناديب) */}
+      {/* ---------------------------------------------------- */}
+      {activeTab === 'staff' && (
+        <div className="space-y-6">
+          {/* Header Card */}
+          <div className="bg-[#f7efe9] border-[1.5px] border-[#171717] rounded-[16px] p-6 shadow-[0_1px_2px_rgba(0,0,0,0.15)] space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b-[1.5px] border-[#171717]/15 pb-4">
+              <div>
+                <h2 className="text-lg font-black text-[#2b1a07] flex items-center gap-2">
+                  <UserCheck className="w-6 h-6 text-[#ff6f1e]" />
+                  <span>إدارة المشرفين والمناديب وتوزيع الصلاحيات (Staff & Access Control)</span>
+                </h2>
+                <p className="text-xs text-[#171717]/70 mt-1 leading-relaxed">
+                  التحكم الكامل في حسابات المنصة: إضافة مناديب لرفع المذكرات والشيتات، وترقيتهم لمراجعين أكاديميين للاعتماد، أو تعطيل الحسابات وتغيير الصلاحيات بضغطة زر واحدة.
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <span className="px-3 py-1 rounded-full bg-[#fdfbf9] border border-[#171717] text-xs font-black text-[#2b1a07]">
+                  {staffList.length} أعضاء بالفريق
+                </span>
+              </div>
+            </div>
+
+            {/* Quick Stat Chips */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+              <div className="p-3 bg-[#fdfbf9] border-[1.5px] border-[#171717] rounded-[12px] flex items-center justify-between">
+                <div>
+                  <span className="text-[11px] font-bold text-[#171717]/70">المشرف العام (Super Admin):</span>
+                  <div className="text-lg font-black text-[#2b1a07]">
+                    {staffList.filter((s) => s.role === 'super_admin').length}
+                  </div>
+                </div>
+                <div className="w-8 h-8 rounded-full bg-[#171717] text-white flex items-center justify-center font-black">
+                  👑
+                </div>
+              </div>
+
+              <div className="p-3 bg-[#fdfbf9] border-[1.5px] border-[#171717] rounded-[12px] flex items-center justify-between">
+                <div>
+                  <span className="text-[11px] font-bold text-[#171717]/70">مراجعون ومدققون معتمدون:</span>
+                  <div className="text-lg font-black text-[#22c55e]">
+                    {staffList.filter((s) => s.role === 'reviewer_admin').length}
+                  </div>
+                </div>
+                <div className="w-8 h-8 rounded-full bg-emerald-100 text-emerald-800 flex items-center justify-center font-black">
+                  ✓
+                </div>
+              </div>
+
+              <div className="p-3 bg-[#fdfbf9] border-[1.5px] border-[#171717] rounded-[12px] flex items-center justify-between">
+                <div>
+                  <span className="text-[11px] font-bold text-[#171717]/70">مناديب الشعب (رافعو المواد):</span>
+                  <div className="text-lg font-black text-[#ff6f1e]">
+                    {staffList.filter((s) => s.role === 'dept_rep').length}
+                  </div>
+                </div>
+                <div className="w-8 h-8 rounded-full bg-amber-100 text-[#ff6f1e] flex items-center justify-center font-black">
+                  📤
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Add New Staff Card */}
+          <div className="bg-[#fdfbf9] border-[1.5px] border-[#171717] rounded-[16px] p-6 shadow-[0_1px_2px_rgba(0,0,0,0.15)] space-y-4">
+            <h3 className="font-extrabold text-[#2b1a07] text-sm flex items-center gap-2 border-b-[1px] border-[#171717]/15 pb-2.5">
+              <UserPlus className="w-4 h-4 text-[#ff6f1e]" />
+              <span>إضافة عضو جديد (مندوب شعبة أو مشرف مراجع)</span>
+            </h3>
+
+            <form onSubmit={handleCreateStaff} className="space-y-4 text-xs">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+                <div>
+                  <label className="block font-bold text-[#171717] mb-1">الاسم الكامل:</label>
+                  <input
+                    type="text"
+                    required
+                    value={newStaffName}
+                    onChange={(e) => setNewStaffName(e.target.value)}
+                    placeholder="مثال: م. أحمد مصطفى"
+                    className="w-full bg-[#fdfbf9] border-[1.5px] border-[#171717] rounded-[8px] p-2.5 text-[#171717] focus:outline-none focus:border-[#ff6f1e]"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-bold text-[#171717] mb-1">البريد الإلكتروني الرسمي:</label>
+                  <input
+                    type="email"
+                    required
+                    value={newStaffEmail}
+                    onChange={(e) => setNewStaffEmail(e.target.value)}
+                    placeholder="rep.ahmed@iti-alex.edu.eg"
+                    className="w-full bg-[#fdfbf9] border-[1.5px] border-[#171717] rounded-[8px] p-2.5 text-[#171717] focus:outline-none focus:border-[#ff6f1e] dir-ltr text-left"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-bold text-[#171717] mb-1">كلمة المرور:</label>
+                  <input
+                    type="text"
+                    required
+                    value={newStaffPassword}
+                    onChange={(e) => setNewStaffPassword(e.target.value)}
+                    placeholder="كلمة مرور قوية (مثال: pass123)"
+                    className="w-full bg-[#fdfbf9] border-[1.5px] border-[#171717] rounded-[8px] p-2.5 text-[#171717] focus:outline-none focus:border-[#ff6f1e] dir-ltr text-left"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-bold text-[#171717] mb-1">الصلاحية المبدئية:</label>
+                  <select
+                    value={newStaffRole}
+                    onChange={(e) => setNewStaffRole(e.target.value as any)}
+                    className="w-full bg-[#fdfbf9] border-[1.5px] border-[#171717] rounded-[8px] p-2.5 text-[#171717] focus:outline-none focus:border-[#ff6f1e] cursor-pointer"
+                  >
+                    <option value="dept_rep">مندوب شعبة (رفع فقط)</option>
+                    <option value="reviewer_admin">مشرف ومدقق أكاديمي (اعتماد وتدقيق)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-1">
+                <div className="w-full sm:w-1/2">
+                  <label className="block font-bold text-[#171717] mb-1">الشعبة التابع لها:</label>
+                  <select
+                    value={newStaffDeptId}
+                    onChange={(e) => setNewStaffDeptId(e.target.value)}
+                    className="w-full bg-[#fdfbf9] border-[1.5px] border-[#171717] rounded-[8px] p-2.5 text-[#171717] focus:outline-none focus:border-[#ff6f1e] cursor-pointer"
+                  >
+                    {departments.map((d) => (
+                      <option key={d.id} value={d.id}>{d.name_ar}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="w-full sm:w-auto self-end">
+                  <button
+                    type="submit"
+                    disabled={isStaffSubmitting}
+                    className="w-full sm:w-auto px-6 py-2.5 rounded-full bg-[#171717] hover:bg-[#171717]/90 text-white font-black text-xs border border-[#171717] shadow-[0_2px_4px_rgba(0,0,0,0.2)] transition-all cursor-pointer flex items-center justify-center gap-2 disabled:opacity-50"
+                  >
+                    <UserPlus className="w-4 h-4 text-[#ff6f1e]" />
+                    <span>{isStaffSubmitting ? 'جاري الإضافة والتزامن...' : 'إضافة وتثبيت الحساب فوراً'}</span>
+                  </button>
+                </div>
+              </div>
+            </form>
+          </div>
+
+          {/* Staff Directory Table */}
+          <div className="bg-[#fdfbf9] border-[1.5px] border-[#171717] rounded-[16px] p-6 shadow-[0_1px_2px_rgba(0,0,0,0.15)] space-y-4">
+            <h3 className="font-extrabold text-[#2b1a07] text-sm">
+              قائمة أعضاء فريق العمل والمناديب المسجلين بالمنصة ({staffList.length}):
+            </h3>
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-xs text-right">
+                <thead className="bg-[#f7efe9] text-[#2b1a07] font-bold border-b-[1.5px] border-[#171717]">
+                  <tr>
+                    <th className="p-3">م</th>
+                    <th className="p-3">المشرف / المندوب</th>
+                    <th className="p-3">البريد الإلكتروني</th>
+                    <th className="p-3">الشعبة</th>
+                    <th className="p-3">الصلاحية الحالية</th>
+                    <th className="p-3">الحالة</th>
+                    <th className="p-3 text-center">التحكم بالترقية والتخفيض</th>
+                    <th className="p-3 text-center">إجراءات</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[#171717]/10">
+                  {staffList.map((s, idx) => {
+                    const isSuper = s.role === 'super_admin';
+                    const isReviewer = s.role === 'reviewer_admin';
+                    const isRep = s.role === 'dept_rep';
+                    const isActive = s.is_active !== false;
+                    const dept = departments.find((d) => d.id === s.assigned_department_id);
+
+                    return (
+                      <tr key={s.id || idx} className="hover:bg-[#f7efe9]/60 transition-colors">
+                        <td className="p-3 font-mono text-[#171717]/60">{idx + 1}</td>
+                        <td className="p-3 font-extrabold text-[#2b1a07]">
+                          <div className="flex items-center gap-2">
+                            <div className="w-7 h-7 rounded-full bg-[#f7efe9] border border-[#171717] flex items-center justify-center font-bold text-xs text-[#ff6f1e]">
+                              {s.full_name ? s.full_name.slice(0, 1) : 'م'}
+                            </div>
+                            <span>{s.full_name}</span>
+                          </div>
+                        </td>
+                        <td className="p-3 font-mono text-[#171717]/80 dir-ltr text-right">{s.email}</td>
+                        <td className="p-3 text-[#171717]">{dept ? dept.name_ar : 'عام / كل الشعب'}</td>
+                        <td className="p-3">
+                          {isSuper && (
+                            <span className="px-2.5 py-1 rounded-full text-[10px] font-black bg-[#171717] text-white">
+                              👑 Super Admin (مدير عام)
+                            </span>
+                          )}
+                          {isReviewer && (
+                            <span className="px-2.5 py-1 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-900 border border-emerald-300">
+                              ✓ مراجع ومدقق أكاديمي
+                            </span>
+                          )}
+                          {isRep && (
+                            <span className="px-2.5 py-1 rounded-full text-[10px] font-black bg-amber-100 text-amber-900 border border-amber-300">
+                              📤 مندوب شعبة (رافع)
+                            </span>
+                          )}
+                        </td>
+                        <td className="p-3">
+                          {isActive ? (
+                            <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700">
+                              <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+                              <span>نشط</span>
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 text-[11px] font-bold text-rose-700">
+                              <span className="w-2 h-2 rounded-full bg-rose-500"></span>
+                              <span>معطل</span>
+                            </span>
+                          )}
+                        </td>
+                        <td className="p-3 text-center">
+                          {isSuper ? (
+                            <span className="text-[10px] text-[#171717]/50 font-bold">الحساب الرئيسي</span>
+                          ) : isRep ? (
+                            <button
+                              type="button"
+                              onClick={() => handleToggleStaffRole(s)}
+                              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 text-emerald-900 text-[11px] font-black transition-all cursor-pointer shadow-[0_1px_2px_rgba(0,0,0,0.08)]"
+                              title="ترقية إلى مراجع أكاديمي لمنحه صلاحية مراجعة واعتماد الملفات"
+                            >
+                              <span>ترقية إلى مراجع أكاديمي</span>
+                              <span>⬆️</span>
+                            </button>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => handleToggleStaffRole(s)}
+                              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-50 hover:bg-amber-100 border border-amber-300 text-amber-900 text-[11px] font-black transition-all cursor-pointer shadow-[0_1px_2px_rgba(0,0,0,0.08)]"
+                              title="تخفيض إلى مندوب لتقييد الصلاحيات على الرفع فقط"
+                            >
+                              <span>تخفيض إلى مندوب رفع</span>
+                              <span>⬇️</span>
+                            </button>
+                          )}
+                        </td>
+                        <td className="p-3 text-center">
+                          <div className="flex items-center justify-center gap-1.5">
+                            {!isSuper && (
+                              <>
+                                <button
+                                  type="button"
+                                  onClick={() => handleToggleStaffStatus(s)}
+                                  className={`px-2.5 py-1 rounded-full text-[10px] font-bold border transition-colors cursor-pointer ${
+                                    isActive
+                                      ? 'bg-rose-50 text-rose-800 border-rose-200 hover:bg-rose-100'
+                                      : 'bg-emerald-50 text-emerald-800 border-emerald-200 hover:bg-emerald-100'
+                                  }`}
+                                  title={isActive ? 'تعطيل الحساب' : 'تفعيل الحساب'}
+                                >
+                                  {isActive ? 'تعطيل' : 'تفعيل'}
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleDeleteStaff(s)}
+                                  className="p-1.5 text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
+                                  title="حذف الحساب نهائياً"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+                              </>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>

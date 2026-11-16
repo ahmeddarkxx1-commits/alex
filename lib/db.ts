@@ -2,6 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import { 
   StudentUser, 
+  AdminUser,
   Subject, 
   Resource, 
   Schedule, 
@@ -29,7 +30,41 @@ interface DatabaseSchema {
   resources: Resource[];
   schedules: Schedule[];
   announcements: Announcement[];
+  admins: AdminUser[];
 }
+
+export const INITIAL_ADMINS: AdminUser[] = [
+  {
+    id: 'admin-super',
+    email: 'admin@iti-alex.edu.eg',
+    full_name: 'المهندس المشرف العام (Super Admin)',
+    role: 'super_admin',
+    password: 'admin',
+    assigned_department_id: null,
+    is_active: true,
+    created_at: '2026-01-01T00:00:00.000Z',
+  },
+  {
+    id: 'admin-reviewer',
+    email: 'reviewer@iti-alex.edu.eg',
+    full_name: 'د. مراجع ومعتمد المحتوى الأكاديمي',
+    role: 'reviewer_admin',
+    password: 'reviewer123',
+    assigned_department_id: null,
+    is_active: true,
+    created_at: '2026-01-01T00:00:00.000Z',
+  },
+  {
+    id: 'rep-survey',
+    email: 'survey-rep@iti-alex.edu.eg',
+    full_name: 'مندوب شعبة المساحة العامة',
+    role: 'dept_rep',
+    password: 'rep123',
+    assigned_department_id: 'dept-surveying',
+    is_active: true,
+    created_at: '2026-01-01T00:00:00.000Z',
+  },
+];
 
 const DATA_DIR = path.join(process.cwd(), 'data');
 const DB_FILE = path.join(DATA_DIR, 'db.json');
@@ -73,6 +108,7 @@ function initDb(): DatabaseSchema {
       resources: INITIAL_RESOURCES,
       schedules: INITIAL_SCHEDULES,
       announcements: INITIAL_ANNOUNCEMENTS,
+      admins: INITIAL_ADMINS,
     };
     fs.writeFileSync(DB_FILE, JSON.stringify(initialData, null, 2), 'utf-8');
     return initialData;
@@ -89,6 +125,7 @@ function initDb(): DatabaseSchema {
     if (!parsed.resources) { parsed.resources = INITIAL_RESOURCES; modified = true; }
     if (!parsed.schedules) { parsed.schedules = INITIAL_SCHEDULES; modified = true; }
     if (!parsed.announcements) { parsed.announcements = INITIAL_ANNOUNCEMENTS; modified = true; }
+    if (!parsed.admins || parsed.admins.length === 0) { parsed.admins = INITIAL_ADMINS; modified = true; }
 
     if (modified) {
       fs.writeFileSync(DB_FILE, JSON.stringify(parsed, null, 2), 'utf-8');
@@ -103,6 +140,7 @@ function initDb(): DatabaseSchema {
       resources: INITIAL_RESOURCES,
       schedules: INITIAL_SCHEDULES,
       announcements: INITIAL_ANNOUNCEMENTS,
+      admins: INITIAL_ADMINS,
     };
     fs.writeFileSync(DB_FILE, JSON.stringify(fallback, null, 2), 'utf-8');
     return fallback;
@@ -398,4 +436,73 @@ export function dbCreateAnnouncement(item: Omit<Announcement, 'id' | 'created_at
 export function dbGetDepartments(): Department[] {
   const db = initDb();
   return db.departments || INITIAL_DEPARTMENTS;
+}
+
+// ====================================================================
+// ADMINS & STAFF (Super Admin, Reviewers, Department Delegates)
+// ====================================================================
+
+export function dbGetAdmins(): AdminUser[] {
+  const db = initDb();
+  return db.admins || INITIAL_ADMINS;
+}
+
+export function dbFindAdmin(query: { id?: string; email?: string }): AdminUser | null {
+  const admins = dbGetAdmins();
+  if (query.id) {
+    const found = admins.find((a) => a.id === query.id);
+    if (found) return found;
+  }
+  if (query.email) {
+    const cleanEmail = query.email.trim().toLowerCase();
+    const found = admins.find((a) => a.email.trim().toLowerCase() === cleanEmail);
+    if (found) return found;
+  }
+  return null;
+}
+
+export function dbCreateOrUpdateAdmin(admin: AdminUser): AdminUser {
+  const db = initDb();
+  if (!db.admins) db.admins = [...INITIAL_ADMINS];
+
+  const existingIdx = db.admins.findIndex(
+    (a) => a.id === admin.id || a.email.trim().toLowerCase() === admin.email.trim().toLowerCase()
+  );
+
+  const finalRecord: AdminUser = {
+    ...admin,
+    id: existingIdx >= 0 ? db.admins[existingIdx].id : (admin.id || `admin-${Date.now()}`),
+    created_at: existingIdx >= 0 ? db.admins[existingIdx].created_at : new Date().toISOString(),
+    is_active: admin.is_active !== undefined ? admin.is_active : true,
+  };
+
+  if (existingIdx >= 0) {
+    db.admins[existingIdx] = {
+      ...db.admins[existingIdx],
+      ...finalRecord,
+      // preserve password if not provided in update
+      password: admin.password || db.admins[existingIdx].password,
+    };
+  } else {
+    db.admins.unshift(finalRecord);
+  }
+
+  writeDb(db);
+  return finalRecord;
+}
+
+export function dbDeleteAdmin(id: string): boolean {
+  // Prevent deleting primary super admin
+  if (id === 'admin-super') return false;
+
+  const db = initDb();
+  if (!db.admins) return false;
+
+  const initLen = db.admins.length;
+  db.admins = db.admins.filter((a) => a.id !== id);
+  if (db.admins.length !== initLen) {
+    writeDb(db);
+    return true;
+  }
+  return false;
 }
