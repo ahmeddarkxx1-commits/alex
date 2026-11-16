@@ -6,6 +6,7 @@ import {
   Resource, 
   Schedule, 
   Announcement, 
+  AcademicYear,
   SemesterNumber, 
   SectionNumber, 
   ResourceType 
@@ -39,7 +40,8 @@ export default function SurveyingPortal() {
   const [loading, setLoading] = useState(true);
 
   // Active Preferences
-  const [activeSemester, setActiveSemester] = useState<SemesterNumber>(1);
+  const [activeYear, setActiveYear] = useState<AcademicYear | 'all'>('الفرقة الأولى');
+  const [activeSemester, setActiveSemester] = useState<SemesterNumber | 'all'>(1);
   const [activeSection, setActiveSection] = useState<SectionNumber>('عام');
 
   // Active View Tab: 'courses' | 'resources' | 'schedules' | 'deadlines' | 'bookmarks'
@@ -58,7 +60,10 @@ export default function SurveyingPortal() {
     async function loadInitialData() {
       setLoading(true);
       const savedPrefs = getUserPreferences();
-      setActiveSemester(savedPrefs.semesterNumber || 1);
+      const prefYear = savedPrefs.academicYear || 'الفرقة الأولى';
+      const prefSem = savedPrefs.semesterNumber || 1;
+      setActiveYear(prefYear);
+      setActiveSemester(prefSem);
       setActiveSection(savedPrefs.sectionNumber || 'عام');
       setBookmarks(getBookmarks());
 
@@ -75,9 +80,20 @@ export default function SurveyingPortal() {
   useEffect(() => {
     async function updateSemesterData() {
       const [subjs, res, sch] = await Promise.all([
-        getSubjects({ departmentId: 'dept-surveying', semesterNumber: activeSemester }),
-        getResources({ departmentId: 'dept-surveying', semesterNumber: activeSemester }),
-        getSchedules({ departmentId: 'dept-surveying', semesterNumber: activeSemester }),
+        getSubjects({ 
+          departmentId: 'dept-surveying', 
+          academicYear: activeYear !== 'all' ? activeYear : undefined,
+          semesterNumber: activeSemester !== 'all' ? activeSemester : undefined 
+        }),
+        getResources({ 
+          departmentId: 'dept-surveying', 
+          academicYear: activeYear !== 'all' ? activeYear : undefined,
+          semesterNumber: activeSemester !== 'all' ? activeSemester : undefined 
+        }),
+        getSchedules({ 
+          departmentId: 'dept-surveying', 
+          academicYear: activeYear !== 'all' ? activeYear : undefined 
+        }),
       ]);
 
       setSubjects(subjs);
@@ -86,15 +102,36 @@ export default function SurveyingPortal() {
     }
 
     updateSemesterData();
-  }, [activeSemester]);
+  }, [activeYear, activeSemester]);
 
-  const handleSelectSemester = (sem: SemesterNumber) => {
+  const handleSelectYear = (year: AcademicYear | 'all') => {
+    setActiveYear(year);
+    if (year === 'الفرقة الأولى') {
+      setActiveSemester(1);
+      saveUserPreferences({ academicYear: 'الفرقة الأولى', semesterNumber: 1 });
+    } else if (year === 'الفرقة الثانية') {
+      setActiveSemester(3);
+      saveUserPreferences({ academicYear: 'الفرقة الثانية', semesterNumber: 3 });
+    } else {
+      setActiveSemester('all');
+    }
+    setSelectedSubjectFilter('all');
+  };
+
+  const handleSelectSemester = (sem: SemesterNumber | 'all', year?: AcademicYear) => {
+    if (year) {
+      setActiveYear(year);
+    } else if (sem !== 'all') {
+      setActiveYear(sem <= 2 ? 'الفرقة الأولى' : 'الفرقة الثانية');
+    }
     setActiveSemester(sem);
     setSelectedSubjectFilter('all');
-    saveUserPreferences({ 
-      semesterNumber: sem, 
-      academicYear: sem <= 2 ? 'الفرقة الأولى' : 'الفرقة الثانية' 
-    });
+    if (sem !== 'all') {
+      saveUserPreferences({ 
+        semesterNumber: sem, 
+        academicYear: sem <= 2 ? 'الفرقة الأولى' : 'الفرقة الثانية' 
+      });
+    }
   };
 
   const handleSelectSection = (sec: SectionNumber) => {
@@ -109,13 +146,23 @@ export default function SurveyingPortal() {
     );
   };
 
-  const getSemesterLabel = (sem: SemesterNumber) => {
+  const getSemesterLabel = (sem: SemesterNumber | 'all') => {
     switch (sem) {
-      case 1: return 'الفصل الدراسي الأول';
-      case 2: return 'الفصل الدراسي الثاني';
-      case 3: return 'الفصل الدراسي الثالث';
-      case 4: return 'الفصل الدراسي الرابع';
+      case 1: return 'الفصل الدراسي الأول (الترم 1)';
+      case 2: return 'الفصل الدراسي الثاني (الترم 2)';
+      case 3: return 'الفصل الدراسي الثالث (الترم 1 لسنة ثانية)';
+      case 4: return 'الفصل الدراسي الرابع (ترم التخرج)';
+      case 'all': 
+        if (activeYear === 'الفرقة الأولى') return 'سنة أولى كاملة (الترمين الأول والثاني)';
+        if (activeYear === 'الفرقة الثانية') return 'سنة ثانية كاملة (الترمين الثالث والرابع)';
+        return 'جميع فصول السنتين';
     }
+  };
+
+  const getYearLabel = () => {
+    if (activeYear === 'الفرقة الأولى') return 'سنة أولى (الفرقة الأولى)';
+    if (activeYear === 'الفرقة الثانية') return 'سنة ثانية (الفرقة الثانية - تخرج)';
+    return 'السنتين معاً (الفرقة الأولى والثانية)';
   };
 
   const filteredResources = useMemo(() => {
@@ -177,10 +224,12 @@ export default function SurveyingPortal() {
           </div>
         </div>
 
-        {/* 4 Semesters Selector Controller */}
+        {/* 4 Semesters Selector Controller with Year 1 & Year 2 Division */}
         <SemesterSelector
+          activeYear={activeYear}
           activeSemester={activeSemester}
           activeSection={activeSection}
+          onSelectYear={handleSelectYear}
           onSelectSemester={handleSelectSemester}
           onSelectSection={handleSelectSection}
           totalCoursesCount={subjects.length}
@@ -253,29 +302,76 @@ export default function SurveyingPortal() {
         {/* TAB 1: COURSES GRID */}
         {/* ---------------------------------------------------- */}
         {activeTab === 'courses' && (
-          <div className="space-y-4">
-            <div className="flex items-center justify-between text-xs text-[#171717]/70">
-              <span className="font-bold text-[#2b1a07]">
-                مواد {getSemesterLabel(activeSemester)} ({subjects.length} مواد معتمدة):
-              </span>
-              <span>اضغط على أي مادة لعرض الملفات والشيتات المرفوعة</span>
-            </div>
+          <div className="space-y-6">
+            {activeSemester === 'all' ? (
+              /* Grouped by Semester View */
+              <div className="space-y-6">
+                {[1, 2, 3, 4].map((semNum) => {
+                  const semSubjects = subjects.filter((s) => s.semester_number === semNum);
+                  if (semSubjects.length === 0) return null;
+                  return (
+                    <div key={semNum} className="space-y-3 bg-[#fdfbf9] border-[1.5px] border-[#171717] rounded-[16px] p-4 sm:p-5 shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
+                      <div className="flex items-center justify-between border-b-[1.5px] border-[#171717]/15 pb-2.5">
+                        <div className="flex items-center gap-2">
+                          <span className="w-2.5 h-2.5 rounded-full bg-[#ff6f1e]"></span>
+                          <h3 className="font-extrabold text-[#2b1a07] text-base sm:text-lg">
+                            {getSemesterLabel(semNum as SemesterNumber)}
+                          </h3>
+                          <span className="text-xs font-semibold text-[#171717]/60">
+                            • {semNum <= 2 ? 'سنة أولى' : 'سنة ثانية'}
+                          </span>
+                        </div>
+                        <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-[#f7efe9] text-[#2b1a07] border-[1px] border-[#171717]/40">
+                          {semSubjects.length} مواد معتمدة
+                        </span>
+                      </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
-              {subjects.map((sub) => {
-                const subResources = resources.filter((r) => r.subject_id === sub.id);
-                const subSheets = subResources.filter((r) => r.type === 'شيت وتكليف');
-                return (
-                  <CourseCard
-                    key={sub.id}
-                    subject={sub}
-                    resourcesCount={subResources.length}
-                    sheetsCount={subSheets.length}
-                    onOpenSubject={setSelectedCourse}
-                  />
-                );
-              })}
-            </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+                        {semSubjects.map((sub) => {
+                          const subResources = resources.filter((r) => r.subject_id === sub.id);
+                          const subSheets = subResources.filter((r) => r.type === 'شيت وتكليف');
+                          return (
+                            <CourseCard
+                              key={sub.id}
+                              subject={sub}
+                              resourcesCount={subResources.length}
+                              sheetsCount={subSheets.length}
+                              onOpenSubject={setSelectedCourse}
+                            />
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              /* Single Semester View */
+              <div className="space-y-4">
+                <div className="flex items-center justify-between text-xs text-[#171717]/70">
+                  <span className="font-bold text-[#2b1a07]">
+                    مواد {getSemesterLabel(activeSemester)} ({subjects.length} مواد معتمدة):
+                  </span>
+                  <span>اضغط على أي مادة لعرض الملفات والشيتات المرفوعة</span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+                  {subjects.map((sub) => {
+                    const subResources = resources.filter((r) => r.subject_id === sub.id);
+                    const subSheets = subResources.filter((r) => r.type === 'شيت وتكليف');
+                    return (
+                      <CourseCard
+                        key={sub.id}
+                        subject={sub}
+                        resourcesCount={subResources.length}
+                        sheetsCount={subSheets.length}
+                        onOpenSubject={setSelectedCourse}
+                      />
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -387,7 +483,7 @@ export default function SurveyingPortal() {
           <SchedulesTab
             schedules={schedules}
             activeDeptName="شعبة المساحة العامة"
-            activeYear={getSemesterLabel(activeSemester)}
+            activeYear={`${getYearLabel()} (${getSemesterLabel(activeSemester)})`}
           />
         )}
 
