@@ -783,25 +783,7 @@ export default function AdminDashboard() {
             </button>
           </form>
 
-          {/* Institutional Credentials Notice */}
-          <div className="pt-2 border-t border-[#171717]/15">
-            <div className="bg-[#fdfbf9] border border-[#171717]/20 rounded-[12px] p-3 space-y-1.5 text-[11px] text-[#171717]/80">
-              <span className="font-black text-[#2b1a07] flex items-center gap-1.5">
-                <Lock className="w-3.5 h-3.5 text-[#ff6f1e]" />
-                <span>حسابات النظام المسجلة بقاعدة البيانات:</span>
-              </span>
-              <div className="space-y-1 pr-1 font-mono text-[10px]">
-                <div>• المشرف العام: <code className="bg-amber-100 px-1 py-0.5 rounded text-amber-900">admin@iti-alex.edu.eg</code> (كلمة المرور: admin123)</div>
-                <div>• المراجع الأكاديمي: <code className="bg-emerald-100 px-1 py-0.5 rounded text-emerald-900">reviewer@iti-alex.edu.eg</code> (كلمة المرور: reviewer123)</div>
-                <div>• مندوب المساحة: <code className="bg-sky-100 px-1 py-0.5 rounded text-sky-900">survey-rep@iti-alex.edu.eg</code> (كلمة المرور: rep123)</div>
-              </div>
-              <p className="text-[10px] text-[#171717]/60 pt-1 border-t border-[#171717]/10">
-                💡 يستطيع المشرف العام إضافة مناديب ومراجعين جدد أو ترقيتهم وتعديل كلمات المرور من لوحة الإدارة.
-              </p>
-            </div>
-          </div>
-
-          <div className="pt-2 text-center">
+          <div className="pt-2 text-center border-t border-[#171717]/15">
             <Link
               href="/"
               className="inline-flex items-center gap-1.5 text-xs font-bold text-[#171717]/80 hover:text-[#ff6f1e] transition-colors"
