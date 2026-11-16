@@ -19,7 +19,8 @@ import {
   User,
   LogIn,
   AlertCircle,
-  ShieldCheck
+  ShieldCheck,
+  Send
 } from 'lucide-react';
 
 interface SurveyingLandingPageProps {
@@ -557,6 +558,76 @@ export default function SurveyingLandingPage({
             <p className="text-xs text-[#171717]/80 leading-relaxed">
               متابعة مواعيد تسليم شيتات الميزانيات، حسابات الكميات، ورسومات المساقط الهندسية أولاً بأول.
             </p>
+          </div>
+        </div>
+      </section>
+
+      {/* ==================================================== */}
+      {/* 4. OFFICIAL TELEGRAM CHANNELS (YEAR 1 & YEAR 2 SEPARATED) */}
+      {/* ==================================================== */}
+      <section className="max-w-4xl mx-auto px-4 space-y-4">
+        <div className="text-center space-y-1">
+          <div className="inline-flex items-center gap-1.5 text-xs font-black text-[#ff6f1e]">
+            <Send className="w-4 h-4" />
+            <span>قنوات التليجرام الرسمية المستقلة للدفعات</span>
+          </div>
+          <h2 className="text-xl sm:text-2xl font-black text-[#2b1a07]">
+            قنوات منفصلة للفرقة الأولى والفرقة الثانية
+          </h2>
+          <p className="text-xs sm:text-sm text-[#171717]/70">
+            لكل فرقة قناتها الخاصة لضمان وصول التنبيهات والشيتات الخاصة بها دون أي اختلاط
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {/* Year 1 Channel Card */}
+          <div className="bg-[#f7efe9] border-[1.5px] border-[#171717] rounded-[16px] p-5 space-y-3 shadow-[0_1px_3px_rgba(0,0,0,0.06)] flex flex-col justify-between">
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between">
+                <span className="font-black text-base text-[#2b1a07]">📘 قناة الفرقة الأولى (سنة أولى)</span>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#fdfbf9] border border-[#171717]">
+                  الفصل 1 و 2
+                </span>
+              </div>
+              <p className="text-xs text-[#171717]/80 leading-relaxed">
+                مخصصة لطلاب سنة أولى: شيتات الميزانية، اختبار الوتدين، مواعيد تسليم رسومات الهندسة الوصفية وتنبيهات المعامل.
+              </p>
+            </div>
+
+            <a
+              href={process.env.NEXT_PUBLIC_TELEGRAM_YEAR1_LINK || 'https://t.me/iti_alex_surveying_year1'}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="py-2.5 px-4 rounded-full bg-[#171717] hover:bg-[#171717]/90 text-white font-bold text-xs text-center border-[1.5px] border-[#171717] shadow-[0_1px_2px_rgba(0,0,0,0.2)] flex items-center justify-center gap-2 cursor-pointer transition-all"
+            >
+              <Send className="w-3.5 h-3.5 text-[#ff6f1e]" />
+              <span>انضمام لقناة الفرقة الأولى (تليجرام) ←</span>
+            </a>
+          </div>
+
+          {/* Year 2 Channel Card */}
+          <div className="bg-[#f7efe9] border-[1.5px] border-[#171717] rounded-[16px] p-5 space-y-3 shadow-[0_1px_3px_rgba(0,0,0,0.06)] flex flex-col justify-between">
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between">
+                <span className="font-black text-base text-[#2b1a07]">📙 قناة الفرقة الثانية (سنة التخرج)</span>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#ff6f1e] text-[#2b1a07] border border-[#171717]">
+                  الفصل 3 و 4
+                </span>
+              </div>
+              <p className="text-xs text-[#171717]/80 leading-relaxed">
+                مخصصة لطلاب سنة ثانية: مشاريع التخرج، خرائط الجيوديسيا ونظم GIS، شيتات مساحة الأنفاق والمساحة التصويرية.
+              </p>
+            </div>
+
+            <a
+              href={process.env.NEXT_PUBLIC_TELEGRAM_YEAR2_LINK || 'https://t.me/iti_alex_surveying_year2'}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="py-2.5 px-4 rounded-full bg-[#ff6f1e] hover:bg-[#ff6f1e]/90 text-[#2b1a07] font-black text-xs text-center border-[1.5px] border-[#171717] shadow-[0_1px_2px_rgba(0,0,0,0.2)] flex items-center justify-center gap-2 cursor-pointer transition-all"
+            >
+              <Send className="w-3.5 h-3.5" />
+              <span>انضمام لقناة الفرقة الثانية (تليجرام) ←</span>
+            </a>
           </div>
         </div>
       </section>

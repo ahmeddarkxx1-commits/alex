@@ -48,7 +48,8 @@ import {
   LogOut,
   Lock,
   Globe,
-  Compass
+  Compass,
+  Send
 } from 'lucide-react';
 
 export default function SurveyingPortal() {
@@ -375,6 +376,24 @@ export default function SurveyingPortal() {
                 <Settings className="w-3.5 h-3.5 text-[#ff6f1e]" />
                 <span>تعديل الترم / السكشن</span>
               </button>
+
+              {/* Dedicated Telegram Channel Link for Batch */}
+              <a
+                href={
+                  currentStudent.academic_year === 'الفرقة الأولى'
+                    ? (process.env.NEXT_PUBLIC_TELEGRAM_YEAR1_LINK || 'https://t.me/iti_alex_surveying_year1')
+                    : (process.env.NEXT_PUBLIC_TELEGRAM_YEAR2_LINK || 'https://t.me/iti_alex_surveying_year2')
+                }
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-3.5 py-1.5 rounded-full bg-[#fdfbf9] hover:bg-[#ff6f1e]/10 text-[#2b1a07] border-[1.5px] border-[#171717] font-bold shadow-[0_1px_2px_rgba(0,0,0,0.15)] transition-all cursor-pointer flex items-center gap-1.5"
+                title={currentStudent.academic_year === 'الفرقة الأولى' ? 'قناة تليجرام سنة أولى الرسمية' : 'قناة تليجرام سنة ثانية الرسمية'}
+              >
+                <Send className="w-3.5 h-3.5 text-[#ff6f1e]" />
+                <span>
+                  {currentStudent.academic_year === 'الفرقة الأولى' ? 'قناة تليجرام أولى 📲' : 'قناة تليجرام ثانية 📲'}
+                </span>
+              </a>
 
               <button
                 onClick={handleStudentLogout}

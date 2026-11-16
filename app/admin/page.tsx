@@ -29,6 +29,7 @@ import {
   deleteSchedule, 
   createAnnouncement 
 } from '@/lib/dataService';
+import { isSupabaseConfigured } from '@/lib/supabase';
 import { 
   ShieldCheck, 
   Lock, 
@@ -81,6 +82,9 @@ export default function AdminDashboard() {
   const [newResDueDate, setNewResDueDate] = useState('');
   const [newResWeek, setNewResWeek] = useState('3');
   const [notifyTelegram, setNotifyTelegram] = useState(true);
+  const [resTgTarget, setResTgTarget] = useState<'year1' | 'year2' | 'both'>('year1');
+  const [uploadingPdf, setUploadingPdf] = useState(false);
+  const [uploadedPdfName, setUploadedPdfName] = useState('');
 
   // Tab 2: New Schedule Form State
   const [schDeptId, setSchDeptId] = useState('');
@@ -101,6 +105,8 @@ export default function AdminDashboard() {
   const [annCategory, setAnnCategory] = useState<AnnouncementCategory>('تسليم شيت');
   const [annUrgency, setAnnUrgency] = useState<UrgencyLevel>('عاجل جداً');
   const [annDate, setAnnDate] = useState('');
+  const [annNotifyTg, setAnnNotifyTg] = useState(true);
+  const [annTgTarget, setAnnTgTarget] = useState<'year1' | 'year2' | 'both'>('both');
 
   // Show Toast Helper
   const showToast = (message: string, type: 'success' | 'error' = 'success') => {
@@ -184,10 +190,46 @@ export default function AdminDashboard() {
       });
       const data = await res.json();
       if (data.success) {
-        showToast('تم إرسال إشعار فوري لجروب التليجرام الخاص بالدفعة!');
+        showToast(data.message || 'تم إرسال إشعار فوري لقنوات التليجرام بنجاح!');
+      } else {
+        showToast(data.message || 'تم تسجيل الإشعار محلياً', 'error');
       }
     } catch (e) {
       console.warn('Telegram broadcast failed', e);
+    }
+  };
+
+  // Handle PDF Upload with Strict Image Prohibition
+  const handlePdfUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
+    if (!isPdf) {
+      showToast('❌ غير مسموح برفع الصور! المنصة تعتمد ملفات PDF فقط (.pdf) توفيراً للمساحة وسرعة التصفح لجميع الطلاب.', 'error');
+      e.target.value = '';
+      return;
+    }
+
+    setUploadingPdf(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      const res = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'فشل في رفع مستند الـ PDF');
+      }
+      setNewResFileUrl(data.url);
+      setUploadedPdfName(data.filename);
+      showToast(`تم رفع مستند الـ PDF بنجاح (${data.file_size})!`);
+    } catch (err: any) {
+      showToast(err.message || 'حدث خطأ أثناء رفع الملف', 'error');
+    } finally {
+      setUploadingPdf(false);
     }
   };
 
@@ -217,19 +259,20 @@ export default function AdminDashboard() {
       is_pinned: false,
     });
 
-    showToast('تم نشر المحتوى الأكاديمي بنجاح!');
+    showToast('تم نشر المحتوى الأكاديمي وحفظه بقاعدة البيانات بنجاح!');
 
-    // Send Telegram broadcast if checked
+    // Send Telegram broadcast if checked with specific channel (Year 1 or Year 2)
     if (notifyTelegram) {
       triggerTelegramBroadcast({
         type: 'resource',
         title: created.title,
-        departmentName: dept?.name_ar || '',
+        departmentName: dept?.name_ar || 'شعبة المساحة العامة',
         academicYear: created.academic_year,
         subjectName: subj?.name_ar || '',
         details: created.summary,
         dueDate: created.due_date || undefined,
         resourceType: created.type,
+        targetChannel: resTgTarget,
       });
     }
 
@@ -238,6 +281,7 @@ export default function AdminDashboard() {
     setNewResSummary('');
     setNewResMarkdown('');
     setNewResFileUrl('');
+    setUploadedPdfName('');
     setNewResDueDate('');
     refreshAllData();
   };
@@ -289,13 +333,16 @@ export default function AdminDashboard() {
 
     showToast('تم نشر الإعلان والتنبيه بنجاح!');
 
-    // Broadcast
-    triggerTelegramBroadcast({
-      type: 'announcement',
-      title: created.title,
-      departmentName: dept?.name_ar || 'عام لكل شعب المعهد',
-      details: created.details,
-    });
+    // Broadcast to Telegram
+    if (annNotifyTg) {
+      triggerTelegramBroadcast({
+        type: 'announcement',
+        title: created.title,
+        departmentName: dept?.name_ar || 'شعبة المساحة العامة',
+        details: created.details,
+        targetChannel: annTgTarget,
+      });
+    }
 
     setAnnTitle('');
     setAnnDetails('');
@@ -565,7 +612,11 @@ export default function AdminDashboard() {
                 <label className="block text-xs font-bold text-[#171717] mb-1.5">الفرقة الدراسية:</label>
                 <select
                   value={newResYear}
-                  onChange={(e) => setNewResYear(e.target.value as AcademicYear)}
+                  onChange={(e) => {
+                    const yr = e.target.value as AcademicYear;
+                    setNewResYear(yr);
+                    setResTgTarget(yr === 'الفرقة الأولى' ? 'year1' : 'year2');
+                  }}
                   className="w-full bg-[#fdfbf9] border-[1.5px] border-[#171717] rounded-[8px] p-2.5 text-xs sm:text-sm text-[#171717] focus:outline-none focus:border-[#ff6f1e] cursor-pointer"
                 >
                   <option value="الفرقة الأولى">الفرقة الأولى</option>
@@ -673,39 +724,142 @@ export default function AdminDashboard() {
               />
             </div>
 
-            {/* File URL (PDF or Drive) */}
-            <div>
-              <label className="block text-xs font-bold text-[#171717] mb-1.5">رابط ملف PDF أو صور الشيت (اختياري):</label>
-              <input
-                type="url"
-                value={newResFileUrl}
-                onChange={(e) => setNewResFileUrl(e.target.value)}
-                placeholder="https://example.com/files/surveying-level.pdf"
-                className="w-full bg-[#fdfbf9] border-[1.5px] border-[#171717] rounded-[8px] p-2.5 text-xs sm:text-sm text-[#171717] focus:outline-none focus:border-[#ff6f1e] dir-ltr text-left"
-              />
+            {/* PDF File Upload & Attachment (STRICTLY PDF ONLY TO SAVE STORAGE) */}
+            <div className="p-4 bg-[#fdfbf9] border-[1.5px] border-[#171717] rounded-[12px] space-y-3">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b-[1px] border-[#171717]/15 pb-2.5">
+                <div className="flex items-center gap-2">
+                  <div className="w-7 h-7 rounded-full bg-[#f7efe9] border-[1px] border-[#171717] flex items-center justify-center text-[#ff6f1e]">
+                    <FileText className="w-4 h-4" />
+                  </div>
+                  <span className="text-xs sm:text-sm font-extrabold text-[#2b1a07]">
+                    مستند المحتوى الأكاديمي (مستندات PDF فقط)
+                  </span>
+                </div>
+                <span className="inline-flex items-center gap-1 text-[11px] font-black text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-300">
+                  <span>🛡️ نظام توفير السعة: PDF فقط (ممنوع الصور)</span>
+                </span>
+              </div>
+
+              <div className="text-[11px] text-[#171717]/70 leading-relaxed">
+                توفيراً لمساحة السيرفر وضماناً لسرعة تحميل وتصفح المواد للطلاب، يسمح برفع مستندات <strong>PDF فقط (.pdf)</strong> بحجم حتى 30 ميجابايت، ويتم حظر الصور والتنسيقات غير المتوافقة تلقائياً.
+              </div>
+
+              {/* Direct File Upload */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                <div>
+                  <label className="block text-xs font-bold text-[#171717] mb-1">
+                    1. رفع ملف PDF من جهازك:
+                  </label>
+                  <label className="flex items-center justify-center gap-2 px-4 py-2.5 bg-[#f7efe9] hover:bg-[#ff6f1e]/10 border-[1.5px] border-dashed border-[#171717] rounded-[8px] cursor-pointer text-xs font-bold text-[#2b1a07] transition-all">
+                    <Upload className="w-4 h-4 text-[#ff6f1e]" />
+                    <span>{uploadingPdf ? 'جاري رفع ملف الـ PDF...' : 'اختر ملف PDF للرفع 📄'}</span>
+                    <input
+                      type="file"
+                      accept=".pdf,application/pdf"
+                      disabled={uploadingPdf}
+                      onChange={handlePdfUpload}
+                      className="hidden"
+                    />
+                  </label>
+                  {uploadedPdfName && (
+                    <div className="text-[11px] font-bold text-emerald-700 mt-1 flex items-center gap-1">
+                      <CheckCircle2 className="w-3.5 h-3.5" />
+                      <span>تم رفع: {uploadedPdfName}</span>
+                    </div>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-[#171717] mb-1">
+                    2. أو رابط ملف PDF خارجي (Google Drive / Direct PDF):
+                  </label>
+                  <input
+                    type="url"
+                    value={newResFileUrl}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (val.match(/\.(png|jpg|jpeg|webp|gif)$/i)) {
+                        showToast('❌ غير مسموح بروابط الصور! يرجى إرفاق رابط مستند PDF فقط توفيراً للمساحة.', 'error');
+                        return;
+                      }
+                      setNewResFileUrl(val);
+                    }}
+                    placeholder="https://.../surveying-sheet.pdf"
+                    className="w-full bg-[#fdfbf9] border-[1.5px] border-[#171717] rounded-[8px] p-2.5 text-xs text-[#171717] focus:outline-none focus:border-[#ff6f1e] dir-ltr text-left"
+                  />
+                </div>
+              </div>
             </div>
 
-            {/* Telegram notification toggle */}
-            <div className="flex items-center gap-2.5 p-3 rounded-[8px] bg-[#fdfbf9] border-[1.5px] border-[#171717]">
-              <input
-                type="checkbox"
-                id="notifyTg"
-                checked={notifyTelegram}
-                onChange={(e) => setNotifyTelegram(e.target.checked)}
-                className="w-4 h-4 rounded text-[#ff6f1e] focus:ring-[#ff6f1e] cursor-pointer accent-[#ff6f1e]"
-              />
-              <label htmlFor="notifyTg" className="text-xs font-bold text-[#171717] cursor-pointer flex items-center gap-1.5">
-                <Send className="w-3.5 h-3.5 text-[#ff6f1e]" />
-                <span>إرسال إشعار فوري لجروب وقناة تليجرام الدفعة فور النشر (Telegram Bot API)</span>
-              </label>
+            {/* Telegram notification toggle & Independent Channel Selection */}
+            <div className="p-4 rounded-[12px] bg-[#fdfbf9] border-[1.5px] border-[#171717] space-y-3">
+              <div className="flex items-center gap-2.5">
+                <input
+                  type="checkbox"
+                  id="notifyTg"
+                  checked={notifyTelegram}
+                  onChange={(e) => setNotifyTelegram(e.target.checked)}
+                  className="w-4 h-4 rounded text-[#ff6f1e] focus:ring-[#ff6f1e] cursor-pointer accent-[#ff6f1e]"
+                />
+                <label htmlFor="notifyTg" className="text-xs sm:text-sm font-extrabold text-[#2b1a07] cursor-pointer flex items-center gap-1.5">
+                  <Send className="w-4 h-4 text-[#ff6f1e]" />
+                  <span>إرسال إشعار فوري لقناة التليجرام الرسمية فور النشر</span>
+                </label>
+              </div>
+
+              {notifyTelegram && (
+                <div className="pt-1 pr-6 space-y-2 border-t-[1px] border-[#171717]/15">
+                  <span className="block text-xs font-bold text-[#171717]">
+                    اختر القناة المستهدفة بالإشعار:
+                  </span>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
+                    <button
+                      type="button"
+                      onClick={() => setResTgTarget('year1')}
+                      className={`p-2.5 rounded-[8px] border-[1.5px] font-bold text-center transition-all cursor-pointer ${
+                        resTgTarget === 'year1'
+                          ? 'bg-[#171717] text-white border-[#171717] shadow-[0_1px_3px_rgba(0,0,0,0.2)]'
+                          : 'bg-[#f7efe9] text-[#171717] border-[#171717]/40 hover:bg-[#fdfbf9]'
+                      }`}
+                    >
+                      📘 قناة الفرقة الأولى فقط
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setResTgTarget('year2')}
+                      className={`p-2.5 rounded-[8px] border-[1.5px] font-bold text-center transition-all cursor-pointer ${
+                        resTgTarget === 'year2'
+                          ? 'bg-[#171717] text-white border-[#171717] shadow-[0_1px_3px_rgba(0,0,0,0.2)]'
+                          : 'bg-[#f7efe9] text-[#171717] border-[#171717]/40 hover:bg-[#fdfbf9]'
+                      }`}
+                    >
+                      📙 قناة الفرقة الثانية فقط
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setResTgTarget('both')}
+                      className={`p-2.5 rounded-[8px] border-[1.5px] font-bold text-center transition-all cursor-pointer ${
+                        resTgTarget === 'both'
+                          ? 'bg-[#ff6f1e] text-[#2b1a07] border-[#171717] shadow-[0_1px_3px_rgba(0,0,0,0.2)]'
+                          : 'bg-[#f7efe9] text-[#171717] border-[#171717]/40 hover:bg-[#fdfbf9]'
+                      }`}
+                    >
+                      🌐 القناتين معاً (إشعار عام)
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Submit Button */}
             <button
               type="submit"
-              className="w-full py-3 px-4 rounded-full bg-[#ff6f1e] hover:bg-[#ff6f1e]/90 text-[#2b1a07] font-extrabold text-sm border-[1.5px] border-[#171717] shadow-[0_1px_2px_rgba(0,0,0,0.25)] transition-all cursor-pointer"
+              className="w-full py-3.5 px-4 rounded-full bg-[#ff6f1e] hover:bg-[#ff6f1e]/90 text-[#2b1a07] font-black text-sm border-[1.5px] border-[#171717] shadow-[0_2px_4px_rgba(0,0,0,0.25)] transition-all cursor-pointer flex items-center justify-center gap-2"
             >
-              نشر التلخيص / الشيت الآن
+              <CheckCircle2 className="w-4 h-4" />
+              <span>نشر التلخيص / مستند الـ PDF الآن</span>
             </button>
           </form>
         </div>
@@ -999,11 +1153,70 @@ export default function AdminDashboard() {
               />
             </div>
 
+            {/* Telegram Notification Options for Announcements */}
+            <div className="p-3.5 rounded-[12px] bg-[#fdfbf9] border-[1.5px] border-[#171717] space-y-2.5">
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  id="annNotifyTgBox"
+                  checked={annNotifyTg}
+                  onChange={(e) => setAnnNotifyTg(e.target.checked)}
+                  className="w-4 h-4 rounded text-[#ff6f1e] focus:ring-[#ff6f1e] cursor-pointer accent-[#ff6f1e]"
+                />
+                <label htmlFor="annNotifyTgBox" className="text-xs font-extrabold text-[#2b1a07] cursor-pointer flex items-center gap-1.5">
+                  <Send className="w-3.5 h-3.5 text-[#ff6f1e]" />
+                  <span>إرسال هذا التنبيه فوراً إلى قناة التليجرام</span>
+                </label>
+              </div>
+
+              {annNotifyTg && (
+                <div className="pr-6 pt-1 space-y-1.5 border-t border-[#171717]/10">
+                  <span className="block text-[11px] font-bold text-[#171717]">القناة المستهدفة:</span>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
+                    <button
+                      type="button"
+                      onClick={() => setAnnTgTarget('year1')}
+                      className={`py-2 px-2 rounded-[6px] border-[1.5px] font-bold text-center transition-all cursor-pointer ${
+                        annTgTarget === 'year1'
+                          ? 'bg-[#171717] text-white border-[#171717]'
+                          : 'bg-[#f7efe9] text-[#171717] border-[#171717]/40'
+                      }`}
+                    >
+                      قناة سنة أولى
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setAnnTgTarget('year2')}
+                      className={`py-2 px-2 rounded-[6px] border-[1.5px] font-bold text-center transition-all cursor-pointer ${
+                        annTgTarget === 'year2'
+                          ? 'bg-[#171717] text-white border-[#171717]'
+                          : 'bg-[#f7efe9] text-[#171717] border-[#171717]/40'
+                      }`}
+                    >
+                      قناة سنة ثانية
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setAnnTgTarget('both')}
+                      className={`py-2 px-2 rounded-[6px] border-[1.5px] font-bold text-center transition-all cursor-pointer ${
+                        annTgTarget === 'both'
+                          ? 'bg-[#ff6f1e] text-[#2b1a07] border-[#171717]'
+                          : 'bg-[#f7efe9] text-[#171717] border-[#171717]/40'
+                      }`}
+                    >
+                      القناتين معاً (إشعار عام)
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+
             <button
               type="submit"
-              className="w-full py-3 px-4 rounded-full bg-[#ff6f1e] hover:bg-[#ff6f1e]/90 text-[#2b1a07] font-extrabold text-sm border-[1.5px] border-[#171717] shadow-[0_1px_2px_rgba(0,0,0,0.25)] cursor-pointer"
+              className="w-full py-3.5 px-4 rounded-full bg-[#ff6f1e] hover:bg-[#ff6f1e]/90 text-[#2b1a07] font-black text-sm border-[1.5px] border-[#171717] shadow-[0_2px_4px_rgba(0,0,0,0.25)] transition-all cursor-pointer flex items-center justify-center gap-2"
             >
-              نشر التنبيه الفوري
+              <Bell className="w-4 h-4" />
+              <span>نشر التنبيه الفوري</span>
             </button>
           </form>
         </div>
@@ -1014,6 +1227,60 @@ export default function AdminDashboard() {
       {/* ---------------------------------------------------- */}
       {activeTab === 'manage' && (
         <div className="space-y-6">
+          {/* Database Synchronization Status Panel */}
+          <div className="bg-[#fdfbf9] border-[1.5px] border-[#171717] rounded-[16px] p-6 shadow-[0_1px_2px_rgba(0,0,0,0.15)] space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b-[1.5px] border-[#171717]/15 pb-3">
+              <div>
+                <h3 className="font-extrabold text-[#2b1a07] text-base flex items-center gap-2">
+                  <Database className="w-5 h-5 text-[#ff6f1e]" />
+                  <span>حالة تزامن وحفظ قواعد البيانات (Database Synchronization)</span>
+                </h3>
+                <p className="text-xs text-[#171717]/70 mt-0.5">
+                  تأكيد اتصال وتزامن السيرفر والذاكرة السحابية لقسم المساحة
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                <span className="text-xs font-black text-emerald-800">النظام متزامن ومحفوظ</span>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+              {/* Local File DB Card */}
+              <div className="p-4 rounded-[12px] bg-[#f7efe9] border-[1.5px] border-[#171717] space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="font-black text-[#2b1a07]">1. قاعدة البيانات المحلية (Permanent Server DB)</span>
+                  <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold text-[10px] border border-emerald-300">
+                    نشطة لحظياً ✓
+                  </span>
+                </div>
+                <p className="text-[#171717]/80 text-[11px] leading-relaxed">
+                  يتم حفظ وتحديث الطلاب (حساباتهم وفرقهم)، والمقررات الـ 32، والمذكرات والسكاشن تلقائياً ومباشرة في <code className="bg-[#fdfbf9] px-1 py-0.5 rounded border border-[#171717]/20">data/db.json</code> وتعمل بدون أي انقطاع.
+                </p>
+              </div>
+
+              {/* Supabase Cloud DB Card */}
+              <div className="p-4 rounded-[12px] bg-[#f7efe9] border-[1.5px] border-[#171717] space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="font-black text-[#2b1a07]">2. سحابة Supabase السحابية (PostgreSQL + Storage)</span>
+                  <span className={`px-2 py-0.5 rounded-full font-bold text-[10px] border ${
+                    isSupabaseConfigured
+                      ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
+                      : 'bg-amber-100 text-amber-800 border-amber-300'
+                  }`}>
+                    {isSupabaseConfigured ? 'متصلة سحابياً ✓' : 'جاهزة للربط عبر .env.local'}
+                  </span>
+                </div>
+                <p className="text-[#171717]/80 text-[11px] leading-relaxed">
+                  {isSupabaseConfigured
+                    ? 'مشروع Supabase مربوط ويعمل بكفاءة عبر مفاتيح API السحابية.'
+                    : 'يمكن وضع رابط ومفتاح Supabase في ملف .env.local للتزامن المباشر مع سحابة PostgreSQL و Supabase Storage.'}
+                </p>
+              </div>
+            </div>
+          </div>
+
           {/* Backup Actions Card */}
           <div className="bg-[#f7efe9] border-[1.5px] border-[#171717] rounded-[16px] p-6 shadow-[0_1px_2px_rgba(0,0,0,0.15)] flex flex-col md:flex-row items-center justify-between gap-4">
             <div>

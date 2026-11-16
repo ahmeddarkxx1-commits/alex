@@ -212,6 +212,15 @@ export async function createResource(newRes: Omit<Resource, 'id' | 'views_count'
     created_at: new Date().toISOString(),
   };
 
+  // Sync with Backend Server DB
+  if (typeof window !== 'undefined') {
+    fetch('/api/resources', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(resourceToSave),
+    }).catch((e) => console.warn('Backend resource sync error:', e));
+  }
+
   if (isSupabaseConfigured) {
     try {
       const { data, error } = await (supabase.from('resources') as any).insert([resourceToSave]).select().single();
@@ -228,6 +237,13 @@ export async function createResource(newRes: Omit<Resource, 'id' | 'views_count'
 }
 
 export async function deleteResource(id: string): Promise<boolean> {
+  // Sync delete with Backend Server DB
+  if (typeof window !== 'undefined') {
+    fetch(`/api/resources?id=${encodeURIComponent(id)}`, {
+      method: 'DELETE',
+    }).catch((e) => console.warn('Backend resource delete error:', e));
+  }
+
   if (isSupabaseConfigured) {
     try {
       const { error } = await supabase.from('resources').delete().eq('id', id);
@@ -333,6 +349,15 @@ export async function createSchedule(newSch: Omit<Schedule, 'id' | 'created_at'>
     created_at: new Date().toISOString(),
   };
 
+  // Sync with Backend Server DB
+  if (typeof window !== 'undefined') {
+    fetch('/api/schedules', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(item),
+    }).catch((e) => console.warn('Backend schedule sync error:', e));
+  }
+
   if (isSupabaseConfigured) {
     try {
       const { data, error } = await (supabase.from('schedules') as any).insert([item]).select().single();
@@ -349,6 +374,13 @@ export async function createSchedule(newSch: Omit<Schedule, 'id' | 'created_at'>
 }
 
 export async function deleteSchedule(id: string): Promise<boolean> {
+  // Sync delete with Backend Server DB
+  if (typeof window !== 'undefined') {
+    fetch(`/api/schedules?id=${encodeURIComponent(id)}`, {
+      method: 'DELETE',
+    }).catch((e) => console.warn('Backend schedule delete error:', e));
+  }
+
   if (isSupabaseConfigured) {
     try {
       const { error } = await supabase.from('schedules').delete().eq('id', id);
@@ -358,7 +390,8 @@ export async function deleteSchedule(id: string): Promise<boolean> {
     }
   }
   const list = getLocalItem<Schedule[]>(STORAGE_KEYS.SCHEDULES, INITIAL_SCHEDULES);
-  setLocalItem(STORAGE_KEYS.SCHEDULES, list.filter((s) => s.id !== id));
+  const filtered = list.filter((s) => s.id !== id);
+  setLocalItem(STORAGE_KEYS.SCHEDULES, filtered);
   return true;
 }
 
@@ -413,6 +446,15 @@ export async function createAnnouncement(newAnn: Omit<Announcement, 'id' | 'crea
     id: `ann-${Date.now()}`,
     created_at: new Date().toISOString(),
   };
+
+  // Sync with Backend Server DB
+  if (typeof window !== 'undefined') {
+    fetch('/api/announcements', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(item),
+    }).catch((e) => console.warn('Backend announcement sync error:', e));
+  }
 
   if (isSupabaseConfigured) {
     try {

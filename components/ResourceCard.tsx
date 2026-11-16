@@ -56,9 +56,16 @@ export default function ResourceCard({
       <div>
         {/* Top: Category Tag & Bookmark */}
         <div className="flex items-center justify-between gap-2 mb-3">
-          <span className={`text-[11px] font-bold px-3 py-0.5 rounded-[20px] border-[1.5px] shadow-[0_1px_2px_rgba(0,0,0,0.1)] ${getBadgeStyle()}`}>
-            {resource.type}
-          </span>
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <span className={`text-[11px] font-bold px-3 py-0.5 rounded-[20px] border-[1.5px] shadow-[0_1px_2px_rgba(0,0,0,0.1)] ${getBadgeStyle()}`}>
+              {resource.type}
+            </span>
+            {resource.file_url && (
+              <span className="text-[10px] font-black px-2 py-0.5 rounded-[20px] bg-rose-50 text-rose-700 border-[1px] border-rose-300">
+                مستند PDF 📄
+              </span>
+            )}
+          </div>
 
           <button
             onClick={() => onToggleBookmark(resource.id)}
