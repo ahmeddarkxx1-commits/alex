@@ -57,7 +57,20 @@
       "icon_name": "Car"
     }
   ],
-  "students": [],
+  "students": [
+    {
+      "id": "student-1794860979474",
+      "name": "أحمد محمود فني مساحة",
+      "student_code": "SURV2026-TEST",
+      "phone": "01299887766",
+      "department_id": "dept-surveying",
+      "department_name": "شعبة المساحة العامة",
+      "academic_year": "الفرقة الأولى",
+      "semester_number": 1,
+      "section_number": "سكشن 2",
+      "created_at": "2026-11-16T20:29:39.474Z"
+    }
+  ],
   "subjects": [
     {
       "id": "subj-sem1-1",

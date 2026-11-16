@@ -54,6 +54,36 @@ export async function POST(request: NextRequest) {
       review_status: body.review_status || 'approved',
     });
 
+    // Sync with Supabase Cloud
+    try {
+      const { isSupabaseConfigured, supabase } = await import('@/lib/supabase');
+      if (isSupabaseConfigured) {
+        await (supabase.from('resources') as any).upsert({
+          id: created.id,
+          department_id: created.department_id,
+          subject_id: created.subject_id,
+          academic_year: created.academic_year,
+          semester_number: created.semester_number,
+          type: created.type,
+          title: created.title,
+          summary: created.summary,
+          content_markdown: created.content_markdown,
+          file_url: created.file_url,
+          due_date: created.due_date,
+          week_number: created.week_number,
+          author_name: created.author_name,
+          is_pinned: created.is_pinned,
+          views_count: created.views_count,
+          review_status: created.review_status,
+          reviewer_name: created.reviewer_name,
+          reviewed_at: created.reviewed_at,
+          created_at: created.created_at,
+        });
+      }
+    } catch (syncErr) {
+      console.warn('Supabase resource insert sync warning:', syncErr);
+    }
+
     return NextResponse.json(created, { status: 201 });
   } catch (err: any) {
     return NextResponse.json({ error: err.message || 'Error creating resource' }, { status: 500 });
@@ -73,6 +103,16 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: 'المورد غير موجود' }, { status: 404 });
     }
 
+    // Sync delete with Supabase Cloud
+    try {
+      const { isSupabaseConfigured, supabase } = await import('@/lib/supabase');
+      if (isSupabaseConfigured) {
+        await supabase.from('resources').delete().eq('id', id);
+      }
+    } catch (syncErr) {
+      console.warn('Supabase resource delete sync warning:', syncErr);
+    }
+
     return NextResponse.json({ success: true });
   } catch (err: any) {
     return NextResponse.json({ error: err.message || 'Error deleting resource' }, { status: 500 });
@@ -90,6 +130,16 @@ export async function PATCH(request: NextRequest) {
     const updated = dbUpdateResource(body.id, body);
     if (!updated) {
       return NextResponse.json({ error: 'المورد غير موجود' }, { status: 404 });
+    }
+
+    // Sync update with Supabase Cloud
+    try {
+      const { isSupabaseConfigured, supabase } = await import('@/lib/supabase');
+      if (isSupabaseConfigured) {
+        await (supabase.from('resources') as any).update(body).eq('id', body.id);
+      }
+    } catch (syncErr) {
+      console.warn('Supabase resource update sync warning:', syncErr);
     }
 
     return NextResponse.json(updated);

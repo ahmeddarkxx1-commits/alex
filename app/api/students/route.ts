@@ -44,6 +44,17 @@ export async function POST(request: NextRequest) {
     };
 
     const saved = dbCreateOrUpdateStudent(student);
+
+    // Two-way synchronization with Supabase Cloud
+    const { isSupabaseConfigured, supabase } = await import('@/lib/supabase');
+    if (isSupabaseConfigured) {
+      try {
+        await supabase.from('students').upsert(saved);
+      } catch (syncErr) {
+        console.warn('Supabase student sync warning:', syncErr);
+      }
+    }
+
     return NextResponse.json(saved, { status: 201 });
   } catch (err: any) {
     return NextResponse.json({ error: err.message || 'فشل في حفظ بيانات الطالب' }, { status: 500 });

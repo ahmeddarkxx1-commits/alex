@@ -29,6 +29,27 @@ export async function POST(request: NextRequest) {
     }
 
     if (!student) {
+      // Check Supabase Cloud Database
+      try {
+        const { isSupabaseConfigured, supabase } = await import('@/lib/supabase');
+        if (isSupabaseConfigured) {
+          const { data } = await supabase
+            .from('students')
+            .select('*')
+            .or(`student_code.eq.${query},name.ilike.%${query}%,phone.eq.${query}`)
+            .limit(1);
+          if (data && data.length > 0) {
+            student = data[0] as any;
+            const { dbCreateOrUpdateStudent } = await import('@/lib/db');
+            if (student) dbCreateOrUpdateStudent(student);
+          }
+        }
+      } catch (cloudErr) {
+        console.warn('Supabase login fallback warning:', cloudErr);
+      }
+    }
+
+    if (!student) {
       return NextResponse.json({ error: 'لم يتم العثور على طالب بهذه البيانات. يمكنك التسجيل كطالب جديد.' }, { status: 404 });
     }
 

@@ -218,6 +218,7 @@ export function dbGetResources(params?: {
   // Attach joins
   list = list.map((r) => ({
     ...r,
+    review_status: r.review_status || 'approved',
     subject: subjects.find((s) => s.id === r.subject_id),
     department: departments.find((d) => d.id === r.department_id),
   }));
