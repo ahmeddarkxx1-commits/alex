@@ -1,5 +1,14 @@
 export type AcademicYear = 'الفرقة الأولى' | 'الفرقة الثانية';
-export type AcademicSemester = 'الترم الأول' | 'الترم الثاني';
+export type AcademicSemester = 
+  | 'الفصل الدراسي الأول' 
+  | 'الفصل الدراسي الثاني' 
+  | 'الفصل الدراسي الثالث' 
+  | 'الفصل الدراسي الرابع'
+  | 'الترم الأول'
+  | 'الترم الثاني';
+
+export type SemesterNumber = 1 | 2 | 3 | 4;
+
 export type ResourceType = 'تلخيص محاضرة' | 'شيت وتكليف' | 'مذكرة سكشن عملي' | 'بنك أسئلة وامتحانات';
 export type SessionType = 'محاضرة نظري' | 'سكشن عملي' | 'ورشة' | 'معمل';
 export type SectionNumber = 'عام' | 'سكشن 1' | 'سكشن 2' | 'سكشن 3' | 'سكشن 4';
@@ -23,9 +32,12 @@ export interface Subject {
   department_id: string;
   academic_year: AcademicYear;
   semester: AcademicSemester;
+  semester_number: SemesterNumber;
   name_ar: string;
-  code?: string;
+  code: string;
   instructor_name?: string;
+  description?: string;
+  icon_name?: string;
   created_at?: string;
 }
 
@@ -34,6 +46,7 @@ export interface Resource {
   department_id: string;
   subject_id: string;
   academic_year: AcademicYear;
+  semester_number?: SemesterNumber;
   type: ResourceType;
   title: string;
   summary: string;
@@ -45,7 +58,7 @@ export interface Resource {
   is_pinned: boolean;
   views_count: number;
   created_at: string;
-  // Joins / Populated fields for frontend convenience
+  // Joins
   department?: Department;
   subject?: Subject;
 }
@@ -55,9 +68,10 @@ export interface Schedule {
   department_id: string;
   subject_id: string;
   academic_year: AcademicYear;
+  semester_number?: SemesterNumber;
   day_of_week: DayOfWeek;
-  start_time: string; // HH:mm format
-  end_time: string;   // HH:mm format
+  start_time: string; // HH:mm
+  end_time: string;   // HH:mm
   session_type: SessionType;
   section_number: SectionNumber;
   location_room: string;
@@ -78,7 +92,6 @@ export interface Announcement {
   event_date?: string | null;
   is_active: boolean;
   created_at: string;
-  // Joins
   department?: Department;
 }
 
@@ -91,7 +104,6 @@ export interface AdminUser {
   created_at: string;
 }
 
-// Supabase Database Mapping
 export interface Database {
   public: {
     Tables: {

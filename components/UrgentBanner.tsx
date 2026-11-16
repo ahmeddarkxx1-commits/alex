@@ -65,3 +65,4 @@ export default function UrgentBanner({ announcements, onSelectAnnouncement }: Ur
     </div>
   );
 }
+

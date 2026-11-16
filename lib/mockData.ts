@@ -6,15 +6,15 @@ export const INITIAL_DEPARTMENTS: Department[] = [
     slug: 'surveying',
     name_ar: 'شعبة المساحة العامة والخرائط',
     short_name: 'مساحة عامة',
-    description: 'أعمال الرفع المساحي الميداني، أجهزة التوتال ستيشن والميزان، نظم المعلومات الجغرافية GIS، والخرائط الطبوغرافية وحصر الكميات.',
+    description: 'الرفع المساحي، أجهزة الميزان والتوتال ستيشن، نظم المعلومات الجغرافية GIS، المساحة التصويرية والرقمية، وحساب الكميات.',
     icon_name: 'Compass',
   },
   {
     id: 'dept-arch-civil',
     slug: 'architecture-civil',
     name_ar: 'شعبة العمارة والإنشاءات المدنية',
-    short_name: 'عمارة وإنشاءات',
-    description: 'الرسم الهندسي المعماري، تكنولوجيا الخرسانة، ميكانيكا التربة والأساسات، وحساب تكاليف المشاريع الإنشائية.',
+    short_name: 'عمارة ومدني',
+    description: 'الرسم المعماري، تكنولوجيا الخرسانة، ميكانيكا التربة، وحصر الكميات الإنشائية.',
     icon_name: 'Building2',
   },
   {
@@ -22,7 +22,7 @@ export const INITIAL_DEPARTMENTS: Department[] = [
     slug: 'electrical-networks',
     name_ar: 'شعبة الشبكات والآلات الكهربية',
     short_name: 'كهرباء وقوى',
-    description: 'محطات التوليد وشبكات النقل والتوزيع، الآلات والمحركات الكهربية، المحولات، ولوحات التحكم والتوزيع الصناعية.',
+    description: 'شبكات التوزيع ومحطات المحولات، الآلات الكهربية، ولوحات التحكم والتوزيع الصناعية.',
     icon_name: 'Zap',
   },
   {
@@ -30,15 +30,15 @@ export const INITIAL_DEPARTMENTS: Department[] = [
     slug: 'electronics-computers',
     name_ar: 'شعبة الأجهزة الإلكترونية والحاسبات',
     short_name: 'إلكترونيات وحاسبات',
-    description: 'الدوائر الإلكترونية التناظرية والرقمية، المتحكمات الدقيقة Microcontrollers، صيانة الحاسب وشبكات الاتصالات ونظم المراقبة.',
+    description: 'الدوائر الإلكترونية، المتحكمات الدقيقة، شبكات الاتصالات، وصيانة الحاسب الآلي.',
     icon_name: 'Cpu',
   },
   {
     id: 'dept-refrigeration',
     slug: 'refrigeration-ac',
-    name_ar: 'شعبة تكنولوجيا التبريد وتكييف الهواء',
+    name_ar: 'شعبة التبريد وتكييف الهواء',
     short_name: 'تبريد وتكييف',
-    description: 'دورات التبريد الإنضغاطية، حساب الأحمال الحرارية للتكييف المركزي، نظم التثليج الصناعي وصيانة وحدات التكييف المنزلي والتجاري.',
+    description: 'دورات التبريد، حساب الأحمال الحرارية، ونظم التكييف المركزي والمستودعات المبردة.',
     icon_name: 'Snowflake',
   },
   {
@@ -46,486 +46,783 @@ export const INITIAL_DEPARTMENTS: Department[] = [
     slug: 'mechanical-production',
     name_ar: 'شعبة التشغيل والتشكيل وتكنولوجيا الإنتاج',
     short_name: 'تشغيل وميكانيكا',
-    description: 'ماكينات الخراطة والتفريز والتجليخ، تشكيل المعادن واللحام، تكنولوجيا القياسات والمعايرة، وأساسيات التحكم الرقمي CNC.',
+    description: 'ماكينات الخراطة والتفريز، تشكيل المعادن، تكنولوجيا القياسات، وأساسيات التحكم CNC.',
     icon_name: 'Wrench',
   },
   {
     id: 'dept-automotive',
     slug: 'automotive',
-    name_ar: 'شعبة تكنولوجيا ميكانيكا وكهرباء السيارات',
+    name_ar: 'شعبة ميكانيكا وكهرباء السيارات',
     short_name: 'سيارات ومحركات',
-    description: 'محركات الاحتراق الداخلي بنزين وديزل، نظم حقن الوقود الإلكتروني EFI، أنظمة الفرامل والتعليق والتوجيه، وأجهزة الفحص والتشخيص OBD.',
+    description: 'محركات الاحتراق الداخلي بنزين وديزل، نظم الحقن الإلكتروني، وأجهزة الفحص OBD.',
     icon_name: 'Car',
   },
 ];
 
+// ====================================================================
+// المقررات الدراسية الرسمية لشعبة المساحة العامة (32 مادة عبر 4 فصول دراسية)
+// ====================================================================
 export const INITIAL_SUBJECTS: Subject[] = [
-  // شعبة المساحة - الفرقة الأولى
+  // ------------------------------------------------------------------
+  // الفصل الدراسي الأول (الفرقة الأولى) - 8 مواد
+  // ------------------------------------------------------------------
   {
-    id: 'subj-surv-101',
+    id: 'subj-sem1-1',
     department_id: 'dept-surveying',
     academic_year: 'الفرقة الأولى',
-    semester: 'الترم الأول',
-    name_ar: 'الأجهزة المساحية والميزانيات',
+    semester: 'الفصل الدراسي الأول',
+    semester_number: 1,
+    name_ar: 'أجهزة مساحية',
     code: 'SURV-101',
     instructor_name: 'د. إبراهيم عبد العزيز',
+    description: 'أجهزة الميزان بأنواعه، الثيودوليت، البوصلة المساحية، أشرطة القياس، واختبارات وضبط خط التسديد.',
+    icon_name: 'Crosshair',
   },
   {
-    id: 'subj-surv-102',
+    id: 'subj-sem1-2',
     department_id: 'dept-surveying',
     academic_year: 'الفرقة الأولى',
-    semester: 'الترم الأول',
-    name_ar: 'المساحة الطبوغرافية والبوصلة',
+    semester: 'الفصل الدراسي الأول',
+    semester_number: 1,
+    name_ar: 'تطبيقات مساحه مستويه',
     code: 'SURV-102',
     instructor_name: 'م. حسام الدين توفيق',
+    description: 'التمارين الحقلية العملية على الرفع بالشريط وإقامة وإسقاط الأعمدة والميزانيات الطولية والشبكية في أرض المعهد.',
+    icon_name: 'MapPin',
   },
   {
-    id: 'subj-surv-103',
+    id: 'subj-sem1-3',
     department_id: 'dept-surveying',
     academic_year: 'الفرقة الأولى',
-    semester: 'الترم الأول',
-    name_ar: 'الرسم المساحي وإسقاط الخرائط',
-    code: 'SURV-103',
+    semester: 'الفصل الدراسي الأول',
+    semester_number: 1,
+    name_ar: 'رسم فني',
+    code: 'ENG-101',
     instructor_name: 'م. سارة محمود',
+    description: 'أدوات الرسم الهندسي، العمليات الهندسية، الإسقاط العمودي، رسم المساقط الثلاثة والقطاعات الهندسية.',
+    icon_name: 'PenTool',
   },
   {
-    id: 'subj-surv-104',
+    id: 'subj-sem1-4',
     department_id: 'dept-surveying',
     academic_year: 'الفرقة الأولى',
-    semester: 'الترم الثاني',
-    name_ar: 'حساب المثلثات الكروية وتطبيقاتها',
-    code: 'MATH-102',
+    semester: 'الفصل الدراسي الأول',
+    semester_number: 1,
+    name_ar: 'مساحه مستويه',
+    code: 'SURV-103',
+    instructor_name: 'د. محمد أبو العز',
+    description: 'النظريات والقوانين الرياضية للمساحة المستوية، تصحيحات قياس الأطوال (الحرارة، الشد، الترهيم)، ومبادئ الميزانية.',
+    icon_name: 'Ruler',
+  },
+  {
+    id: 'subj-sem1-5',
+    department_id: 'dept-surveying',
+    academic_year: 'الفرقة الأولى',
+    semester: 'الفصل الدراسي الأول',
+    semester_number: 1,
+    name_ar: 'رياضيات',
+    code: 'MATH-101',
     instructor_name: 'د. عادل القاضي',
+    description: 'حساب المثلثات المستوية والكروية، المتجهات، الدوال والتفاضل والتكامل وتطبيقاتها في حساب المسافات والمساحات.',
+    icon_name: 'Binary',
+  },
+  {
+    id: 'subj-sem1-6',
+    department_id: 'dept-surveying',
+    academic_year: 'الفرقة الأولى',
+    semester: 'الفصل الدراسي الأول',
+    semester_number: 1,
+    name_ar: 'تكنولوجيا المعلومات',
+    code: 'IT-101',
+    instructor_name: 'م. أحمد شكري',
+    description: 'أساسيات الحاسب الآلي ونظم التشغيل، معالجة الجداول الحسابية Excel لمعادلات المساحة، وحفظ وتنسيق البيانات.',
+    icon_name: 'Monitor',
+  },
+  {
+    id: 'subj-sem1-7',
+    department_id: 'dept-surveying',
+    academic_year: 'الفرقة الأولى',
+    semester: 'الفصل الدراسي الأول',
+    semester_number: 1,
+    name_ar: 'لغة انجليزية',
+    code: 'ENG-102',
+    instructor_name: 'د. ريهام عبد الحميد',
+    description: 'المصطلحات الهندسية والمساحية الأساسية وقواعد اللغة الإنجليزية للتعامل مع كتالوجات الأجهزة ومواصفات المشاريع.',
+    icon_name: 'Languages',
+  },
+  {
+    id: 'subj-sem1-8',
+    department_id: 'dept-surveying',
+    academic_year: 'الفرقة الأولى',
+    semester: 'الفصل الدراسي الأول',
+    semester_number: 1,
+    name_ar: 'السلامة المهنية',
+    code: 'SAFE-101',
+    instructor_name: 'م. أيمن الغرباوي',
+    description: 'إجراءات الصحة والسلامة المهنية في المواقع الإنشائية وأثناء أعمال الرصد الميداني في الطرق ومواقع العمل.',
+    icon_name: 'ShieldAlert',
   },
 
-  // شعبة المساحة - الفرقة الثانية
+  // ------------------------------------------------------------------
+  // الفصل الدراسي الثاني (الفرقة الأولى) - 8 مواد
+  // ------------------------------------------------------------------
   {
-    id: 'subj-surv-201',
+    id: 'subj-sem2-1',
     department_id: 'dept-surveying',
-    academic_year: 'الفرقة الثانية',
-    semester: 'الترم الأول',
-    name_ar: 'المساحة الجيوديسية ونظام GPS',
-    code: 'SURV-201',
+    academic_year: 'الفرقة الأولى',
+    semester: 'الفصل الدراسي الثاني',
+    semester_number: 2,
+    name_ar: 'مساحة جيوديسية',
+    code: 'SURV-104',
     instructor_name: 'د. مدحت الشناوي',
+    description: 'شكل الأرض والمراجع الجيوديسية (Ellipsoid & Geoid)، انحناء الأرض وتأثيره، وشبكات المثلثات ورصد الأقمار الصناعية GPS.',
+    icon_name: 'Globe2',
   },
   {
-    id: 'subj-surv-202',
+    id: 'subj-sem2-2',
     department_id: 'dept-surveying',
-    academic_year: 'الفرقة الثانية',
-    semester: 'الترم الأول',
-    name_ar: 'حصر الكميات والمستخلصات وتطبيقات الطرق',
-    code: 'SURV-202',
-    instructor_name: 'م. أحمد الشريف',
+    academic_year: 'الفرقة الأولى',
+    semester: 'الفصل الدراسي الثاني',
+    semester_number: 2,
+    name_ar: 'تطبيقات مساحة جيوديسية',
+    code: 'SURV-105',
+    instructor_name: 'م. عمر سامي',
+    description: 'تطبيقات حقلية باستخدام مستقبلات GPS / GNSS الثابتة والمتحركة (RTK) وربط المحطات بالشبكة الوطنية.',
+    icon_name: 'Navigation',
   },
   {
-    id: 'subj-surv-203',
+    id: 'subj-sem2-3',
     department_id: 'dept-surveying',
-    academic_year: 'الفرقة الثانية',
-    semester: 'الترم الأول',
-    name_ar: 'ميكانيكا التربة وهندسة الري والمطارات',
-    code: 'CIV-205',
-    instructor_name: 'د. طارق السعيد',
-  },
-
-  // عمارة وإنشاءات
-  {
-    id: 'subj-arch-101',
-    department_id: 'dept-arch-civil',
     academic_year: 'الفرقة الأولى',
-    semester: 'الترم الأول',
-    name_ar: 'رسم وتصميم معماري تنفيذي',
-    code: 'ARCH-101',
-    instructor_name: 'د. شريف الدسوقي',
+    semester: 'الفصل الدراسي الثاني',
+    semester_number: 2,
+    name_ar: 'تك معلومات متقدمة',
+    code: 'IT-102',
+    instructor_name: 'م. يوسف النجار',
+    description: 'إدارة قواعد البيانات المكانية وتطوير شيتات حسابية برمجية لأتمتة تفريغ القياسات الميدانية وحساب المناسيب.',
+    icon_name: 'Database',
   },
   {
-    id: 'subj-civ-101',
-    department_id: 'dept-arch-civil',
+    id: 'subj-sem2-4',
+    department_id: 'dept-surveying',
     academic_year: 'الفرقة الأولى',
-    semester: 'الترم الأول',
-    name_ar: 'خواص واختبار مواد البناء والخرسانة',
+    semester: 'الفصل الدراسي الثاني',
+    semester_number: 2,
+    name_ar: 'كميات ومواصفات',
     code: 'CIV-101',
-    instructor_name: 'د. علاء منصور',
+    instructor_name: 'م. أحمد الشريف',
+    description: 'حصر كميات الحفر والردم لمشاريع الطرق وقنوات الري، إعداد جداول الحصر والمستخلصات الشهرية لمقاولي التنفيذ.',
+    icon_name: 'Calculator',
+  },
+  {
+    id: 'subj-sem2-5',
+    department_id: 'dept-surveying',
+    academic_year: 'الفرقة الأولى',
+    semester: 'الفصل الدراسي الثاني',
+    semester_number: 2,
+    name_ar: 'قوانين وتشريعات تخصصية',
+    code: 'LAW-101',
+    instructor_name: 'د. مجدي كمال',
+    description: 'قوانين نزع الملكية للمنفعة العامة، السجل العيني، لوائح نقابة التطبيقيين والمسؤولية القانونية للمساح المعتمد.',
+    icon_name: 'Scale',
+  },
+  {
+    id: 'subj-sem2-6',
+    department_id: 'dept-surveying',
+    academic_year: 'الفرقة الأولى',
+    semester: 'الفصل الدراسي الثاني',
+    semester_number: 2,
+    name_ar: 'نظرية الأخطاء',
+    code: 'SURV-106',
+    instructor_name: 'د. طارق السعيد',
+    description: 'أنواع الأخطاء (نظامية، عفوية، جسيمة)، الانحراف المعياري، حساب خطأ القفل الزاوي وتوزيع الأخطاء بطريقة المربعات الصغرى.',
+    icon_name: 'Percent',
+  },
+  {
+    id: 'subj-sem2-7',
+    department_id: 'dept-surveying',
+    academic_year: 'الفرقة الأولى',
+    semester: 'الفصل الدراسي الثاني',
+    semester_number: 2,
+    name_ar: 'رسم تخصصي',
+    code: 'ENG-103',
+    instructor_name: 'م. سارة محمود',
+    description: 'رسم اللوحات الطبوغرافية اليدوية وتوقيع مضلعات الترافرس ومقاييس الرسم المساحية واستخدام الرموز والاصطلاحات المعتمدة.',
+    icon_name: 'Layers',
+  },
+  {
+    id: 'subj-sem2-8',
+    department_id: 'dept-surveying',
+    academic_year: 'الفرقة الأولى',
+    semester: 'الفصل الدراسي الثاني',
+    semester_number: 2,
+    name_ar: 'تصنيف تربة ومحاصيل',
+    code: 'AGRI-101',
+    instructor_name: 'د. مصطفى العوضي',
+    description: 'دراسة أنواع التربة وتأثيرها على استقرار الأجهزة والمباني، وشبكات الري والصرف الزراعي وعلاقتها بالمشاريع المساحية.',
+    icon_name: 'Wheat',
   },
 
-  // كهرباء
+  // ------------------------------------------------------------------
+  // الفصل الدراسي الثالث (الفرقة الثانية) - 8 مواد
+  // ------------------------------------------------------------------
   {
-    id: 'subj-elec-101',
-    department_id: 'dept-electrical',
-    academic_year: 'الفرقة الأولى',
-    semester: 'الترم الأول',
-    name_ar: 'الدوائر الكهربية والتيار المتردد AC',
-    code: 'ELEC-101',
-    instructor_name: 'د. حازم البرنس',
+    id: 'subj-sem3-1',
+    department_id: 'dept-surveying',
+    academic_year: 'الفرقة الثانية',
+    semester: 'الفصل الدراسي الثالث',
+    semester_number: 3,
+    name_ar: 'مساحة انفاق',
+    code: 'SURV-201',
+    instructor_name: 'د. خالد عبد السميع',
+    description: 'أعمال التوجيه المساحي الدقيق للأنفاق ومترو الأنفاق، أجهزة الليزر، نقل الإحداثيات من السطح إلى قاع البئر والمسح تحت الأرض.',
+    icon_name: 'Spline',
+  },
+  {
+    id: 'subj-sem3-2',
+    department_id: 'dept-surveying',
+    academic_year: 'الفرقة الثانية',
+    semester: 'الفصل الدراسي الثالث',
+    semester_number: 3,
+    name_ar: 'مقدمة رسم بالحاسب',
+    code: 'CAD-201',
+    instructor_name: 'م. هاني بدير',
+    description: 'التدريب على برنامج AutoCAD واستيراد وتصدير نقاط الرفع المساحي وإدارة الطبقات (Layers) وإخراج مخططات الكاد.',
+    icon_name: 'Laptop',
+  },
+  {
+    id: 'subj-sem3-3',
+    department_id: 'dept-surveying',
+    academic_year: 'الفرقة الثانية',
+    semester: 'الفصل الدراسي الثالث',
+    semester_number: 3,
+    name_ar: 'مساحة تصويرية',
+    code: 'SURV-202',
+    instructor_name: 'د. شريف حامد',
+    description: 'أسس التصوير الجوي الرأسي، حساب مقياس رسم الصور الجوية، التداخل الطولي والجانبي، وتحديد إزاحة التضاريس والارتفاعات.',
+    icon_name: 'Camera',
+  },
+  {
+    id: 'subj-sem3-4',
+    department_id: 'dept-surveying',
+    academic_year: 'الفرقة الثانية',
+    semester: 'الفصل الدراسي الثالث',
+    semester_number: 3,
+    name_ar: 'تطبيقات مساحة تصويرية',
+    code: 'SURV-203',
+    instructor_name: 'م. ندى الجبالي',
+    description: 'استخدام أجهزة الإبصار المجسم (Stereoscope) وتعيين الإحداثيات ثلاثية الأبعاد ونقاط التحكم الأرضي (GCPs).',
+    icon_name: 'Glasses',
+  },
+  {
+    id: 'subj-sem3-5',
+    department_id: 'dept-surveying',
+    academic_year: 'الفرقة الثانية',
+    semester: 'الفصل الدراسي الثالث',
+    semester_number: 3,
+    name_ar: 'اسقاط خرائط',
+    code: 'SURV-204',
+    instructor_name: 'د. علاء المنشاوي',
+    description: 'نظرية تحويل سطح الأرض المنحني إلى خريطة مسطحة، نظام الإسقاط المصري ETM، النظام العالمي UTM، وحساب معاملات التشوه.',
+    icon_name: 'Grid',
+  },
+  {
+    id: 'subj-sem3-6',
+    department_id: 'dept-surveying',
+    academic_year: 'الفرقة الثانية',
+    semester: 'الفصل الدراسي الثالث',
+    semester_number: 3,
+    name_ar: 'مساحة طبوغرافية',
+    code: 'SURV-205',
+    instructor_name: 'د. إبراهيم عبد العزيز',
+    description: 'خطوط الكنتور وخواصها، تعيين الفترات الكنتورية، رسم القطاعات الطولية والعرضية، وتحديد مجاري السيول وخطوط تقسيم المياه.',
+    icon_name: 'Mountain',
+  },
+  {
+    id: 'subj-sem3-7',
+    department_id: 'dept-surveying',
+    academic_year: 'الفرقة الثانية',
+    semester: 'الفصل الدراسي الثالث',
+    semester_number: 3,
+    name_ar: 'تطبيقات مساحة طبوغرافية',
+    code: 'SURV-206',
+    instructor_name: 'م. حسام الدين توفيق',
+    description: 'تنفيذ ميزانية شبكية بميزان القامة والتوتال ستيشن ورسم اللوحة الكنتورية الميدانية بمقياس رسم تفصيلي.',
+    icon_name: 'Compass',
+  },
+  {
+    id: 'subj-sem3-8',
+    department_id: 'dept-surveying',
+    academic_year: 'الفرقة الثانية',
+    semester: 'الفصل الدراسي الثالث',
+    semester_number: 3,
+    name_ar: 'خرائط جيوليجية',
+    code: 'GEOL-201',
+    instructor_name: 'د. ماهر قنديل',
+    description: 'قراءة الخرائط الجيولوجية، تراكيب الطبقات الصخرية، الفوالق والطيات وتأثير التراكيب الجيولوجية على التخطيط المساحي.',
+    icon_name: 'Boxes',
   },
 
-  // إلكترونيات وحاسبات
+  // ------------------------------------------------------------------
+  // الفصل الدراسي الرابع (الفرقة الثانية) - 8 مواد
+  // ------------------------------------------------------------------
   {
-    id: 'subj-comp-101',
-    department_id: 'dept-electronics',
-    academic_year: 'الفرقة الأولى',
-    semester: 'الترم الأول',
-    name_ar: 'الدوائر المنطقية الرقمية Digital Circuits',
-    code: 'COMP-101',
-    instructor_name: 'د. رامي صقر',
+    id: 'subj-sem4-1',
+    department_id: 'dept-surveying',
+    academic_year: 'الفرقة الثانية',
+    semester: 'الفصل الدراسي الرابع',
+    semester_number: 4,
+    name_ar: 'نظم معلومات',
+    code: 'GIS-201',
+    instructor_name: 'د. رامي عزب',
+    description: 'نظم المعلومات الجغرافية GIS، برنامج ArcGIS Pro، إنشاء الطبقات وتعيين المراجع الجغرافية والتحليلات المكانية المتقدمة.',
+    icon_name: 'Map',
   },
-
-  // تبريد وتكييف
   {
-    id: 'subj-thermo-101',
-    department_id: 'dept-refrigeration',
-    academic_year: 'الفرقة الأولى',
-    semester: 'الترم الأول',
-    name_ar: 'الديناميكا الحرارية وانتقال الحرارة',
-    code: 'THERMO-101',
-    instructor_name: 'د. محمد رضوان',
+    id: 'subj-sem4-2',
+    department_id: 'dept-surveying',
+    academic_year: 'الفرقة الثانية',
+    semester: 'الفصل الدراسي الرابع',
+    semester_number: 4,
+    name_ar: 'المساحة التصويرية الرقمية',
+    code: 'SURV-207',
+    instructor_name: 'د. شريف حامد',
+    description: 'معالجة صور طائرات الدرون (Drones / UAVs)، برامج Agisoft Metashape، توليد سحب النقاط ثلاثية الأبعاد ونماذج الارتفاع الرقمية DEM.',
+    icon_name: 'Scan',
   },
-
-  // ميكانيكا
   {
-    id: 'subj-mech-101',
-    department_id: 'dept-mechanics',
-    academic_year: 'الفرقة الأولى',
-    semester: 'الترم الأول',
-    name_ar: 'تكنولوجيا تشغيل المعادن والخراطة',
-    code: 'MECH-101',
-    instructor_name: 'م. هيثم مرسي',
+    id: 'subj-sem4-3',
+    department_id: 'dept-surveying',
+    academic_year: 'الفرقة الثانية',
+    semester: 'الفصل الدراسي الرابع',
+    semester_number: 4,
+    name_ar: 'تطبيقات الرسم المساحى بالحاسب الالى',
+    code: 'CAD-202',
+    instructor_name: 'م. هاني بدير',
+    description: 'تطبيقات متقدمة ببرنامج Autodesk Civil 3D لتصميم مسارات الطرق، القطاعات العرضية وحساب كميات الحفر والردم تلقائياً.',
+    icon_name: 'LayoutTemplate',
   },
-
-  // سيارات
   {
-    id: 'subj-auto-101',
-    department_id: 'dept-automotive',
-    academic_year: 'الفرقة الأولى',
-    semester: 'الترم الأول',
-    name_ar: 'محركات الاحتراق الداخلي وتزييتها',
-    code: 'AUTO-101',
-    instructor_name: 'م. أشرف بسيوني',
+    id: 'subj-sem4-4',
+    department_id: 'dept-surveying',
+    academic_year: 'الفرقة الثانية',
+    semester: 'الفصل الدراسي الرابع',
+    semester_number: 4,
+    name_ar: 'حساب مساحى',
+    code: 'SURV-208',
+    instructor_name: 'د. طارق السعيد',
+    description: 'حساب إحداثيات مضلعات الترافرس المغلقة والموصلة، تصحيح الأرصاد الزاوية والخطية، والتقاطع الأمامي والخلفي (Resection).',
+    icon_name: 'Sigma',
+  },
+  {
+    id: 'subj-sem4-5',
+    department_id: 'dept-surveying',
+    academic_year: 'الفرقة الثانية',
+    semester: 'الفصل الدراسي الرابع',
+    semester_number: 4,
+    name_ar: 'كتابة التقارير الفنية',
+    code: 'COMM-201',
+    instructor_name: 'د. ريهام عبد الحميد',
+    description: 'أصول كتابة التقارير المساحية الميدانية، محاضر استلام وتسليم النقاط المساحية، وصياغة المذكرات الفنية للاستشاري والمقاول.',
+    icon_name: 'FileCheck2',
+  },
+  {
+    id: 'subj-sem4-6',
+    department_id: 'dept-surveying',
+    academic_year: 'الفرقة الثانية',
+    semester: 'الفصل الدراسي الرابع',
+    semester_number: 4,
+    name_ar: 'كارتوجرافى',
+    code: 'SURV-209',
+    instructor_name: 'د. علاء المنشاوي',
+    description: 'علم وتصميم الخرائط الكارتوجرافية، إخراج اللوحات بمقاييس قياسية، وتصميم الرموز، العناوين، هوامش الخرائط ومفتاح الرسم.',
+    icon_name: 'Palette',
+  },
+  {
+    id: 'subj-sem4-7',
+    department_id: 'dept-surveying',
+    academic_year: 'الفرقة الثانية',
+    semester: 'الفصل الدراسي الرابع',
+    semester_number: 4,
+    name_ar: 'لغة انجليزية تخصصية',
+    code: 'ENG-201',
+    instructor_name: 'د. مروة الشاذلي',
+    description: 'الترجمة المتخصصة لمصطلحات الأجهزة الرقمية الحديثة، برمجيات المساحة، وكتابة المراسلات الرسمية باللغة الإنجليزية.',
+    icon_name: 'BookOpen',
+  },
+  {
+    id: 'subj-sem4-8',
+    department_id: 'dept-surveying',
+    academic_year: 'الفرقة الثانية',
+    semester: 'الفصل الدراسي الرابع',
+    semester_number: 4,
+    name_ar: 'مشروع وثقافة العمل الحر',
+    code: 'PROJ-201',
+    instructor_name: 'لجنة مشاريع التخرج',
+    description: 'مشروع التخرج العملي المتكامل لمسح منطقة حقيقية بالإسكندرية، مع مهارات تأسيس مكتب مساحي خاص والتسويق للأعمال المساحية.',
+    icon_name: 'Trophy',
   },
 ];
 
+// ====================================================================
+// المذكرات والشيتات ونماذج الامتحانات لشعبة المساحة العامة
+// ====================================================================
 export const INITIAL_RESOURCES: Resource[] = [
+  // Semester 1
   {
-    id: 'res-surv-1',
+    id: 'res-surv-101-1',
     department_id: 'dept-surveying',
-    subject_id: 'subj-surv-101',
+    subject_id: 'subj-sem1-1',
     academic_year: 'الفرقة الأولى',
+    semester_number: 1,
     type: 'تلخيص محاضرة',
     title: 'شرح أخطاء جهاز الميزان (Level) واختبار الوتدين Two-Peg Test وضبط خط التسديد',
-    summary: 'ملخص شامل للمحاضرة الثالثة مع خطوات اختبار الوتدين العملية وقوانين تصحيح خطأ التحديب الأرضي والانكسار الجوي.',
-    content_markdown: `### أخطاء جهاز الميزان الشائعة وكيفية تلافيها:
+    summary: 'ملخص شامل لضبط الفقاعة الدائرية والأنبوبية، وخطوات اختبار الوتدين الميداني بالمسائل والقوانين.',
+    content_markdown: `### أخطاء جهاز الميزان وكيفية تلافيها:
 
 1. **الخطأ الآلي (Instrumental Error):**
-   - عدم توازي محور خط النظر (Line of Collimation) مع المحور البصري لفقاعة التسوية.
-   - عدم رأسية القامة أو تآكل كعب القامة المعدني.
+   - عدم توازي خط النظر (Line of Collimation) مع المحور البصري لفقاعة التسوية.
+   - تآكل كعب القامة المعدني أو عدم رأسية القامة أثناء الرصد.
 
-2. **طريقة اختبار الوتدين الميداني (Two-Peg Test):**
-   - يتم تثبيت وتدين $A$ و $B$ على مسافة $50$ إلى $60$ متراً في أرض مستوية.
-   - **المرحلة 1:** يتم تنصيب الميزان في المنتصف تماماً بين $A$ و $B$.
+2. **خطوات اختبار الوتدين (Two-Peg Test):**
+   - تثبيت وتدين $A$ و $B$ على مسافة $50$ إلى $60$ متراً.
+   - **الخطوة الأولى:** تنصيب الميزان في المنتصف تماماً بين $A$ و $B$.
      - قراءة القامة عند $A$ هي $a_1$ وعند $B$ هي $b_1$.
-     - فرق المنسوب الحقيقي بين النقطتين:
+     - فرق المنسوب الحقيقي:
        $$\\Delta h = a_1 - b_1$$
-       *(لأن بُعد المسافة متساوٍ، فإن أي خطأ في ميل خط التسديد يُلغي نفسه تلقائياً)*.
-   - **المرحلة 2:** يتم نقل الجهاز بالقرب من الوتد $A$ (على بُعد $2$ إلى $5$ أمتار).
-     - نقرأ القامة عند $A$ لتكون $a_2$.
-     - القراءة المفترضة الصحيحة عند $B$ يجب أن تكون:
+   - **الخطوة الثانية:** نقل الجهاز بالقرب من الوتد $A$ على بُعد مترين.
+     - نقرأ عند $A$ لتكون $a_2$.
+     - القراءة الصحيحة المفترضة عند $B$:
        $$b_{2\\text{ (صحيحة)}} = a_2 - \\Delta h$$
-     - إذا كانت القراءة الفعلية $b_2$ تختلف عن $b_{2\\text{ (صحيحة)}}$، يتم تحريك مسمار ضبط حامل الشعرات الشعرة الوسطى حتى تطابق القراءة الصحيحة.
+     - إذا كانت القراءة الفعلية تختلف، يتم تحريك مسمار حامل الشعرات لتصحيح الشعرة الوسطى.
 
-3. **قوانين تصحيح التحديب والانكسار الجوي:**
+3. **قانون تصحيح التحديب والانكسار معاً:**
    $$C_{cr} = 0.0675 \\times D^2$$
-   *حيث $D$ هي المسافة بالكيلومتر والناتج $C_{cr}$ بالمتر يُطرح دائماً من قراءة القامة.*`,
+   *(حيث $D$ بالكيلومتر و $C_{cr}$ بالمتر يُطرح دائماً من قراءة القامة).*`,
     file_url: 'https://example.com/iti-notes/surveying-level-test.pdf',
     due_date: null,
     week_number: 3,
-    author_name: 'م. محمود جمال (مندوب مساحة)',
+    author_name: 'م. حسام الدين (مندوب مساحة)',
     is_pinned: true,
-    views_count: 420,
-    created_at: new Date(Date.now() - 3 * 86400000).toISOString(),
-  },
-  {
-    id: 'res-surv-2',
-    department_id: 'dept-surveying',
-    subject_id: 'subj-surv-101',
-    academic_year: 'الفرقة الأولى',
-    type: 'شيت وتكليف',
-    title: 'شيت (2) تسوية طولية وحساب مناسيب النقاط بجدول ارتفاع الجهاز والارتفاع والانخفاض',
-    summary: 'مطلوب تفريغ 14 قراءة قامة لمشروع خط مياه وإجراء التحقيق الحسابي الثلاثي ورسم القطاع الطولي.',
-    content_markdown: `### متطلبات تسليم شيت (2):
-
-- **بيانات القراءات الحقلية للميزانية:**
-  - النقطة 1 (روبير منسوبه 12.450 م): قراءة مؤخرة 1.820 م.
-  - النقاط التالية (متوسطات): 2.150 ، 1.940 ، 2.680 ، 1.450 م.
-  - نقطة الدوران 1 (نقطة ربط): مقدمة 0.850 م ، ومؤخرة لنفس النقطة 2.300 م.
-  - باقي النقاط ومقدمة الختام: 1.120 م.
-
-#### المطلوب تنفيذه:
-1. تفريغ القراءات في جدول **ارتفاع الجهاز (Height of Instrument Method)** وحساب مناسيب جميع النقاط.
-2. تفريغ نفس القراءات في جدول **الارتفاع والانخفاض (Rise & Fall Method)** للمقارنة.
-3. كتابة معادلة التحقيق الحسابي والتأكد من صحتها:
-   $$\\sum \\text{Backsight} - \\sum \\text{Foresight} = \\text{Last RL} - \\text{First RL}$$
-4. رسم بروفايل القطاع الطولي في كراسة الرسم المليمتري بمقياس رسم أفقي 1:1000 ورأسي 1:100.
-
-> **تنبيه:** التسليم باليد بالمعمل في الموعد المحدد ولا يُقبل أي تأخير.`,
-    file_url: 'https://example.com/iti-notes/sheet2-leveling.pdf',
-    due_date: new Date(Date.now() + 2 * 86400000).toISOString(), // remaining 2 days
-    week_number: 4,
-    author_name: 'مكتب شيتات المعهد',
-    is_pinned: true,
-    views_count: 612,
+    views_count: 520,
     created_at: new Date(Date.now() - 2 * 86400000).toISOString(),
   },
   {
-    id: 'res-surv-3',
+    id: 'res-surv-101-2',
     department_id: 'dept-surveying',
-    subject_id: 'subj-surv-201',
-    academic_year: 'الفرقة الثانية',
-    type: 'مذكرة سكشن عملي',
-    title: 'دليل التشغيل الميداني لأجهزة التوتال ستيشن Sokkia CX & Leica TS06',
-    summary: 'دليل عملي مفصل للخطوات الميدانية: التسامت، ضبط الفقاعة الإلكترونية، الاحتلال، والتوجيه والرفع الطبوغرافي.',
-    content_markdown: `### خطوات العمل على التوتال ستيشن:
+    subject_id: 'subj-sem1-1',
+    academic_year: 'الفرقة الأولى',
+    semester_number: 1,
+    type: 'شيت وتكليف',
+    title: 'شيت (1) تفريغ جدول ميزانية وحساب المناسيب بطريقة ارتفاع الجهاز وطريقة الارتفاع والانخفاض',
+    summary: 'مطلوب تفريغ 14 قراءة قامة وإجراء التحقيق الحسابي الثلاثي ورسم القطاع الطولي لمسار خط مياه.',
+    content_markdown: `### بيانات شيت (1) لمادة أجهزة مساحية ومساحة مستوية:
 
-1. **التسامت الميداني (Centering):**
-   - تثبيت حامل الأرجل المعدني بحيث تكون أرجل الحامل متساوية والقاعدة أفقية بالعين المجردة.
-   - فتح مسمار تثبيت الجهاز، وتشغيل شعاع الليزر السفلي (Laser Plummet) ليتطابق مع مسمار الوتد الأرضي.
-2. **ضبط الأفقية الدقيقة:**
-   - ضبط الفقاعة الدائرية بإطالة أو تقصير أرجل الحامل.
-   - ضبط الفقاعة الأنبوبية/الإلكترونية باستخدام المسامير الثلاثية لقاعدة الجهاز (مسامير التسوية).
-3. **الربط الموقعي (Station Setup):**
-   - الدخول لقائمة **Programs -> Station Setup**.
-   - اختيار الربط بمعلومية نقطة خلفية **Backsight Coordinates / Azimuth**.
-   - إدخال إحداثيات المحطة المحتلة $X, Y, Z$ وقياس ارتفاع الجهاز بشريط القياس بدقة.
-4. **توجيه العاكس (Prism):**
-   - رصد سنتر المنشور وتصفير زاوية الانحراف أو تسجيل قراءة التحقق.
-5. **الرفع الميداني والتسجيل:**
-   - التبديل إلى شاشة **Survey / Meas + Rec** لرصد النقط وتخزين الأكواد المساحية.`,
-    file_url: 'https://example.com/iti-notes/total-station-guide.pdf',
+- **القراءات الحقلية المعطاة:**
+  - النقطة 1 (روبير منسوبه 12.450 م): مؤخرة 1.820 م.
+  - متوسطات: 2.150 ، 1.940 ، 2.680 ، 1.450 م.
+  - نقطة دوران: مقدمة 0.850 م ، ومؤخرة 2.300 م.
+  - مقدمة ختامية: 1.120 م.
+
+#### المطلوب تنفيذه:
+1. تفريغ القراءات بجدول **ارتفاع الجهاز (HI Method)**.
+2. تفريغ نفس القراءات بجدول **الارتفاع والانخفاض (Rise & Fall Method)**.
+3. كتابة معادلة التحقيق الحسابي والتأكد من صحتها:
+   $$\\sum \\text{Backsight} - \\sum \\text{Foresight} = \\text{Last RL} - \\text{First RL}$$
+4. تسليم الكراسة باليد في معمل المساحة.`,
+    file_url: 'https://example.com/iti-notes/sheet1-leveling.pdf',
+    due_date: new Date(Date.now() + 2 * 86400000).toISOString(),
+    week_number: 4,
+    author_name: 'مكتب تدريب المساحة',
+    is_pinned: true,
+    views_count: 730,
+    created_at: new Date(Date.now() - 1 * 86400000).toISOString(),
+  },
+  {
+    id: 'res-surv-103-1',
+    department_id: 'dept-surveying',
+    subject_id: 'subj-sem1-4',
+    academic_year: 'الفرقة الأولى',
+    semester_number: 1,
+    type: 'تلخيص محاضرة',
+    title: 'قوانين تصحيحات قياس الأطوال بالشريط الصلب (الحرارة، الشد، الترهيم، والانحدار)',
+    summary: 'جميع القوانين الرياضية مع أمثلة محلولة لتصحيح الأطوال المقاسة بالشريط الصلب في الموقع.',
+    content_markdown: `### قوانين تصحيح الأطوال بالشريط:
+
+1. **تصحيح درجة الحرارة (Temperature Correction):**
+   $$C_t = L \\times \\alpha \\times (T_m - T_0)$$
+   - حيث $\\alpha = 0.0000115 / ^\\circ\\text{C}$ معامل التمدد الحراري للصلب.
+2. **تصحيح قوة الشد (Pull Correction):**
+   $$C_p = \\frac{(P_m - P_0) \\times L}{A \\times E}$$
+3. **تصحيح الترهيم (Sag Correction):**
+   $$C_s = \\frac{W^2 \\times L}{24 \\times P_m^2}$$
+   *(دائماً بالسالب لأن الشريط يتدلى لأسفل).*
+4. **تصحيح ميل الأرض (Slope Correction):**
+   $$C_g = \\frac{h^2}{2L}$$`,
+    file_url: null,
     due_date: null,
-    week_number: 2,
-    author_name: 'م. عمر سامي',
+    week_number: 5,
+    author_name: 'د. محمد أبو العز',
     is_pinned: false,
-    views_count: 350,
+    views_count: 410,
     created_at: new Date(Date.now() - 5 * 86400000).toISOString(),
   },
   {
-    id: 'res-surv-4',
+    id: 'res-surv-101-3',
     department_id: 'dept-surveying',
-    subject_id: 'subj-surv-202',
-    academic_year: 'الفرقة الثانية',
-    type: 'بنك أسئلة وامتحانات',
-    title: 'بنك أسئلة ونماذج امتحانات الميدتيرم لمادة حصر الكميات والمستخلصات وتطبيقات الطرق',
-    summary: 'نماذج امتحانات محلولة بالخطوات لحساب مكعبات الحفر والردم بطريقة متوسط المساحات وقاعدة الموشور الدقيق.',
-    content_markdown: `### نماذج أسئلة متوقعة في امتحان أعمال الحفر والردم:
-
-#### المسألة الأولى:
-طريق ترابي مطلوب تسويته بطول $180$ متراً، قُسم إلى $3$ مسافات متساوية كل منها $60$ متراً.
-كانت مساحات القطاعات العرضية عند المحطات كالآتي:
-- المحطة $0+00$: مساحة حفر $A_0 = 42 \\text{ m}^2$
-- المحطة $0+60$: مساحة حفر $A_1 = 35 \\text{ m}^2$
-- المحطة $0+120$: مساحة حفر $A_2 = 28 \\text{ m}^2$
-- المحطة $0+180$: مساحة حفر $A_3 = 18 \\text{ m}^2$
-
-**المطلوب:**
-1. حساب إجمالي حجم الحفر بطريقة **متوسط المساحات (Average End Area)**:
-   $$V = \\frac{L}{2} \\times (A_0 + 2A_1 + 2A_2 + A_3)$$
-2. حساب الحجم باستخدام **قاعدة سمبسون (Prismoidal Rule)** ومقارنة الدقة بين الطريقتين.
-
-#### المسألة الثانية:
-شرح بنود مستخلص المقاول العام للأعمال المساحية وطريقة اعتماد الشيتات المساحية المعتمدة من الاستشاري.`,
-    file_url: 'https://example.com/iti-notes/survey-midterm-bank.pdf',
+    subject_id: 'subj-sem1-3',
+    academic_year: 'الفرقة الأولى',
+    semester_number: 1,
+    type: 'مذكرة سكشن عملي',
+    title: 'لوحة العمليات الهندسية ورسم المساقط الثلاثة والقطاعات - مادة رسم فني',
+    summary: 'شرح طريقة تنصيف الزوايا والخطوط، رسم الأشكال السداسية والبيضوية، واستنتاج المسقط الثالث.',
+    content_markdown: `### خطوات رسم لوحة العمليات الهندسية:
+1. تجهيز لوحة الرسم الورقية وتثبيتها بالمسطرة T ومثلث 30/60 ومثلث 45.
+2. رسم الإطار وجدول البيانات (Title Block) وفق المواصفات القياسية.
+3. تنصيف خط مستقيم ورسم المماس للدوائر.
+4. استنتاج المسقط الجانبي بمعلومية المسقط الرأسي والأفقي.`,
+    file_url: 'https://example.com/iti-notes/technical-drawing-guide.pdf',
     due_date: null,
-    week_number: 6,
-    author_name: 'لجنة المراجعة الطلابية',
+    week_number: 2,
+    author_name: 'م. سارة محمود',
     is_pinned: false,
-    views_count: 532,
-    created_at: new Date(Date.now() - 7 * 86400000).toISOString(),
+    views_count: 380,
+    created_at: new Date(Date.now() - 6 * 86400000).toISOString(),
+  },
+
+  // Semester 2
+  {
+    id: 'res-surv-201-1',
+    department_id: 'dept-surveying',
+    subject_id: 'subj-sem2-1',
+    academic_year: 'الفرقة الأولى',
+    semester_number: 2,
+    type: 'تلخيص محاضرة',
+    title: 'السطوح المرجعية للأرض (الجيود، الإلبسويد، والتوبوجرافي) في المساحة الجيوديسية',
+    summary: 'مفاهيم المساحة الجيوديسية والمراجع العالمية WGS84 والمرجع المصري القديم هلمرت 1906.',
+    content_markdown: `### مقارنة السطوح المرجعية للأرض:
+- **سطح الأرض الطبيعي (Topographic Surface):** سطح حقيقي شديد التعرج لا يصلح للحسابات الرياضية.
+- **سطح الجيود (Geoid):** سطح متساوي الجهد التثاقلي يتطابق مع متوسط منسوب سطح البحر (MSL) وتكون خطوط التثاقل عمودية عليه.
+- **سطح الإلبسويد (Ellipsoid):** شكل هندسي رياضي ناتج عن دوران قطع ناقص حول محوره الأصغر يُستخدم كمرجع للإحداثيات $(X, Y, Z)$ وخطوط الطول ودوائر العرض.`,
+    file_url: null,
+    due_date: null,
+    week_number: 2,
+    author_name: 'د. مدحت الشناوي',
+    is_pinned: true,
+    views_count: 490,
+    created_at: new Date(Date.now() - 8 * 86400000).toISOString(),
   },
   {
-    id: 'res-arch-1',
-    department_id: 'dept-arch-civil',
-    subject_id: 'subj-civ-101',
+    id: 'res-surv-204-1',
+    department_id: 'dept-surveying',
+    subject_id: 'subj-sem2-4',
     academic_year: 'الفرقة الأولى',
+    semester_number: 2,
     type: 'شيت وتكليف',
-    title: 'شيت واختبارات معمل الخرسانة (اختبار الهبوط Slump Test ومقاومة الضغط)',
-    summary: 'تقرير معملي لتحديد قوام الخرسانة الطازجة وحساب إجهاد الكسر لمكعبات الخرسانة بعمر 7 و 28 يوماً.',
-    content_markdown: `### خطوات إعداد التقرير المعملي:
-1. تسجيل أبعاد مخروط الهبوط القياسي (ارتفاع 30 سم، قطر سفلي 20 سم، قطر علوي 10 سم).
-2. ملء المخروط على 3 طبقات ودمك كل طبقة 25 ضربة بقضيب الدمك القياسي.
-3. قياس مقدار الهبوط (Slump) بالسنتيمتر وتصنيف القوام (جاف، لدن، رخو، منهار).
-4. تجهيز جدول كسر مكعبات $15 \\times 15 \\times 15$ سم وحساب الإجهاد:
-   $$f_c = \\frac{\\text{الحمل الأقصى (kN)} \\times 1000}{\\text{مساحة المقطع } (22500 \\text{ mm}^2)}$$`,
-    file_url: 'https://example.com/iti-notes/civil-concrete-sheet.pdf',
-    due_date: new Date(Date.now() + 5 * 86400000).toISOString(),
-    week_number: 5,
-    author_name: 'مندوب عمارة ومدني',
+    title: 'شيت حصر كميات الحفر والردم لمشروع طريق بطريقة متوسط المساحات وقاعدة سمبسون',
+    summary: 'مسائل حصر مكعبات التربة للطرق والقطاعات العرضية المختلطة وجداول المستخلصات.',
+    content_markdown: `### مطلوب تسليم شيت كميات ومواصفات:
+حساب مكعبات الحفر والردم لطريق بطول 240 متراً مقسم لمحطات كل 40 متراً:
+$$V = \\frac{L}{2} \\times (A_1 + 2A_2 + \\dots + A_n)$$
+تسليم الحسابات في جدول حصر رسمي مختوم.`,
+    file_url: 'https://example.com/iti-notes/earthwork-sheet.pdf',
+    due_date: new Date(Date.now() + 4 * 86400000).toISOString(),
+    week_number: 6,
+    author_name: 'م. أحمد الشريف',
     is_pinned: false,
-    views_count: 215,
+    views_count: 510,
+    created_at: new Date(Date.now() - 3 * 86400000).toISOString(),
+  },
+
+  // Semester 3
+  {
+    id: 'res-surv-301-1',
+    department_id: 'dept-surveying',
+    subject_id: 'subj-sem3-1',
+    academic_year: 'الفرقة الثانية',
+    semester_number: 3,
+    type: 'مذكرة سكشن عملي',
+    title: 'طرق التوجيه المساحي ونقل الإحداثيات في مساحة الأنفاق تحت الأرض',
+    summary: 'شرح نقل اتجاه الشمال المغناطيسي ونقاط التحكم من السطح إلى قاع بئر الحفر باستخدام الوايرات الثقيلة وأجهزة الجيروسكوب.',
+    content_markdown: `### مراحل المسح في الأنفاق:
+1. شبكة التحكم السطحية الخارجية ورصد محطات الدخول والخروج.
+2. نقل الإحداثيات للعمق الرأسي (Plumbing Method) باستخدام أسلاك البيانو مع ثقالات مغمورة في الزيت لتخميد الحركة.
+3. التوجيه بالليزر الموجه (Laser Alignment) لتوجيه ماكينة حفر الأنفاق TBM.`,
+    file_url: 'https://example.com/iti-notes/tunnel-surveying.pdf',
+    due_date: null,
+    week_number: 3,
+    author_name: 'د. خالد عبد السميع',
+    is_pinned: true,
+    views_count: 630,
     created_at: new Date(Date.now() - 4 * 86400000).toISOString(),
+  },
+
+  // Semester 4
+  {
+    id: 'res-surv-401-1',
+    department_id: 'dept-surveying',
+    subject_id: 'subj-sem4-1',
+    academic_year: 'الفرقة الثانية',
+    semester_number: 4,
+    type: 'بنك أسئلة وامتحانات',
+    title: 'بنك أسئلة ونماذج امتحانات نظم المعلومات الجغرافية GIS و ArcGIS Pro',
+    summary: 'نماذج أسئلة المقارنة بين البيانات الاتجاهية Vector والشبكية Raster، الإرجاع الجغرافي Georeferencing، والتحليلات المكانية.',
+    content_markdown: `### أهم أسئلة امتحانات نظم معلومات جغرافية:
+1. قارن بين بنية البيانات Vector وبنية Raster مع ذكر مزايا وعيوب كل نوع.
+2. اشرح خطوات الإرجاع الجغرافي لخريطة ورقية مسحوبة بواسطة الإسكانر.
+3. ما هي استعلامات Spatial Queries والتقاطعات المكانية (Buffer, Clip, Intersect)؟`,
+    file_url: 'https://example.com/iti-notes/gis-exams-bank.pdf',
+    due_date: null,
+    week_number: 5,
+    author_name: 'لجنة المراجعة الطلابية',
+    is_pinned: true,
+    views_count: 890,
+    created_at: new Date(Date.now() - 10 * 86400000).toISOString(),
+  },
+  {
+    id: 'res-surv-404-1',
+    department_id: 'dept-surveying',
+    subject_id: 'subj-sem4-4',
+    academic_year: 'الفرقة الثانية',
+    semester_number: 4,
+    type: 'تلخيص محاضرة',
+    title: 'حساب مضلعات الترافرس المغلق (Closed Traverse) والتحقيق الزاوي والخطوط الكروكية',
+    summary: 'خطوات حساب الانحرافات الأفقية والتحقيق الزاوي وتوزيع خطأ القفل على الإحداثيات الشرقية والشمالية.',
+    content_markdown: `### خطوات حل الترافرس المغلق:
+1. التحقيق الزاوي لمجموع الزوايا الداخلية:
+   $$\\sum \\theta = (n - 2) \\times 180^\\circ$$
+2. حساب خطأ القفل الزاوي وتوزيعه بالتساوي على الزوايا.
+3. حساب الانحراف الدائري لكل ضلع:
+   $$\\alpha_{AB} = \\alpha_{previous} \\pm 180^\\circ + \\theta$$
+4. حساب مركبات الأضلاع:
+   $$\\Delta X = L \\times \\sin(\\alpha), \\quad \\Delta Y = L \\times \\cos(\\alpha)$$
+5. تصحيح المركبات بطريقة Bowditch وحساب إحداثيات النقاط النهائية.`,
+    file_url: 'https://example.com/iti-notes/traverse-calculations.pdf',
+    due_date: null,
+    week_number: 4,
+    author_name: 'د. طارق السعيد',
+    is_pinned: false,
+    views_count: 570,
+    created_at: new Date(Date.now() - 7 * 86400000).toISOString(),
   },
 ];
 
+// ====================================================================
+// جداول المحاضرات والسكاشن لشعبة المساحة العامة
+// ====================================================================
 export const INITIAL_SCHEDULES: Schedule[] = [
-  // السبت - مساحة الفرقة الأولى
+  // الفصل الدراسي الأول (سنة 1)
   {
-    id: 'sch-1',
+    id: 'sch-s1-1',
     department_id: 'dept-surveying',
-    subject_id: 'subj-surv-101',
+    subject_id: 'subj-sem1-1',
     academic_year: 'الفرقة الأولى',
+    semester_number: 1,
     day_of_week: 'السبت',
-    start_time: '09:00',
-    end_time: '11:00',
+    start_time: '08:30',
+    end_time: '10:30',
     session_type: 'محاضرة نظري',
     section_number: 'عام',
-    location_room: 'مدرج 2 - المبنى الرئيسي',
+    location_room: 'مدرج 2 - المبنى الهندسي',
     instructor_name: 'د. إبراهيم عبد العزيز',
   },
   {
-    id: 'sch-2',
+    id: 'sch-s1-2',
     department_id: 'dept-surveying',
-    subject_id: 'subj-surv-101',
+    subject_id: 'subj-sem1-2',
     academic_year: 'الفرقة الأولى',
+    semester_number: 1,
     day_of_week: 'السبت',
-    start_time: '11:15',
-    end_time: '13:15',
+    start_time: '10:45',
+    end_time: '13:00',
     session_type: 'سكشن عملي',
     section_number: 'سكشن 1',
     location_room: 'أرض الرفع المساحي الميداني',
     instructor_name: 'م. حسام الدين توفيق',
   },
   {
-    id: 'sch-3',
+    id: 'sch-s1-3',
     department_id: 'dept-surveying',
-    subject_id: 'subj-surv-103',
+    subject_id: 'subj-sem1-3',
     academic_year: 'الفرقة الأولى',
-    day_of_week: 'السبت',
-    start_time: '11:15',
-    end_time: '13:15',
-    session_type: 'ورشة',
-    section_number: 'سكشن 2',
-    location_room: 'صالة الرسم المساحي 3',
-    instructor_name: 'م. سارة محمود',
-  },
-
-  // الأحد - مساحة الفرقة الأولى
-  {
-    id: 'sch-4',
-    department_id: 'dept-surveying',
-    subject_id: 'subj-surv-102',
-    academic_year: 'الفرقة الأولى',
+    semester_number: 1,
     day_of_week: 'الأحد',
     start_time: '09:00',
-    end_time: '10:30',
+    end_time: '11:30',
+    session_type: 'ورشة',
+    section_number: 'عام',
+    location_room: 'صالة الرسم الهندسي 3',
+    instructor_name: 'م. سارة محمود',
+  },
+  {
+    id: 'sch-s1-4',
+    department_id: 'dept-surveying',
+    subject_id: 'subj-sem1-4',
+    academic_year: 'الفرقة الأولى',
+    semester_number: 1,
+    day_of_week: 'الاثنين',
+    start_time: '09:00',
+    end_time: '11:00',
     session_type: 'محاضرة نظري',
     section_number: 'عام',
     location_room: 'مدرج 1',
-    instructor_name: 'م. حسام الدين توفيق',
+    instructor_name: 'د. محمد أبو العز',
   },
   {
-    id: 'sch-5',
+    id: 'sch-s1-5',
     department_id: 'dept-surveying',
-    subject_id: 'subj-surv-102',
+    subject_id: 'subj-sem1-6',
     academic_year: 'الفرقة الأولى',
-    day_of_week: 'الأحد',
-    start_time: '10:45',
-    end_time: '12:45',
-    session_type: 'معمل',
-    section_number: 'سكشن 3',
-    location_room: 'معمل أجهزة المساحة الدقيقة',
-    instructor_name: 'م. أحمد الشريف',
-  },
-
-  // الاثنين - مساحة الفرقة الأولى
-  {
-    id: 'sch-6',
-    department_id: 'dept-surveying',
-    subject_id: 'subj-surv-103',
-    academic_year: 'الفرقة الأولى',
-    day_of_week: 'الاثنين',
-    start_time: '08:30',
-    end_time: '11:00',
-    session_type: 'ورشة',
-    section_number: 'عام',
-    location_room: 'صالة الرسم المساحي 1',
-    instructor_name: 'م. سارة محمود',
-  },
-
-  // الثلاثاء - مساحة الفرقة الأولى
-  {
-    id: 'sch-7',
-    department_id: 'dept-surveying',
-    subject_id: 'subj-surv-101',
-    academic_year: 'الفرقة الأولى',
+    semester_number: 1,
     day_of_week: 'الثلاثاء',
     start_time: '10:00',
-    end_time: '12:30',
-    session_type: 'سكشن عملي',
-    section_number: 'سكشن 4',
-    location_room: 'أرض الرفع المساحي الميداني',
-    instructor_name: 'م. عمر سامي',
+    end_time: '12:00',
+    session_type: 'معمل',
+    section_number: 'سكشن 2',
+    location_room: 'معمل الحاسب الآلي 2',
+    instructor_name: 'م. أحمد شكري',
   },
 
-  // السبت - مساحة الفرقة الثانية
+  // الفصل الدراسي الثالث (سنة 2)
   {
-    id: 'sch-8',
+    id: 'sch-s3-1',
     department_id: 'dept-surveying',
-    subject_id: 'subj-surv-201',
+    subject_id: 'subj-sem3-1',
     academic_year: 'الفرقة الثانية',
+    semester_number: 3,
     day_of_week: 'السبت',
     start_time: '08:30',
     end_time: '10:30',
     session_type: 'محاضرة نظري',
     section_number: 'عام',
     location_room: 'مدرج 3 - قاعة المؤتمرات',
-    instructor_name: 'د. مدحت الشناوي',
+    instructor_name: 'د. خالد عبد السميع',
   },
   {
-    id: 'sch-9',
+    id: 'sch-s3-2',
     department_id: 'dept-surveying',
-    subject_id: 'subj-surv-201',
+    subject_id: 'subj-sem3-2',
     academic_year: 'الفرقة الثانية',
-    day_of_week: 'السبت',
-    start_time: '10:45',
-    end_time: '13:00',
-    session_type: 'سكشن عملي',
-    section_number: 'سكشن 1',
-    location_room: 'موقع الرصد الجيوديسي الخارجي',
-    instructor_name: 'م. عمر سامي',
-  },
-
-  // الأحد - مساحة الفرقة الثانية
-  {
-    id: 'sch-10',
-    department_id: 'dept-surveying',
-    subject_id: 'subj-surv-202',
-    academic_year: 'الفرقة الثانية',
+    semester_number: 3,
     day_of_week: 'الأحد',
-    start_time: '09:00',
-    end_time: '11:00',
-    session_type: 'محاضرة نظري',
-    section_number: 'عام',
-    location_room: 'مدرج 2',
-    instructor_name: 'م. أحمد الشريف',
-  },
-  {
-    id: 'sch-11',
-    department_id: 'dept-surveying',
-    subject_id: 'subj-surv-203',
-    academic_year: 'الفرقة الثانية',
-    day_of_week: 'الثلاثاء',
-    start_time: '11:00',
-    end_time: '13:00',
+    start_time: '10:00',
+    end_time: '12:30',
     session_type: 'معمل',
-    section_number: 'سكشن 2',
-    location_room: 'معمل ميكانيكا التربة والهيدروليكا',
-    instructor_name: 'د. طارق السعيد',
+    section_number: 'سكشن 1',
+    location_room: 'معمل الأوتوكاد ونظم المعلومات',
+    instructor_name: 'م. هاني بدير',
   },
 ];
 
+// ====================================================================
+// التنبيهات ومواعيد التسليم
+// ====================================================================
 export const INITIAL_ANNOUNCEMENTS: Announcement[] = [
   {
     id: 'ann-1',
     department_id: 'dept-surveying',
-    title: 'تنبيه عاجل: تسليم شيت 2 ميزانيات معملية وتوقيع دفاتر الحقل',
-    details: 'تنبيه لطلاب الفرقة الأولى شعبة مساحة: آخر موعد لتسليم شيت الميزانيات وتوقيع دفاتر الحقل العملي يوم الأحد القادم بمكتب د. إبراهيم. لن يتم قبول شيتات بعد هذا الموعد.',
+    title: 'تنبيه عاجل: تسليم شيت 1 أجهزة مساحية وتوقيع دفاتر الحقل العملي',
+    details: 'لطلاب الفرقة الأولى: آخر موعد لتسليم شيت (1) ميزانيات معملية وتوقيع دفاتر الحقل العملي يوم الأحد القادم بمكتب د. إبراهيم. لن يتم قبول شيتات بعد هذا الموعد.',
     category: 'تسليم شيت',
     urgency: 'عاجل جداً',
     event_date: new Date(Date.now() + 2 * 86400000).toISOString(),
@@ -535,8 +832,8 @@ export const INITIAL_ANNOUNCEMENTS: Announcement[] = [
   {
     id: 'ann-2',
     department_id: 'dept-surveying',
-    title: 'موعد امتحان عملي منتصف الفصل لأجهزة الميزان والتوتال ستيشن',
-    details: 'يبدأ الاختبار الميداني العملي لقياس سرعة ودقة ضبط الأفقية والتوجيه ورصد القامة يوم السبت القادم لكل سكشن في موعده الرسمي.',
+    title: 'موعد الامتحان العملي الميداني لأجهزة الميزان والثيودوليت',
+    details: 'يبدأ الاختبار الميداني الشفوي والعملي لقياس السرعة والدقة في ضبط أفقية الأجهزة وقراءة القامة ابتداءً من السبت القادم بأرض الرفع المساحي.',
     category: 'امتحان عملي',
     urgency: 'هام',
     event_date: new Date(Date.now() + 6 * 86400000).toISOString(),

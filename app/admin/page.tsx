@@ -135,7 +135,7 @@ export default function AdminDashboard() {
   // Update subjects dropdown when department or year changes
   useEffect(() => {
     if (!newResDeptId) return;
-    getSubjects(newResDeptId, newResYear).then((subs) => {
+    getSubjects({ departmentId: newResDeptId, academicYear: newResYear }).then((subs) => {
       setSubjects(subs);
       if (subs.length > 0) {
         setNewResSubjectId(subs[0].id);
@@ -1088,3 +1088,4 @@ export default function AdminDashboard() {
     </div>
   );
 }
+

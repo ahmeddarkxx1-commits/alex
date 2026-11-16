@@ -6,6 +6,8 @@ import {
   Schedule, 
   Announcement, 
   AcademicYear, 
+  AcademicSemester,
+  SemesterNumber,
   ResourceType, 
   DayOfWeek,
   SectionNumber,
@@ -20,13 +22,13 @@ import {
 } from '@/lib/mockData';
 
 const STORAGE_KEYS = {
-  DEPARTMENTS: 'iti_alex_departments',
-  SUBJECTS: 'iti_alex_subjects',
-  RESOURCES: 'iti_alex_resources',
-  SCHEDULES: 'iti_alex_schedules',
-  ANNOUNCEMENTS: 'iti_alex_announcements',
-  BOOKMARKS: 'iti_alex_bookmarks',
-  USER_PREFS: 'iti_alex_user_prefs',
+  DEPARTMENTS: 'iti_alex_departments_v2',
+  SUBJECTS: 'iti_alex_subjects_v2',
+  RESOURCES: 'iti_alex_resources_v2',
+  SCHEDULES: 'iti_alex_schedules_v2',
+  ANNOUNCEMENTS: 'iti_alex_announcements_v2',
+  BOOKMARKS: 'iti_alex_bookmarks_v2',
+  USER_PREFS: 'iti_alex_user_prefs_v2',
 };
 
 // Safe helper to get from LocalStorage (client side only)
@@ -67,12 +69,17 @@ export async function getDepartments(): Promise<Department[]> {
 }
 
 // ----------------- SUBJECTS -----------------
-export async function getSubjects(departmentId?: string, academicYear?: AcademicYear): Promise<Subject[]> {
+export async function getSubjects(params?: {
+  departmentId?: string;
+  academicYear?: AcademicYear;
+  semesterNumber?: SemesterNumber;
+}): Promise<Subject[]> {
   if (isSupabaseConfigured) {
     try {
       let query = supabase.from('subjects').select('*');
-      if (departmentId) query = query.eq('department_id', departmentId);
-      if (academicYear) query = query.eq('academic_year', academicYear);
+      if (params?.departmentId) query = query.eq('department_id', params.departmentId);
+      if (params?.academicYear) query = query.eq('academic_year', params.academicYear);
+      if (params?.semesterNumber) query = query.eq('semester_number', params.semesterNumber);
       const { data, error } = await query.order('name_ar', { ascending: true });
       if (!error && data && data.length > 0) return data as Subject[];
     } catch (e) {
@@ -81,8 +88,9 @@ export async function getSubjects(departmentId?: string, academicYear?: Academic
   }
 
   let list = getLocalItem<Subject[]>(STORAGE_KEYS.SUBJECTS, INITIAL_SUBJECTS);
-  if (departmentId) list = list.filter((s) => s.department_id === departmentId);
-  if (academicYear) list = list.filter((s) => s.academic_year === academicYear);
+  if (params?.departmentId) list = list.filter((s) => s.department_id === params.departmentId);
+  if (params?.academicYear) list = list.filter((s) => s.academic_year === params.academicYear);
+  if (params?.semesterNumber) list = list.filter((s) => s.semester_number === params.semesterNumber);
   return list;
 }
 
@@ -90,6 +98,7 @@ export async function getSubjects(departmentId?: string, academicYear?: Academic
 export async function getResources(params?: {
   departmentId?: string;
   academicYear?: AcademicYear;
+  semesterNumber?: SemesterNumber;
   type?: ResourceType | 'الكل';
   subjectId?: string;
   search?: string;
@@ -127,12 +136,15 @@ export async function getResources(params?: {
     subject: allSubjs.find((s) => s.id === r.subject_id),
   }));
 
-  // In-memory filters if needed
+  // In-memory filters
   if (params?.departmentId) {
     resources = resources.filter((r) => r.department_id === params.departmentId);
   }
   if (params?.academicYear) {
     resources = resources.filter((r) => r.academic_year === params.academicYear);
+  }
+  if (params?.semesterNumber) {
+    resources = resources.filter((r) => r.semester_number === params.semesterNumber || (r.subject && r.subject.semester_number === params.semesterNumber));
   }
   if (params?.type && params.type !== 'الكل') {
     resources = resources.filter((r) => r.type === params.type);
@@ -197,6 +209,7 @@ export async function deleteResource(id: string): Promise<boolean> {
 export async function getSchedules(params?: {
   departmentId?: string;
   academicYear?: AcademicYear;
+  semesterNumber?: SemesterNumber;
   dayOfWeek?: DayOfWeek | 'الكل';
   sectionNumber?: SectionNumber | 'الكل';
   sessionType?: SessionType | 'الكل';
@@ -237,6 +250,9 @@ export async function getSchedules(params?: {
   }
   if (params?.academicYear) {
     schedules = schedules.filter((s) => s.academic_year === params.academicYear);
+  }
+  if (params?.semesterNumber) {
+    schedules = schedules.filter((s) => s.semester_number === params.semesterNumber || (s.subject && s.subject.semester_number === params.semesterNumber));
   }
   if (params?.dayOfWeek && params.dayOfWeek !== 'الكل') {
     schedules = schedules.filter((s) => s.day_of_week === params.dayOfWeek);
@@ -365,15 +381,15 @@ export function toggleBookmark(resourceId: string): boolean {
 // ----------------- USER PREFERENCES -----------------
 export interface UserPreferences {
   departmentId: string;
+  semesterNumber: SemesterNumber;
   academicYear: AcademicYear;
-  semester: 'الترم الأول' | 'الترم الثاني';
   sectionNumber: SectionNumber;
 }
 
 export const DEFAULT_PREFERENCES: UserPreferences = {
   departmentId: 'dept-surveying',
+  semesterNumber: 1,
   academicYear: 'الفرقة الأولى',
-  semester: 'الترم الأول',
   sectionNumber: 'عام',
 };
 

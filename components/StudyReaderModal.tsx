@@ -224,3 +224,4 @@ export default function StudyReaderModal({ resource, onClose }: StudyReaderModal
     </div>
   );
 }
+

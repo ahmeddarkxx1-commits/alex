@@ -189,3 +189,4 @@ FOR ALL USING (public.is_super_admin());
 
 CREATE POLICY "Super admin can manage subjects" ON public.subjects
 FOR ALL USING (public.is_super_admin());
+

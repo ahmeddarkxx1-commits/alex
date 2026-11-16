@@ -267,3 +267,4 @@ export default function SchedulesTab({ schedules, activeDeptName, activeYear }: 
     </div>
   );
 }
+
