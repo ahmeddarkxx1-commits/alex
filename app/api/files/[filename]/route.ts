@@ -14,15 +14,20 @@ export async function GET(
 
     // Sanitize to prevent path traversal
     const safeFilename = path.basename(filename);
-    const uploadsDir = path.join(process.cwd(), 'public', 'uploads');
-    const filePath = path.join(uploadsDir, safeFilename);
+    const localUploadsPath = path.join(process.cwd(), 'public', 'uploads', safeFilename);
+    const tmpUploadsPath = path.join('/tmp', 'uploads', safeFilename);
 
-    if (!fs.existsSync(filePath)) {
+    let targetFilePath = '';
+    if (fs.existsSync(localUploadsPath)) {
+      targetFilePath = localUploadsPath;
+    } else if (fs.existsSync(tmpUploadsPath)) {
+      targetFilePath = tmpUploadsPath;
+    } else {
       return NextResponse.json({ error: 'الملف غير موجود على السيرفر' }, { status: 404 });
     }
 
-    const fileBuffer = fs.readFileSync(filePath);
-    const stats = fs.statSync(filePath);
+    const fileBuffer = fs.readFileSync(targetFilePath);
+    const stats = fs.statSync(targetFilePath);
 
     return new NextResponse(fileBuffer, {
       headers: {

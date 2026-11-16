@@ -39,10 +39,17 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 3. Ensure uploads folder exists in public directory
-    const uploadsDir = path.join(process.cwd(), 'public', 'uploads');
-    if (!fs.existsSync(uploadsDir)) {
-      fs.mkdirSync(uploadsDir, { recursive: true });
+    // 3. Ensure uploads folder exists (with /tmp fallback for Vercel serverless read-only filesystem)
+    let uploadsDir = path.join(process.cwd(), 'public', 'uploads');
+    try {
+      if (!fs.existsSync(uploadsDir)) {
+        fs.mkdirSync(uploadsDir, { recursive: true });
+      }
+    } catch {
+      uploadsDir = path.join('/tmp', 'uploads');
+      if (!fs.existsSync(uploadsDir)) {
+        fs.mkdirSync(uploadsDir, { recursive: true });
+      }
     }
 
     // 4. Generate clean, unique filename
