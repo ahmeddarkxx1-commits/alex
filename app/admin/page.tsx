@@ -2590,8 +2590,14 @@ export default function AdminDashboard() {
       {/* INLINE PDF PREVIEW MODAL */}
       {/* ---------------------------------------------------- */}
       {previewPdfUrl && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="relative w-full max-w-5xl h-[90vh] bg-[#fdfbf9] border-[2px] border-[#171717] rounded-[16px] shadow-[0_8px_30px_rgba(0,0,0,0.3)] flex flex-col overflow-hidden">
+        <div
+          onClick={() => setPreviewPdfUrl(null)}
+          className="fixed inset-0 w-screen h-screen z-50 flex items-center justify-center p-3 sm:p-6 bg-[#171717]/65 backdrop-blur-md animate-in fade-in duration-200 cursor-pointer"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="relative w-full max-w-5xl h-[90vh] bg-[#fdfbf9] border-[2px] border-[#171717] rounded-[16px] shadow-[0_8px_32px_rgba(0,0,0,0.3)] flex flex-col overflow-hidden cursor-default"
+          >
             {/* Modal Header */}
             <div className="flex items-center justify-between p-4 bg-[#f7efe9] border-b-[1.5px] border-[#171717]">
               <div className="flex items-center gap-2.5 truncate">

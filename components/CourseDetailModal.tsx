@@ -37,8 +37,14 @@ export default function CourseDetailModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-[#171717]/40 backdrop-blur-sm animate-fade-in">
-      <div className="relative w-full max-w-3xl max-h-[90vh] flex flex-col bg-[#fdfbf9] border-[2px] border-[#171717] rounded-[16px] shadow-[0_4px_30px_rgba(0,0,0,0.15)] overflow-hidden">
+    <div
+      onClick={onClose}
+      className="fixed inset-0 w-screen h-screen z-50 flex items-center justify-center p-3 sm:p-6 bg-[#171717]/65 backdrop-blur-md animate-fade-in cursor-pointer"
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="relative w-full max-w-3xl max-h-[90vh] flex flex-col bg-[#fdfbf9] border-[2px] border-[#171717] rounded-[16px] shadow-[0_8px_32px_rgba(0,0,0,0.3)] overflow-hidden cursor-default"
+      >
         {/* Header */}
         <div className="flex items-center justify-between p-5 border-b-[1.5px] border-[#171717] bg-[#f7efe9]">
           <div>

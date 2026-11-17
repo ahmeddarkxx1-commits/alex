@@ -116,9 +116,13 @@ export default function StudentAuthModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#171717]/60 backdrop-blur-sm overflow-y-auto">
+    <div
+      onClick={onClose}
+      className="fixed inset-0 w-screen h-screen z-50 flex items-center justify-center p-4 bg-[#171717]/65 backdrop-blur-md overflow-y-auto cursor-pointer"
+    >
       <div 
-        className="w-full max-w-lg bg-[#fdfbf9] border-[2px] border-[#171717] rounded-[20px] shadow-[0_4px_24px_rgba(0,0,0,0.15)] overflow-hidden my-8 animate-fade-in text-right"
+        onClick={(e) => e.stopPropagation()}
+        className="w-full max-w-lg bg-[#fdfbf9] border-[2px] border-[#171717] rounded-[20px] shadow-[0_8px_32px_rgba(0,0,0,0.3)] overflow-hidden my-8 animate-fade-in text-right cursor-default"
         dir="rtl"
       >
         {/* Header Ribbon */}
