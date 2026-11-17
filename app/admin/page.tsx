@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import { 
   Department, 
@@ -2696,10 +2697,11 @@ export default function AdminDashboard() {
       {/* ---------------------------------------------------- */}
       {/* INLINE PDF PREVIEW MODAL */}
       {/* ---------------------------------------------------- */}
-      {previewPdfUrl && (
+      {previewPdfUrl && typeof document !== 'undefined' && createPortal(
         <div
           onClick={() => setPreviewPdfUrl(null)}
-          className="fixed inset-0 z-[999] flex items-center justify-center p-3 sm:p-6 bg-[#171717]/75 backdrop-blur-lg animate-in fade-in duration-200 cursor-pointer"
+          className="fixed inset-0 z-[99999] flex items-center justify-center p-3 sm:p-6 bg-[#171717]/80 backdrop-blur-lg animate-in fade-in duration-200 cursor-pointer"
+          dir="rtl"
         >
           <div
             onClick={(e) => e.stopPropagation()}
@@ -2793,7 +2795,8 @@ export default function AdminDashboard() {
               </div>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

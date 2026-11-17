@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { Resource } from '@/types/database';
 import { 
   X, 
@@ -21,8 +22,19 @@ interface StudyReaderModalProps {
 
 export default function StudyReaderModal({ resource, onClose }: StudyReaderModalProps) {
   const [copied, setCopied] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
-  if (!resource) return null;
+  useEffect(() => {
+    setMounted(true);
+    if (resource) {
+      document.body.style.overflow = 'hidden';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [resource]);
+
+  if (!mounted || !resource) return null;
 
   const displayMarkdown = (() => {
     const raw = resource.content_markdown || '';
@@ -101,10 +113,11 @@ export default function StudyReaderModal({ resource, onClose }: StudyReaderModal
     });
   };
 
-  return (
+  return createPortal(
     <div
       onClick={onClose}
-      className="fixed inset-0 z-[999] flex items-center justify-center p-3 sm:p-6 bg-[#171717]/75 backdrop-blur-lg animate-fade-in cursor-pointer"
+      className="fixed inset-0 z-[99999] flex items-center justify-center p-3 sm:p-6 bg-[#171717]/80 backdrop-blur-lg animate-fade-in cursor-pointer"
+      dir="rtl"
     >
       <div
         onClick={(e) => e.stopPropagation()}
@@ -219,12 +232,13 @@ export default function StudyReaderModal({ resource, onClose }: StudyReaderModal
           <span>شعبة المساحة العامة • المعهد الفني الصناعي بالإسكندرية</span>
           <button
             onClick={onClose}
-            className="btn-pill !py-1 !px-4 text-xs"
+            className="btn-pill !py-1 !px-4 text-xs cursor-pointer"
           >
             إغلاق
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

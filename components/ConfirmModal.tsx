@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { Trash2, AlertTriangle, AlertOctagon, Info, X, Check } from 'lucide-react';
 
 export interface ConfirmModalProps {
@@ -28,25 +29,34 @@ export default function ConfirmModal({
   onConfirm,
   onClose,
 }: ConfirmModalProps) {
-  // Close on Escape key
+  const [mounted, setMounted] = useState(false);
+
+  // Close on Escape key and handle overflow
   useEffect(() => {
+    setMounted(true);
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+    }
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && isOpen && !isLoading) {
         onClose();
       }
     };
     window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = '';
+    };
   }, [isOpen, isLoading, onClose]);
 
-  if (!isOpen) return null;
+  if (!mounted || !isOpen) return null;
 
-  return (
+  return createPortal(
     <div
       onClick={() => {
         if (!isLoading) onClose();
       }}
-      className="fixed inset-0 z-[1000] flex items-center justify-center p-4 bg-[#171717]/75 backdrop-blur-lg cursor-pointer animate-in fade-in duration-200"
+      className="fixed inset-0 z-[999999] flex items-center justify-center p-4 bg-[#171717]/80 backdrop-blur-lg cursor-pointer animate-in fade-in duration-200"
       dir="rtl"
     >
       <div
@@ -145,6 +155,7 @@ export default function ConfirmModal({
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

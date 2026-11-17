@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { 
   Department, 
   AcademicYear, 
@@ -38,6 +39,7 @@ export default function StudentAuthModal({
   onSuccess,
   initialStudent,
 }: StudentAuthModalProps) {
+  const [mounted, setMounted] = useState(false);
   const [departments, setDepartments] = useState<Department[]>([]);
   const [savedAccounts, setSavedAccounts] = useState<StudentUser[]>([]);
   const [activeMode, setActiveMode] = useState<'create' | 'saved'>(initialStudent ? 'create' : 'create');
@@ -49,6 +51,16 @@ export default function StudentAuthModal({
   const [academicYear, setAcademicYear] = useState<AcademicYear>('الفرقة الأولى');
   const [semesterNumber, setSemesterNumber] = useState<SemesterNumber>(1);
   const [sectionNumber, setSectionNumber] = useState<SectionNumber>('سكشن 1');
+
+  useEffect(() => {
+    setMounted(true);
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isOpen]);
 
   useEffect(() => {
     async function loadData() {
@@ -113,12 +125,12 @@ export default function StudentAuthModal({
     onClose();
   };
 
-  if (!isOpen) return null;
+  if (!mounted || !isOpen) return null;
 
-  return (
+  return createPortal(
     <div
       onClick={onClose}
-      className="fixed inset-0 z-[999] flex items-center justify-center p-4 bg-[#171717]/75 backdrop-blur-lg overflow-y-auto cursor-pointer"
+      className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-[#171717]/80 backdrop-blur-lg overflow-y-auto cursor-pointer"
     >
       <div 
         onClick={(e) => e.stopPropagation()}
@@ -418,7 +430,8 @@ export default function StudentAuthModal({
           )}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 

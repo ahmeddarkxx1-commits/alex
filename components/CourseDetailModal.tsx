@@ -1,6 +1,7 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { Subject, Resource } from '@/types/database';
 import { X, FileText, Download, Clock, ChevronLeft } from 'lucide-react';
 
@@ -17,7 +18,19 @@ export default function CourseDetailModal({
   onClose,
   onOpenResource,
 }: CourseDetailModalProps) {
-  if (!subject) return null;
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+    if (subject) {
+      document.body.style.overflow = 'hidden';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [subject]);
+
+  if (!mounted || !subject) return null;
 
   const subjectResources = resources.filter((r) => r.subject_id === subject.id);
 
@@ -36,10 +49,11 @@ export default function CourseDetailModal({
     }
   };
 
-  return (
+  return createPortal(
     <div
       onClick={onClose}
-      className="fixed inset-0 z-[999] flex items-center justify-center p-3 sm:p-6 bg-[#171717]/75 backdrop-blur-lg animate-fade-in cursor-pointer"
+      className="fixed inset-0 z-[99999] flex items-center justify-center p-3 sm:p-6 bg-[#171717]/80 backdrop-blur-lg animate-fade-in cursor-pointer"
+      dir="rtl"
     >
       <div
         onClick={(e) => e.stopPropagation()}
@@ -162,12 +176,13 @@ export default function CourseDetailModal({
         <div className="p-4 border-t-[1.5px] border-[#171717] bg-[#f7efe9] flex justify-end">
           <button
             onClick={onClose}
-            className="btn-pill !py-1 !px-4 text-xs"
+            className="btn-pill !py-1 !px-4 text-xs cursor-pointer"
           >
             إغلاق
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
