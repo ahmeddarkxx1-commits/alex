@@ -111,6 +111,9 @@ export default function RootLayout({
             </div>
           </div>
         </footer>
+
+        {/* Global High-Z Portal Container for modals and overlays */}
+        <div id="portal-root" className="relative z-[9999999]"></div>
       </body>
     </html>
   );

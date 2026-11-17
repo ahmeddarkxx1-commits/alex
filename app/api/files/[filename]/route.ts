@@ -46,19 +46,24 @@ export async function GET(
 
         // 2. Check Supabase Database resources table (Persistent Cloud Storage)
         try {
-          const { data: resList, error: dbErr } = await (supabase
-            .from('resources') as any)
-            .select('content_markdown, file_url')
-            .like('file_url', `%${safeFilename}%`)
+          let query = (supabase.from('resources') as any)
+            .select('content_markdown, file_url, title')
+            .or(`file_url.ilike.%${safeFilename}%,summary.ilike.%${safeFilename}%`)
+            .order('created_at', { ascending: false })
             .limit(1);
 
+          const { data: resList, error: dbErr } = await query;
           const resData: any = resList?.[0];
 
-          if (!dbErr && resData?.content_markdown?.startsWith('PDF_DATA:::')) {
-            const parts = resData.content_markdown.split(':::');
-            const base64Str = parts[1];
-            if (base64Str) {
-              const fileBuffer = Buffer.from(base64Str, 'base64');
+          if (!dbErr && resData?.content_markdown?.includes('PDF_DATA:::')) {
+            const raw = resData.content_markdown;
+            const markerIndex = raw.indexOf('PDF_DATA:::');
+            const sub = raw.substring(markerIndex + 11);
+            const nextMarker = sub.indexOf(':::');
+            const base64Str = nextMarker !== -1 ? sub.substring(0, nextMarker) : sub;
+
+            if (base64Str && base64Str.trim().length > 50) {
+              const fileBuffer = Buffer.from(base64Str.trim(), 'base64');
 
               // Cache to /tmp for faster future reads
               try {
@@ -70,10 +75,11 @@ export async function GET(
               }
 
               return new NextResponse(fileBuffer, {
+                status: 200,
                 headers: {
                   'Content-Type': 'application/pdf',
                   'Content-Length': fileBuffer.length.toString(),
-                  'Content-Disposition': `inline; filename="${encodeURIComponent(safeFilename)}"`,
+                  'Content-Disposition': `inline; filename="${encodeURIComponent(resData.title || safeFilename)}"`,
                   'Cache-Control': 'public, max-age=31536000, immutable',
                 },
               });
@@ -83,6 +89,35 @@ export async function GET(
           console.warn('Database PDF retrieval error:', dbReadErr);
         }
       }
+
+      // 3. Fallback: Check local db.json
+      try {
+        const { dbGetResources } = await import('@/lib/db');
+        const localList = dbGetResources();
+        const found = localList.find((r) => r.file_url?.includes(safeFilename) || r.summary?.includes(safeFilename));
+        if (found?.content_markdown?.includes('PDF_DATA:::')) {
+          const raw = found.content_markdown;
+          const markerIndex = raw.indexOf('PDF_DATA:::');
+          const sub = raw.substring(markerIndex + 11);
+          const nextMarker = sub.indexOf(':::');
+          const base64Str = nextMarker !== -1 ? sub.substring(0, nextMarker) : sub;
+          if (base64Str && base64Str.trim().length > 50) {
+            const fileBuffer = Buffer.from(base64Str.trim(), 'base64');
+            return new NextResponse(fileBuffer, {
+              status: 200,
+              headers: {
+                'Content-Type': 'application/pdf',
+                'Content-Length': fileBuffer.length.toString(),
+                'Content-Disposition': `inline; filename="${encodeURIComponent(found.title || safeFilename)}"`,
+                'Cache-Control': 'public, max-age=31536000, immutable',
+              },
+            });
+          }
+        }
+      } catch (localDbErr) {
+        // ignore
+      }
+
       return NextResponse.json({ error: 'الملف غير موجود على السيرفر' }, { status: 404 });
     }
 

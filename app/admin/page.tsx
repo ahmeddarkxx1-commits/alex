@@ -142,6 +142,13 @@ export default function AdminDashboard() {
     setTimeout(() => setToast(null), 4000);
   };
 
+  const getLiveOrigin = () => {
+    if (typeof window !== 'undefined' && window.location.origin && !window.location.origin.includes('localhost') && !window.location.origin.includes('127.0.0.1')) {
+      return window.location.origin;
+    }
+    return 'https://survey.nexoura.org';
+  };
+
   // Custom Confirmation Modal State (replaces ugly native browser confirm)
   const [confirmModal, setConfirmModal] = useState<{
     isOpen: boolean;
@@ -402,6 +409,8 @@ export default function AdminDashboard() {
       setCurrentUser(data.user);
       localStorage.setItem('iti_admin_session', JSON.stringify(data.user));
       showToast(data.message || `مرحباً بك يا ${data.user.full_name}`);
+
+      await refreshAllData();
 
       if (data.user.role === 'reviewer_admin') {
         setActiveTab('review');
@@ -667,7 +676,7 @@ export default function AdminDashboard() {
 
     // Send Telegram broadcast if checked with specific channel (Year 1 or Year 2)
     if (notifyTelegram && isAutoApproved) {
-      const currentOrigin = typeof window !== 'undefined' ? window.location.origin : 'https://alex-iota-two.vercel.app';
+      const currentOrigin = getLiveOrigin();
       const postUrl = `${currentOrigin}/?resId=${created.id}`;
       let fileUrlFormatted: string | undefined = undefined;
       if (created.file_url) {
@@ -710,7 +719,7 @@ export default function AdminDashboard() {
     showToast(`تم اعتماد ونشر "${resItem.title}" للطلاب بنجاح!`);
 
     // Broadcast to the respective Telegram channel upon approval!
-    const currentOrigin = typeof window !== 'undefined' ? window.location.origin : 'https://alex-iota-two.vercel.app';
+    const currentOrigin = getLiveOrigin();
     const postUrl = `${currentOrigin}/?resId=${resItem.id}`;
     let fileUrlFormatted: string | undefined = undefined;
     if (resItem.file_url) {
@@ -2884,7 +2893,7 @@ export default function AdminDashboard() {
                         <button
                           type="button"
                           onClick={() => {
-                            const origin = typeof window !== 'undefined' ? window.location.origin : 'https://survey.nexoura.org';
+                            const origin = getLiveOrigin();
                             const link = `${origin}/?course=${sub.code}`;
                             navigator.clipboard.writeText(link);
                             showToast(`تم نسخ رابط مادة ${sub.name_ar} (${sub.code}) 📋`, 'info');
@@ -2992,12 +3001,13 @@ export default function AdminDashboard() {
       {previewPdfUrl && typeof document !== 'undefined' && createPortal(
         <div
           onClick={() => setPreviewPdfUrl(null)}
-          className="fixed inset-0 z-[99999] flex items-center justify-center p-3 sm:p-6 bg-[#171717]/80 backdrop-blur-lg animate-in fade-in duration-200 cursor-pointer"
+          className="fixed inset-0 w-screen h-screen min-h-[100dvh] z-[9999999] flex items-center justify-center p-3 sm:p-6 bg-[#171717]/85 backdrop-blur-md animate-in fade-in duration-200 cursor-pointer overflow-y-auto"
+          style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, width: '100vw', height: '100dvh', zIndex: 9999999 }}
           dir="rtl"
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="relative w-full max-w-5xl h-[90vh] bg-[#fdfbf9] border-[2px] border-[#171717] rounded-[16px] shadow-[0_8px_32px_rgba(0,0,0,0.3)] flex flex-col overflow-hidden cursor-default"
+            className="relative w-full max-w-5xl h-[90vh] bg-[#fdfbf9] border-[2px] border-[#171717] rounded-[16px] shadow-[0_8px_32px_rgba(0,0,0,0.3)] flex flex-col overflow-hidden cursor-default my-auto"
           >
             {/* Modal Header */}
             <div className="flex items-center justify-between p-4 bg-[#f7efe9] border-b-[1.5px] border-[#171717]">
@@ -3088,7 +3098,7 @@ export default function AdminDashboard() {
             </div>
           </div>
         </div>,
-        document.body
+        document.getElementById('portal-root') || document.body
       )}
     </div>
   );

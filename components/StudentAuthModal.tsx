@@ -127,14 +127,21 @@ export default function StudentAuthModal({
 
   if (!mounted || !isOpen) return null;
 
+  const portalTarget = typeof document !== 'undefined'
+    ? (document.getElementById('portal-root') || document.body)
+    : null;
+
+  if (!portalTarget) return null;
+
   return createPortal(
     <div
       onClick={onClose}
-      className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-[#171717]/80 backdrop-blur-lg overflow-y-auto cursor-pointer"
+      className="fixed inset-0 w-screen h-screen min-h-[100dvh] z-[9999999] flex items-center justify-center p-4 bg-[#171717]/85 backdrop-blur-md overflow-y-auto cursor-pointer"
+      style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, width: '100vw', height: '100dvh', zIndex: 9999999 }}
     >
       <div 
         onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-lg bg-[#fdfbf9] border-[2px] border-[#171717] rounded-[20px] shadow-[0_8px_32px_rgba(0,0,0,0.3)] overflow-hidden my-8 animate-fade-in text-right cursor-default"
+        className="w-full max-w-lg bg-[#fdfbf9] border-[2px] border-[#171717] rounded-[20px] shadow-[0_8px_32px_rgba(0,0,0,0.3)] overflow-hidden my-auto animate-fade-in text-right cursor-default"
         dir="rtl"
       >
         {/* Header Ribbon */}
@@ -431,7 +438,7 @@ export default function StudentAuthModal({
         </div>
       </div>
     </div>,
-    document.body
+    portalTarget
   );
 }
 

@@ -83,7 +83,20 @@ export async function getSubjects(params?: {
       const res = await fetch(`/api/subjects?${q.toString()}`);
       if (res.ok) {
         const data = await res.json();
-        if (Array.isArray(data) && data.length > 0) return data as Subject[];
+        if (Array.isArray(data) && data.length > 0) {
+          try {
+            const current = getLocalItem<Subject[]>(STORAGE_KEYS.SUBJECTS, INITIAL_SUBJECTS);
+            const map = new Map<string, Subject>(current.map((s) => [s.id, s]));
+            data.forEach((s: Subject) => {
+              const old = map.get(s.id);
+              map.set(s.id, old ? { ...old, ...s } : s);
+            });
+            setLocalItem(STORAGE_KEYS.SUBJECTS, Array.from(map.values()));
+          } catch {
+            // ignore
+          }
+          return data as Subject[];
+        }
       }
     } catch (e) {
       // fallback
@@ -97,7 +110,20 @@ export async function getSubjects(params?: {
       if (params?.academicYear) query = query.eq('academic_year', params.academicYear);
       if (params?.semesterNumber) query = query.eq('semester_number', params.semesterNumber);
       const { data, error } = await query.order('name_ar', { ascending: true });
-      if (!error && data && data.length > 0) return data as Subject[];
+      if (!error && data && data.length > 0) {
+        try {
+          const current = getLocalItem<Subject[]>(STORAGE_KEYS.SUBJECTS, INITIAL_SUBJECTS);
+          const map = new Map<string, Subject>(current.map((s) => [s.id, s]));
+          data.forEach((s: any) => {
+            const old = map.get(s.id);
+            map.set(s.id, old ? { ...old, ...s } : s);
+          });
+          setLocalItem(STORAGE_KEYS.SUBJECTS, Array.from(map.values()));
+        } catch {
+          // ignore
+        }
+        return data as Subject[];
+      }
     } catch (e) {
       console.warn('Supabase subjects fetch failed, falling back', e);
     }
@@ -164,7 +190,7 @@ export async function getResources(params?: {
   }
 
   const allDepts = await getDepartments();
-  const allSubjs = getLocalItem<Subject[]>(STORAGE_KEYS.SUBJECTS, INITIAL_SUBJECTS);
+  const allSubjs = await getSubjects();
 
   // Attach joins
   resources = resources.map((r) => ({
@@ -237,6 +263,8 @@ export async function getSubjectByCodeOrId(codeOrId: string): Promise<Subject | 
 }
 
 export async function updateSubject(id: string, updates: Partial<Subject>): Promise<Subject | null> {
+  let updatedRecord: Subject | null = null;
+
   if (typeof window !== 'undefined') {
     try {
       const res = await fetch('/api/subjects', {
@@ -245,24 +273,21 @@ export async function updateSubject(id: string, updates: Partial<Subject>): Prom
         body: JSON.stringify({ id, ...updates }),
       });
       if (res.ok) {
-        const updated = await res.json();
-        const list = getLocalItem<Subject[]>(STORAGE_KEYS.SUBJECTS, INITIAL_SUBJECTS);
-        const idx = list.findIndex((s) => s.id === id);
-        if (idx !== -1) {
-          list[idx] = { ...list[idx], ...updates };
-          setLocalItem(STORAGE_KEYS.SUBJECTS, list);
-        }
-        return updated as Subject;
+        updatedRecord = await res.json();
       }
     } catch (e) {
       console.warn('API updateSubject failed', e);
     }
   }
 
-  if (isSupabaseConfigured) {
+  if (!updatedRecord && isSupabaseConfigured) {
     try {
-      const { data, error } = await (supabase.from('subjects' as any) as any).update(updates).eq('id', id).select().maybeSingle();
-      if (!error && data) return data as Subject;
+      const { data, error } = await (supabase.from('subjects' as any) as any)
+        .update(updates)
+        .eq('id', id)
+        .select()
+        .maybeSingle();
+      if (!error && data) updatedRecord = data as Subject;
     } catch (e) {
       console.warn('Supabase updateSubject failed', e);
     }
@@ -271,11 +296,15 @@ export async function updateSubject(id: string, updates: Partial<Subject>): Prom
   const list = getLocalItem<Subject[]>(STORAGE_KEYS.SUBJECTS, INITIAL_SUBJECTS);
   const idx = list.findIndex((s) => s.id === id);
   if (idx !== -1) {
-    list[idx] = { ...list[idx], ...updates };
+    list[idx] = { ...list[idx], ...(updatedRecord || {}), ...updates };
     setLocalItem(STORAGE_KEYS.SUBJECTS, list);
-    return list[idx];
+    return updatedRecord || list[idx];
+  } else if (updatedRecord) {
+    list.push(updatedRecord);
+    setLocalItem(STORAGE_KEYS.SUBJECTS, list);
+    return updatedRecord;
   }
-  return null;
+  return updatedRecord;
 }
 
 export async function createResource(newRes: Omit<Resource, 'id' | 'views_count' | 'created_at'>): Promise<Resource> {
@@ -413,13 +442,17 @@ export async function getSchedules(params?: {
   }
 
   const allDepts = await getDepartments();
-  const allSubjs = getLocalItem<Subject[]>(STORAGE_KEYS.SUBJECTS, INITIAL_SUBJECTS);
+  const allSubjs = await getSubjects();
 
-  schedules = schedules.map((s) => ({
-    ...s,
-    department: allDepts.find((d) => d.id === s.department_id),
-    subject: allSubjs.find((subj) => subj.id === s.subject_id),
-  }));
+  schedules = schedules.map((s) => {
+    const sub = allSubjs.find((subj) => subj.id === s.subject_id);
+    return {
+      ...s,
+      subject: sub,
+      instructor_name: s.instructor_name || sub?.instructor_name || 'هيئة تدريس المعهد',
+      department: allDepts.find((d) => d.id === s.department_id),
+    };
+  });
 
   if (params?.departmentId) {
     schedules = schedules.filter((s) => s.department_id === params.departmentId);

@@ -51,17 +51,24 @@ export default function ConfirmModal({
 
   if (!mounted || !isOpen) return null;
 
+  const portalTarget = typeof document !== 'undefined'
+    ? (document.getElementById('portal-root') || document.body)
+    : null;
+
+  if (!portalTarget) return null;
+
   return createPortal(
     <div
       onClick={() => {
         if (!isLoading) onClose();
       }}
-      className="fixed inset-0 z-[999999] flex items-center justify-center p-4 bg-[#171717]/80 backdrop-blur-lg cursor-pointer animate-in fade-in duration-200"
+      className="fixed inset-0 w-screen h-screen min-h-[100dvh] z-[9999999] flex items-center justify-center p-4 bg-[#171717]/85 backdrop-blur-md cursor-pointer animate-in fade-in duration-200 overflow-y-auto"
+      style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, width: '100vw', height: '100dvh', zIndex: 9999999 }}
       dir="rtl"
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-md bg-[#fdfbf9] border-[2px] border-[#171717] rounded-[24px] shadow-[0_16px_50px_rgba(0,0,0,0.35)] p-6 sm:p-7 space-y-5 animate-in zoom-in-95 duration-200 text-right cursor-default relative"
+        className="w-full max-w-md bg-[#fdfbf9] border-[2px] border-[#171717] rounded-[24px] shadow-[0_16px_50px_rgba(0,0,0,0.35)] p-6 sm:p-7 space-y-5 animate-in zoom-in-95 duration-200 text-right cursor-default relative my-auto"
       >
         {/* Close "X" Button in corner */}
         <button
@@ -156,6 +163,6 @@ export default function ConfirmModal({
         </div>
       </div>
     </div>,
-    document.body
+    portalTarget
   );
 }

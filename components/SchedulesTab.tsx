@@ -8,12 +8,21 @@ interface SchedulesTabProps {
   schedules: Schedule[];
   activeDeptName: string;
   activeYear: string;
+  initialDay?: DayOfWeek | 'الكل';
+  initialSection?: SectionNumber | 'الكل';
   onCopyLink?: (url: string, title: string) => void;
 }
 
 const DAYS_OF_WEEK: DayOfWeek[] = ['السبت', 'الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس'];
 
-export default function SchedulesTab({ schedules, activeDeptName, activeYear, onCopyLink }: SchedulesTabProps) {
+export default function SchedulesTab({
+  schedules,
+  activeDeptName,
+  activeYear,
+  initialDay,
+  initialSection,
+  onCopyLink,
+}: SchedulesTabProps) {
   const [copiedLink, setCopiedLink] = useState(false);
   const getTodayArabic = (): DayOfWeek => {
     const dayIndex = new Date().getDay();
@@ -30,8 +39,10 @@ export default function SchedulesTab({ schedules, activeDeptName, activeYear, on
   };
 
   const todayArabic = getTodayArabic();
-  const [selectedDay, setSelectedDay] = useState<DayOfWeek | 'الكل'>(todayArabic === ('الجمعة' as any) ? 'السبت' : todayArabic);
-  const [selectedSection, setSelectedSection] = useState<SectionNumber | 'الكل'>('الكل');
+  const [selectedDay, setSelectedDay] = useState<DayOfWeek | 'الكل'>(
+    initialDay || (todayArabic === ('الجمعة' as any) ? 'السبت' : todayArabic)
+  );
+  const [selectedSection, setSelectedSection] = useState<SectionNumber | 'الكل'>(initialSection || 'الكل');
   const [selectedType, setSelectedType] = useState<SessionType | 'الكل'>('الكل');
 
   const filtered = schedules.filter((s) => {
@@ -59,13 +70,19 @@ export default function SchedulesTab({ schedules, activeDeptName, activeYear, on
   };
 
   const handleShareSchedule = () => {
-    const origin = typeof window !== 'undefined' ? window.location.origin : 'https://survey.nexoura.org';
-    const link = `${origin}/?tab=schedules`;
+    const origin = typeof window !== 'undefined' && window.location.origin && !window.location.origin.includes('localhost') && !window.location.origin.includes('127.0.0.1')
+      ? window.location.origin
+      : 'https://survey.nexoura.org';
+    const params = new URLSearchParams();
+    params.set('tab', 'schedules');
+    if (selectedDay !== 'الكل') params.set('day', selectedDay);
+    if (selectedSection !== 'الكل') params.set('sec', selectedSection);
+    const link = `${origin}/?${params.toString()}`;
     navigator.clipboard.writeText(link);
     setCopiedLink(true);
     setTimeout(() => setCopiedLink(false), 2500);
     if (onCopyLink) {
-      onCopyLink(link, 'جدول المحاضرات والسكاشن الأسبوعي');
+      onCopyLink(link, `جدول المحاضرات والسكاشن (${selectedDay === 'الكل' ? 'الأسبوع كاملاً' : selectedDay}${selectedSection !== 'الكل' ? ` • ${selectedSection}` : ''})`);
     }
   };
 
@@ -143,17 +160,17 @@ export default function SchedulesTab({ schedules, activeDeptName, activeYear, on
         })}
       </div>
 
-      {/* Sub-filters (Mobile Responsive with Wrap) */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 text-xs bg-[#fdfbf9] p-3.5 sm:p-4 rounded-[12px] border-[1.5px] border-[#171717] shadow-[0_1px_2px_rgba(0,0,0,0.06)] overflow-hidden">
+      {/* Sub-filters (Mobile Responsive with clean scroll and wrap) */}
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 text-xs bg-[#fdfbf9] p-3 sm:p-4 rounded-[12px] border-[1.5px] border-[#171717] shadow-[0_1px_2px_rgba(0,0,0,0.06)] overflow-hidden">
         {/* Section Filter */}
-        <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+        <div className="flex items-center gap-2 overflow-x-auto scrollbar-none pb-0.5">
           <span className="text-[#2b1a07] font-bold text-xs flex-shrink-0">السكشن:</span>
-          <div className="flex flex-wrap items-center gap-1.5">
+          <div className="flex items-center gap-1.5 flex-nowrap sm:flex-wrap">
             {(['الكل', 'عام', 'سكشن 1', 'سكشن 2', 'سكشن 3', 'سكشن 4'] as (SectionNumber | 'الكل')[]).map((sec) => (
               <button
                 key={sec}
                 onClick={() => setSelectedSection(sec)}
-                className={`px-3 py-1 rounded-[20px] text-xs border-[1.5px] transition-all cursor-pointer ${
+                className={`px-3 py-1 rounded-[20px] text-xs border-[1.5px] transition-all flex-shrink-0 cursor-pointer ${
                   selectedSection === sec
                     ? 'bg-[#171717] text-white border-[#171717] font-bold shadow-sm'
                     : 'bg-[#f7efe9] text-[#171717] border-[#171717]/30 hover:border-[#171717]'
@@ -166,14 +183,14 @@ export default function SchedulesTab({ schedules, activeDeptName, activeYear, on
         </div>
 
         {/* Type Filter */}
-        <div className="flex flex-col sm:flex-row sm:items-center gap-2 border-t md:border-t-0 border-[#171717]/10 pt-2.5 md:pt-0">
+        <div className="flex items-center gap-2 border-t lg:border-t-0 border-[#171717]/10 pt-2.5 lg:pt-0 overflow-x-auto scrollbar-none pb-0.5">
           <span className="text-[#2b1a07] font-bold text-xs flex-shrink-0">النوع:</span>
-          <div className="flex flex-wrap items-center gap-1.5">
+          <div className="flex items-center gap-1.5 flex-nowrap sm:flex-wrap">
             {(['الكل', 'محاضرة نظري', 'سكشن عملي', 'ورشة', 'معمل'] as (SessionType | 'الكل')[]).map((t) => (
               <button
                 key={t}
                 onClick={() => setSelectedType(t)}
-                className={`px-3 py-1 rounded-[20px] text-xs border-[1.5px] transition-all cursor-pointer ${
+                className={`px-3 py-1 rounded-[20px] text-xs border-[1.5px] transition-all flex-shrink-0 cursor-pointer ${
                   selectedType === t
                     ? 'bg-[#171717] text-white border-[#171717] font-bold shadow-sm'
                     : 'bg-[#f7efe9] text-[#171717] border-[#171717]/30 hover:border-[#171717]'

@@ -23,10 +23,25 @@ export async function POST(req: Request) {
     const year1ChannelId = process.env.TELEGRAM_CHANNEL_YEAR1_ID || process.env.TELEGRAM_CHAT_ID;
     const year2ChannelId = process.env.TELEGRAM_CHANNEL_YEAR2_ID || process.env.TELEGRAM_CHAT_ID;
 
+    // Production fallback domains: Nexoura subdomain preferred, then Vercel
+    const productionOrigin = process.env.NEXT_PUBLIC_APP_URL || 'https://survey.nexoura.org';
+
     // Detect live URL from headers or fallback
     const host = req.headers.get('x-forwarded-host') || req.headers.get('host');
-    const proto = req.headers.get('x-forwarded-proto') || (host?.includes('localhost') ? 'http' : 'https');
-    const detectedOrigin = host ? `${proto}://${host}` : (process.env.NEXT_PUBLIC_APP_URL || 'https://alex-iota-two.vercel.app');
+    const proto = req.headers.get('x-forwarded-proto') || 'https';
+
+    // STRICT: Never leak localhost to public Telegram channels
+    let liveOrigin = productionOrigin;
+    if (host && !host.includes('localhost') && !host.includes('127.0.0.1')) {
+      liveOrigin = `${proto}://${host}`;
+    }
+
+    const sanitizeUrl = (rawUrl?: string): string => {
+      if (!rawUrl) return liveOrigin;
+      return rawUrl
+        .replace(/^https?:\/\/localhost(:\d+)?/i, liveOrigin)
+        .replace(/^https?:\/\/127\.0\.0\.1(:\d+)?/i, liveOrigin);
+    };
 
     // Determine target channels based on payload
     let targetChannels: { id: string; name: string }[] = [];
@@ -118,9 +133,9 @@ export async function POST(req: Request) {
       message += `\n💬 <i>${trimmed}</i>\n`;
     }
 
-    const targetPostUrl = body.postUrl || body.link || detectedOrigin;
+    const targetPostUrl = sanitizeUrl(body.postUrl || body.link || liveOrigin);
     const directFileUrl = body.fileUrl
-      ? (body.fileUrl.startsWith('http') ? body.fileUrl : `${detectedOrigin}${body.fileUrl}`)
+      ? (body.fileUrl.startsWith('http') ? sanitizeUrl(body.fileUrl) : `${liveOrigin}${body.fileUrl}`)
       : null;
 
     if (directFileUrl) {

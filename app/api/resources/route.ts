@@ -32,8 +32,17 @@ export async function GET(request: NextRequest) {
           .order('created_at', { ascending: false });
 
         if (!error && data && data.length > 0) {
-          const { dbGetSubjects, dbGetDepartments } = await import('@/lib/db');
-          const allSubjs = dbGetSubjects();
+          let allSubjs: any[] = [];
+          try {
+            const { data: subData } = await supabase.from('subjects').select('*');
+            if (subData && subData.length > 0) allSubjs = subData;
+          } catch {}
+          if (allSubjs.length === 0) {
+            const { dbGetSubjects } = await import('@/lib/db');
+            allSubjs = dbGetSubjects();
+          }
+
+          const { dbGetDepartments } = await import('@/lib/db');
           const allDepts = dbGetDepartments();
           const enriched = data.map((r: any) => ({
             ...r,

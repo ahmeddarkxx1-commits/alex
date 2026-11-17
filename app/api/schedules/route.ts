@@ -24,14 +24,27 @@ export async function GET(request: NextRequest) {
 
         const { data, error } = await q.order('start_time', { ascending: true });
         if (!error && data && data.length > 0) {
-          const { dbGetSubjects, dbGetDepartments } = await import('@/lib/db');
-          const allSubjs = dbGetSubjects();
+          let allSubjs: any[] = [];
+          try {
+            const { data: subData } = await supabase.from('subjects').select('*');
+            if (subData && subData.length > 0) allSubjs = subData;
+          } catch {}
+          if (allSubjs.length === 0) {
+            const { dbGetSubjects } = await import('@/lib/db');
+            allSubjs = dbGetSubjects();
+          }
+
+          const { dbGetDepartments } = await import('@/lib/db');
           const allDepts = dbGetDepartments();
-          const enriched = data.map((s: any) => ({
-            ...s,
-            subject: allSubjs.find((subj) => subj.id === s.subject_id),
-            department: allDepts.find((d) => d.id === s.department_id),
-          }));
+          const enriched = data.map((s: any) => {
+            const sub = allSubjs.find((subj) => subj.id === s.subject_id);
+            return {
+              ...s,
+              subject: sub,
+              instructor_name: s.instructor_name || sub?.instructor_name || 'هيئة تدريس المعهد',
+              department: allDepts.find((d) => d.id === s.department_id),
+            };
+          });
           return NextResponse.json(enriched);
         }
       } catch (e) {

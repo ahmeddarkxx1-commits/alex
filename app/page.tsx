@@ -10,6 +10,7 @@ import {
   SemesterNumber,
   SectionNumber,
   ResourceType,
+  DayOfWeek,
   StudentUser
 } from '@/types/database';
 import {
@@ -90,6 +91,10 @@ export default function SurveyingPortal() {
   const [selectedCourse, setSelectedCourse] = useState<Subject | null>(null);
   const [readingResource, setReadingResource] = useState<Resource | null>(null);
 
+  // Deep linked schedule filters
+  const [scheduleDayParam, setScheduleDayParam] = useState<DayOfWeek | 'الكل' | undefined>(undefined);
+  const [scheduleSecParam, setScheduleSecParam] = useState<SectionNumber | 'الكل' | undefined>(undefined);
+
   // Floating Toast Notifications
   const [toast, setToast] = useState<ToastData | null>(null);
 
@@ -137,9 +142,15 @@ export default function SurveyingPortal() {
         const yearParam = params.get('year');
         const deptParam = params.get('dept');
 
-        if (courseParam || resIdParam || tabParam || semParam || yearParam || deptParam) {
+        const dayParam = params.get('day');
+        const secParam = params.get('sec');
+
+        if (courseParam || resIdParam || tabParam || semParam || yearParam || deptParam || dayParam || secParam) {
           isPortalMode = true;
         }
+
+        if (dayParam) setScheduleDayParam(dayParam as any);
+        if (secParam) setScheduleSecParam(secParam as any);
 
         if (tabParam && ['courses', 'resources', 'schedules', 'deadlines', 'bookmarks'].includes(tabParam)) {
           setActiveTab(tabParam as any);
@@ -873,6 +884,8 @@ export default function SurveyingPortal() {
             schedules={schedules}
             activeDeptName="شعبة المساحة العامة"
             activeYear={`${getYearLabel()} (${getSemesterLabel(activeSemester)})`}
+            initialDay={scheduleDayParam}
+            initialSection={scheduleSecParam}
             onCopyLink={(link, title) => showToast(`تم نسخ رابط ${title} بنجاح! جاهز للإرسال للطلاب 📋`, 'success')}
           />
         )}

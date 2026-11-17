@@ -131,15 +131,22 @@ export default function StudyReaderModal({ resource, onClose, onCopyLink }: Stud
     });
   };
 
+  const portalTarget = typeof document !== 'undefined'
+    ? (document.getElementById('portal-root') || document.body)
+    : null;
+
+  if (!portalTarget) return null;
+
   return createPortal(
     <div
       onClick={onClose}
-      className="fixed inset-0 z-[99999] flex items-center justify-center p-3 sm:p-6 bg-[#171717]/80 backdrop-blur-lg animate-fade-in cursor-pointer"
+      className="fixed inset-0 w-screen h-screen min-h-[100dvh] z-[9999999] flex items-center justify-center p-3 sm:p-6 bg-[#171717]/85 backdrop-blur-md animate-fade-in cursor-pointer overflow-y-auto"
+      style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, width: '100vw', height: '100dvh', zIndex: 9999999 }}
       dir="rtl"
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="relative w-full max-w-4xl max-h-[92vh] flex flex-col bg-[#fdfbf9] border-[2px] border-[#171717] rounded-[16px] shadow-[0_8px_32px_rgba(0,0,0,0.3)] overflow-hidden cursor-default"
+        className="relative w-full max-w-4xl max-h-[92vh] flex flex-col bg-[#fdfbf9] border-[2px] border-[#171717] rounded-[16px] shadow-[0_8px_32px_rgba(0,0,0,0.3)] overflow-hidden cursor-default my-auto"
       >
         {/* Modal Header */}
         <div className="flex items-center justify-between p-4 sm:px-6 border-b-[1.5px] border-[#171717] bg-[#f7efe9]">
@@ -265,6 +272,6 @@ export default function StudyReaderModal({ resource, onClose, onCopyLink }: Stud
         </div>
       </div>
     </div>,
-    document.body
+    portalTarget
   );
 }
