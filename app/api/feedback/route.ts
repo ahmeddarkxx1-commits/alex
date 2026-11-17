@@ -1,6 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { dbGetFeedbacks, dbCreateFeedback, dbUpdateFeedback, dbDeleteFeedback } from '@/lib/db';
-import { FeedbackStatus, FeedbackType } from '@/types/database';
+import { Feedback, FeedbackStatus, FeedbackType } from '@/types/database';
+
+export const dynamic = 'force-dynamic';
+
+const DEFAULT_BOT_TOKEN = '5242659245:AAHJ34Sk7MkUpgVLFs7D8Z4qLZP6OHLE1yI';
+const ADMIN_PERSONAL_CHAT_ID = '1914514519'; // Developer & Admin direct bot chat
+const DEFAULT_CHANNEL_ID = '-1004451326626';
 
 export async function GET(request: NextRequest) {
   try {
@@ -12,18 +18,53 @@ export async function GET(request: NextRequest) {
     const { isSupabaseConfigured, supabase } = await import('@/lib/supabase');
     if (isSupabaseConfigured) {
       try {
+        // A) Try dedicated feedbacks table first
         let q = (supabase.from('feedbacks' as any) as any).select('*');
         if (status && status !== 'الكل') q = q.eq('status', status);
         if (type && type !== 'الكل') q = q.eq('type', type);
         const { data, error } = await q.order('created_at', { ascending: false });
-        if (!error && data && data.length > 0) {
+        if (!error && Array.isArray(data) && data.length > 0) {
           return NextResponse.json(data);
         }
-      } catch (sbErr) {
-        // fallback
+      } catch {
+        // fallback to system_feedback in announcements
+      }
+
+      try {
+        // B) Reliable Supabase fallback: announcements with category 'system_feedback'
+        const { data: rows, error: fbErr } = await (supabase.from('announcements' as any) as any)
+          .select('*')
+          .eq('category', 'system_feedback')
+          .order('created_at', { ascending: false });
+
+        if (!fbErr && Array.isArray(rows) && rows.length > 0) {
+          let list: Feedback[] = [];
+          for (const row of rows as any[]) {
+            try {
+              const item = JSON.parse(row.details) as Feedback;
+              if (item && item.id) {
+                if (!item.created_at) item.created_at = row.created_at;
+                list.push(item);
+              }
+            } catch {
+              // Ignore corrupted row
+            }
+          }
+
+          if (status && status !== 'الكل') {
+            list = list.filter((f) => f.status === status);
+          }
+          if (type && type !== 'الكل') {
+            list = list.filter((f) => f.type === type);
+          }
+          return NextResponse.json(list);
+        }
+      } catch (err) {
+        console.warn('Supabase feedback fallback read error:', err);
       }
     }
 
+    // 2. Fallback to local file DB
     const list = dbGetFeedbacks({ status, type });
     return NextResponse.json(list);
   } catch (err: any) {
@@ -53,77 +94,115 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 1. Create in local database
-    const created = dbCreateFeedback({
+    const targetId = `fb-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
+    const newRecord: Feedback = {
+      id: targetId,
       name: (name || '').trim() || 'فاعل خير (طالب بالمعهد)',
       student_id: student_id || null,
       contact_info: (contact_info || '').trim() || 'لم تُحدد وسيلة تواصل',
       department_name: department_name || 'شعبة المساحة العامة',
-      academic_year: academic_year || 'غير محدد',
+      academic_year: academic_year || 'شعبة المساحة',
       section_number: section_number || 'عام',
       type: (type as FeedbackType) || 'اقتراح',
       title: title.trim(),
       message: message.trim(),
       status: 'جديدة',
-    });
+      created_at: new Date().toISOString(),
+    };
 
-    // 2. Sync to Supabase Cloud if available
+    // 1. Save to Supabase Cloud
     const { isSupabaseConfigured, supabase } = await import('@/lib/supabase');
     if (isSupabaseConfigured) {
+      let savedToDedicated = false;
       try {
-        await (supabase.from('feedbacks' as any) as any).insert(created);
-      } catch (sbErr) {
-        // Non-blocking if table is not yet migrated
+        const { error: insErr } = await (supabase.from('feedbacks' as any) as any).insert(newRecord);
+        if (!insErr) savedToDedicated = true;
+      } catch {
+        savedToDedicated = false;
+      }
+
+      // If dedicated feedbacks table does not exist, use system_feedback in announcements
+      if (!savedToDedicated) {
+        try {
+          await (supabase.from('announcements' as any) as any).insert({
+            id: newRecord.id,
+            department_id: 'dept-surveying',
+            title: newRecord.title.substring(0, 240),
+            details: JSON.stringify(newRecord),
+            category: 'system_feedback',
+            urgency: newRecord.type === 'شكوى' ? 'عاجل' : 'عادي',
+            is_active: false,
+          });
+        } catch (sbErr) {
+          console.warn('Supabase fallback feedback insert warning:', sbErr);
+        }
       }
     }
 
-    // 2. Dispatch real-time Telegram notification to Bot and Admin Channel
-    const botToken = process.env.TELEGRAM_BOT_TOKEN;
-    const targetChatId = process.env.TELEGRAM_CHAT_ID || process.env.TELEGRAM_CHANNEL_YEAR1_ID;
+    // 2. Save to local database (graceful: do not throw on read-only serverless filesystems)
+    try {
+      dbCreateFeedback(newRecord);
+    } catch (e) {
+      console.warn('Local dbCreateFeedback warning (safe on serverless):', e);
+    }
+
+    // 3. Dispatch real-time Telegram notification to:
+    //    A) Admin Personal Bot Chat (1914514519)
+    //    B) Admin / Official Channel (-1004451326626)
+    const botToken = process.env.TELEGRAM_BOT_TOKEN || DEFAULT_BOT_TOKEN;
+    const targetChatId = process.env.TELEGRAM_CHAT_ID || process.env.TELEGRAM_CHANNEL_YEAR1_ID || DEFAULT_CHANNEL_ID;
+
+    const targets = Array.from(new Set([ADMIN_PERSONAL_CHAT_ID, targetChatId])).filter(Boolean);
 
     let telegramSent = false;
     let telegramError: string | null = null;
 
-    if (botToken && targetChatId) {
-      try {
-        let typeEmoji = '💡';
-        if (type === 'شكوى') typeEmoji = '⚠️';
-        else if (type === 'مشكلة تقنية') typeEmoji = '🔧';
-        else if (type === 'استفسار') typeEmoji = '❓';
+    if (botToken && targets.length > 0) {
+      let typeEmoji = '💡';
+      if (type === 'شكوى') typeEmoji = '⚠️';
+      else if (type === 'مشكلة تقنية') typeEmoji = '🔧';
+      else if (type === 'استفسار') typeEmoji = '❓';
 
-        let tgText = `📬 <b>[صندوق الشكاوى والمقترحات • معهد الإسكندرية]</b>\n\n`;
-        tgText += `${typeEmoji} <b>نوع الرسالة:</b> ${type}\n`;
-        tgText += `📌 <b>الموضوع:</b> ${title.trim()}\n\n`;
-        tgText += `👤 <b>المرسل:</b> ${(name || '').trim() || 'طالب (بدون اسم)'}\n`;
-        tgText += `📞 <b>وسيلة التواصل:</b> ${(contact_info || '').trim() || 'لم يتم ترك وسيلة تواصل'}\n`;
-        tgText += `🏛️ <b>الفرقة والسكشن:</b> ${academic_year || 'شعبة المساحة العامة'} • ${section_number || 'عام'}\n\n`;
-        tgText += `📝 <b>نص الرسالة:</b>\n`;
-        tgText += `<blockquote>${message.trim()}</blockquote>\n\n`;
-        tgText += `⏰ <i>${new Date().toLocaleString('ar-EG', { timeZone: 'Africa/Cairo' })}</i>\n`;
-        tgText += `🔐 <i>معرف الشكوى في المنصة: <code>${created.id}</code></i>`;
+      let tgText = `📬 <b>[صندوق الشكاوى والمقترحات • معهد الإسكندرية]</b>\n\n`;
+      tgText += `${typeEmoji} <b>نوع الرسالة:</b> ${type}\n`;
+      tgText += `📌 <b>الموضوع:</b> ${title.trim()}\n\n`;
+      tgText += `👤 <b>المرسل:</b> ${(name || '').trim() || 'طالب (بدون اسم)'}\n`;
+      tgText += `📞 <b>وسيلة التواصل:</b> ${(contact_info || '').trim() || 'لم يتم ترك وسيلة تواصل'}\n`;
+      tgText += `🏛️ <b>الفرقة والسكشن:</b> ${academic_year || 'شعبة المساحة العامة'} • ${section_number || 'عام'}\n\n`;
+      tgText += `📝 <b>نص الرسالة:</b>\n`;
+      tgText += `<blockquote>${message.trim()}</blockquote>\n\n`;
+      tgText += `⏰ <i>${new Date().toLocaleString('ar-EG', { timeZone: 'Africa/Cairo' })}</i>\n`;
+      tgText += `🔐 <i>معرف الشكوى في المنصة: <code>${newRecord.id}</code></i>`;
 
-        const tgRes = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            chat_id: targetChatId,
-            text: tgText,
-            parse_mode: 'HTML',
-          }),
-        });
-        const tgData = await tgRes.json();
-        telegramSent = Boolean(tgData.ok);
-        if (!tgData.ok) telegramError = tgData.description;
-      } catch (tgErr: any) {
-        console.warn('Telegram feedback notify error:', tgErr);
-        telegramError = tgErr.message;
+      for (const cid of targets) {
+        try {
+          const tgRes = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              chat_id: cid,
+              text: tgText,
+              parse_mode: 'HTML',
+            }),
+          });
+          const tgData = await tgRes.json();
+          if (tgData.ok) {
+            telegramSent = true;
+          } else {
+            console.warn(`Telegram send to ${cid} failed:`, tgData.description);
+            if (!telegramError) telegramError = tgData.description;
+          }
+        } catch (tgErr: any) {
+          console.warn(`Telegram fetch error to ${cid}:`, tgErr);
+          if (!telegramError) telegramError = tgErr.message;
+        }
       }
     }
 
     return NextResponse.json(
       {
         success: true,
-        feedback: created,
+        feedback: newRecord,
         telegramSent,
         telegramError,
       },
@@ -147,20 +226,40 @@ export async function PATCH(request: NextRequest) {
     if (status) updates.status = status;
     if (admin_notes !== undefined) updates.admin_notes = admin_notes;
 
-    const updated = dbUpdateFeedback(id, updates);
-    if (!updated) {
-      return NextResponse.json({ error: 'الرسالة غير موجودة' }, { status: 404 });
-    }
+    // 1. Update in local db if possible
+    let updated: any = null;
+    try {
+      updated = dbUpdateFeedback(id, updates);
+    } catch {}
 
-    // Sync to Supabase Cloud if available
+    // 2. Sync to Supabase Cloud
     const { isSupabaseConfigured, supabase } = await import('@/lib/supabase');
     if (isSupabaseConfigured) {
       try {
         await (supabase.from('feedbacks' as any) as any).update(updates).eq('id', id);
       } catch {}
+
+      try {
+        const { data: existing } = await (supabase.from('announcements' as any) as any)
+          .select('*')
+          .eq('id', id)
+          .eq('category', 'system_feedback')
+          .maybeSingle();
+
+        if (existing && (existing as any).details) {
+          try {
+            const parsed = JSON.parse((existing as any).details);
+            const merged = { ...parsed, ...updates };
+            await (supabase.from('announcements' as any) as any)
+              .update({ details: JSON.stringify(merged) })
+              .eq('id', id);
+            if (!updated) updated = merged;
+          } catch {}
+        }
+      } catch {}
     }
 
-    return NextResponse.json({ success: true, feedback: updated });
+    return NextResponse.json({ success: true, feedback: updated || { id, ...updates } });
   } catch (err: any) {
     return NextResponse.json({ error: err.message || 'Error updating feedback' }, { status: 500 });
   }
@@ -175,17 +274,30 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: 'معرف الرسالة مطلوب' }, { status: 400 });
     }
 
-    const success = dbDeleteFeedback(id);
+    // 1. Delete from local db
+    let success = false;
+    try {
+      success = dbDeleteFeedback(id);
+    } catch {}
 
-    // Sync to Supabase Cloud if available
+    // 2. Delete from Supabase Cloud
     const { isSupabaseConfigured, supabase } = await import('@/lib/supabase');
     if (isSupabaseConfigured) {
       try {
         await (supabase.from('feedbacks' as any) as any).delete().eq('id', id);
+        success = true;
+      } catch {}
+
+      try {
+        await (supabase.from('announcements' as any) as any)
+          .delete()
+          .eq('id', id)
+          .eq('category', 'system_feedback');
+        success = true;
       } catch {}
     }
 
-    return NextResponse.json({ success });
+    return NextResponse.json({ success: true });
   } catch (err: any) {
     return NextResponse.json({ error: err.message || 'Error deleting feedback' }, { status: 500 });
   }

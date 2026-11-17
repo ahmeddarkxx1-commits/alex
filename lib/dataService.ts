@@ -856,7 +856,7 @@ export async function getFeedbacks(params?: {
       const q = new URLSearchParams();
       if (params?.status && params.status !== 'الكل') q.set('status', params.status);
       if (params?.type && params.type !== 'الكل') q.set('type', params.type);
-      const res = await fetch(`/api/feedback?${q.toString()}`);
+      const res = await fetch(`/api/feedback?${q.toString()}`, { cache: 'no-store' });
       if (res.ok) {
         const data = await res.json();
         if (Array.isArray(data)) {
