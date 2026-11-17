@@ -121,12 +121,6 @@ export default function SurveyingLandingPage({
       {/* 1. HERO SECTION (Superr Warm Schoolyard Style) */}
       {/* ==================================================== */}
       <section className="relative max-w-5xl mx-auto text-center px-4 space-y-6 pt-4">
-        {/* Subtle decorative sticker badge */}
-        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#f7efe9] border-[1.5px] border-[#171717] shadow-[0_1px_2px_rgba(0,0,0,0.15)] text-xs font-bold text-[#2b1a07]">
-          <span className="w-2 h-2 rounded-full bg-[#ff6f1e] animate-pulse"></span>
-          <span>المعهد الفني الصناعي بالإسكندرية • كامب شيزار والمحرم بك</span>
-        </div>
-
         {/* Big Display Headline */}
         <div className="space-y-2">
           <h1 className="text-3xl sm:text-5xl md:text-6xl font-black text-[#2b1a07] tracking-tight leading-[1.15]">
