@@ -31,7 +31,8 @@ import {
   updateResource,
   createSchedule, 
   deleteSchedule, 
-  createAnnouncement 
+  createAnnouncement,
+  updateSubject 
 } from '@/lib/dataService';
 import { isSupabaseConfigured } from '@/lib/supabase';
 import ConfirmModal from '@/components/ConfirmModal';
@@ -68,7 +69,12 @@ import {
   ChevronDown,
   ChevronUp,
   ExternalLink,
-  BookOpen
+  BookOpen,
+  GraduationCap,
+  Edit3,
+  Save,
+  Check,
+  Link2
 } from 'lucide-react';
 
 export default function AdminDashboard() {
@@ -86,7 +92,15 @@ export default function AdminDashboard() {
   const [students, setStudents] = useState<StudentUser[]>([]);
 
   // Navigation Tab
-  const [activeTab, setActiveTab] = useState<'create-resource' | 'schedules' | 'announcements' | 'manage' | 'review' | 'students' | 'staff'>('create-resource');
+  const [activeTab, setActiveTab] = useState<'create-resource' | 'schedules' | 'announcements' | 'manage' | 'review' | 'students' | 'staff' | 'subjects'>('create-resource');
+
+  // Subjects & Instructors Management State
+  const [allSubjectsList, setAllSubjectsList] = useState<Subject[]>([]);
+  const [subjectFilterSem, setSubjectFilterSem] = useState<number | 'all'>('all');
+  const [subjectSearchQuery, setSubjectSearchQuery] = useState('');
+  const [subjectInstructorsMap, setSubjectInstructorsMap] = useState<Record<string, string>>({});
+  const [savingSubjectId, setSavingSubjectId] = useState<string | null>(null);
+  const [savedSubjectSuccessId, setSavedSubjectSuccessId] = useState<string | null>(null);
 
   // Real Authentication States
   const [loginEmail, setLoginEmail] = useState('');
@@ -215,17 +229,25 @@ export default function AdminDashboard() {
 
   // Load Initial Data
   const refreshAllData = async () => {
-    const [depts, res, sch, anns] = await Promise.all([
+    const [depts, res, sch, anns, allSubs] = await Promise.all([
       getDepartments(),
       getResources(),
       getSchedules(),
       getAnnouncements(),
+      getSubjects({ departmentId: 'dept-surveying' }),
     ]);
 
     setDepartments(depts);
     setResources(res);
     setSchedules(sch);
     setAnnouncements(anns);
+    setAllSubjectsList(allSubs);
+
+    const initialMap: Record<string, string> = {};
+    allSubs.forEach((s) => {
+      initialMap[s.id] = s.instructor_name || '';
+    });
+    setSubjectInstructorsMap(initialMap);
 
     // Load registered students
     try {
@@ -242,6 +264,38 @@ export default function AdminDashboard() {
       if (!newResDeptId) setNewResDeptId(depts[0].id);
       if (!schDeptId) setSchDeptId(depts[0].id);
     }
+  };
+
+  const handleSaveInstructor = async (subjectId: string) => {
+    const newName = (subjectInstructorsMap[subjectId] || '').trim();
+    setSavingSubjectId(subjectId);
+    try {
+      const updated = await updateSubject(subjectId, { instructor_name: newName });
+      if (updated) {
+        setAllSubjectsList((prev) =>
+          prev.map((s) => (s.id === subjectId ? { ...s, instructor_name: newName } : s))
+        );
+        setSubjects((prev) =>
+          prev.map((s) => (s.id === subjectId ? { ...s, instructor_name: newName } : s))
+        );
+        setSavedSubjectSuccessId(subjectId);
+        setTimeout(() => setSavedSubjectSuccessId(null), 3500);
+        showToast(`تم حفظ اسم مهندس مادة "${updated.name_ar}" (${newName || 'غير محدد'}) بنجاح! ✨`, 'success');
+      } else {
+        showToast('تعذر حفظ التعديل، تأكد من الاتصال وحاول مجدداً', 'error');
+      }
+    } catch (e: any) {
+      showToast('حدث خطأ أثناء حفظ اسم المهندس', 'error');
+    } finally {
+      setSavingSubjectId(null);
+    }
+  };
+
+  const handlePrefixInstructor = (subjectId: string, prefix: string) => {
+    const current = (subjectInstructorsMap[subjectId] || '').trim();
+    const clean = current.replace(/^(د\.|م\.|أ\.د\.|د\/|م\/)\s*/, '');
+    const updated = clean ? `${prefix} ${clean}` : `${prefix} `;
+    setSubjectInstructorsMap((prev) => ({ ...prev, [subjectId]: updated }));
   };
 
   useEffect(() => {
@@ -1104,6 +1158,20 @@ export default function AdminDashboard() {
           >
             <Calendar className={`w-4 h-4 ${activeTab === 'schedules' ? 'text-[#ff6f1e]' : 'text-[#171717]'}`} />
             <span>إدارة جدول الفترات</span>
+          </button>
+        )}
+
+        {(currentUser.role === 'super_admin' || currentUser.role === 'reviewer_admin') && (
+          <button
+            onClick={() => setActiveTab('subjects')}
+            className={`flex items-center justify-center gap-2 px-4 py-3 rounded-full text-xs sm:text-sm font-bold border-[1.5px] border-[#171717] transition-all cursor-pointer ${
+              activeTab === 'subjects'
+                ? 'bg-[#171717] text-white shadow-[0_2px_4px_rgba(0,0,0,0.2)]'
+                : 'bg-[#fdfbf9] text-[#171717] hover:bg-[#f7efe9] shadow-[0_1px_2px_rgba(0,0,0,0.25)]'
+            }`}
+          >
+            <GraduationCap className={`w-4 h-4 ${activeTab === 'subjects' ? 'text-[#ff6f1e]' : 'text-[#171717]'}`} />
+            <span>مهندسو ودكاترة المواد ({allSubjectsList.length || 32})</span>
           </button>
         )}
 
@@ -1978,7 +2046,14 @@ export default function AdminDashboard() {
                   <label className="block text-xs font-bold text-[#171717] mb-1.5">المادة:</label>
                   <select
                     value={schSubjectId}
-                    onChange={(e) => setSchSubjectId(e.target.value)}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setSchSubjectId(val);
+                      const chosenSub = subjects.find((s) => s.id === val) || allSubjectsList.find((s) => s.id === val);
+                      if (chosenSub?.instructor_name) {
+                        setSchInstructor(chosenSub.instructor_name);
+                      }
+                    }}
                     className="w-full bg-[#fdfbf9] border-[1.5px] border-[#171717] rounded-[8px] p-2.5 text-xs text-[#171717]"
                   >
                     {subjects.map((s) => (
@@ -2690,6 +2765,223 @@ export default function AdminDashboard() {
                 </tbody>
               </table>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ---------------------------------------------------- */}
+      {/* TAB: SUBJECTS & INSTRUCTORS MANAGEMENT (مهندسو ودكاترة المواد) */}
+      {/* ---------------------------------------------------- */}
+      {activeTab === 'subjects' && (
+        <div className="space-y-6">
+          {/* Header Card */}
+          <div className="bg-[#f7efe9] border-[1.5px] border-[#171717] rounded-[16px] p-6 shadow-[0_1px_2px_rgba(0,0,0,0.15)] space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b-[1.5px] border-[#171717]/15 pb-4">
+              <div>
+                <h2 className="text-lg font-black text-[#2b1a07] flex items-center gap-2">
+                  <GraduationCap className="w-6 h-6 text-[#ff6f1e]" />
+                  <span>التحكم في أسماء مهندسي ودكاترة المواد الدراسية</span>
+                </h2>
+                <p className="text-xs text-[#171717]/70 mt-1 leading-relaxed">
+                  تعديل وتحديد اسم الدكتور أو المهندس المحاضر المسؤول عن كل مادة دراسية. أي تعديل يتم حفظه هنا ينعكس فوراً للطلاب في كروت المواد، نوافذ التفاصيل، وجداول المحاضرات والسكاشن.
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2 self-start sm:self-auto flex-wrap text-xs">
+                <span className="px-3 py-1.5 rounded-full bg-[#fdfbf9] border-[1.5px] border-[#171717] font-bold text-[#2b1a07] shadow-sm">
+                  إجمالي المقررات: {allSubjectsList.length || 32}
+                </span>
+                <span className="px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-800 border-[1.5px] border-emerald-300 font-bold shadow-sm">
+                  شعبة المساحة العامة
+                </span>
+              </div>
+            </div>
+
+            {/* Search & Semester Quick Filters */}
+            <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 pt-1">
+              <div className="relative flex-1">
+                <Search className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#171717]/50" />
+                <input
+                  type="text"
+                  value={subjectSearchQuery}
+                  onChange={(e) => setSubjectSearchQuery(e.target.value)}
+                  placeholder="بحث باسم المادة أو الكود أو اسم المهندس/الدكتور..."
+                  className="w-full bg-[#fdfbf9] border-[1.5px] border-[#171717] rounded-[8px] py-2.5 pr-10 pl-3 text-xs text-[#171717] placeholder-[#171717]/50 focus:outline-none focus:border-[#ff6f1e]"
+                />
+                {subjectSearchQuery && (
+                  <button
+                    onClick={() => setSubjectSearchQuery('')}
+                    className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-[#171717]/60 hover:text-[#171717] font-bold"
+                  >
+                    مسح
+                  </button>
+                )}
+              </div>
+
+              {/* Semester Pills Filter */}
+              <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none text-xs">
+                {[
+                  { id: 'all', label: 'كل الفصول (32)' },
+                  { id: 1, label: 'سنة أولى - ترم 1 (8)' },
+                  { id: 2, label: 'سنة أولى - ترم 2 (8)' },
+                  { id: 3, label: 'سنة ثانية - ترم 3 (8)' },
+                  { id: 4, label: 'سنة ثانية - ترم 4 (8)' },
+                ].map((pill) => (
+                  <button
+                    key={pill.id}
+                    onClick={() => setSubjectFilterSem(pill.id as any)}
+                    className={`px-3 py-1.5 rounded-[20px] font-bold whitespace-nowrap transition-all border-[1.5px] border-[#171717] cursor-pointer shadow-[0_1px_2px_rgba(0,0,0,0.1)] ${
+                      subjectFilterSem === pill.id
+                        ? 'bg-[#ff6f1e] text-[#2b1a07]'
+                        : 'bg-[#fdfbf9] text-[#171717] hover:bg-[#f7efe9]'
+                    }`}
+                  >
+                    {pill.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Subjects Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {allSubjectsList
+              .filter((sub) => {
+                if (subjectFilterSem !== 'all' && sub.semester_number !== subjectFilterSem) return false;
+                if (subjectSearchQuery.trim()) {
+                  const q = subjectSearchQuery.toLowerCase().trim();
+                  const currentInst = (subjectInstructorsMap[sub.id] ?? sub.instructor_name ?? '').toLowerCase();
+                  return (
+                    sub.name_ar.toLowerCase().includes(q) ||
+                    sub.code.toLowerCase().includes(q) ||
+                    currentInst.includes(q)
+                  );
+                }
+                return true;
+              })
+              .map((sub) => {
+                const currentVal = subjectInstructorsMap[sub.id] ?? sub.instructor_name ?? '';
+                const isSaving = savingSubjectId === sub.id;
+                const isSaved = savedSubjectSuccessId === sub.id;
+
+                return (
+                  <div
+                    key={sub.id}
+                    className="bg-[#fdfbf9] border-[1.5px] border-[#171717] rounded-[14px] p-4 sm:p-5 shadow-[0_2px_12px_rgba(0,0,0,0.06)] hover:shadow-[0_4px_16px_rgba(0,0,0,0.1)] transition-all flex flex-col justify-between gap-4"
+                  >
+                    <div>
+                      {/* Top Badges */}
+                      <div className="flex items-center justify-between gap-2 mb-2">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="font-mono text-xs font-black text-[#2b1a07] bg-[#f7efe9] border-[1.5px] border-[#171717] px-2.5 py-0.5 rounded-[8px]">
+                            {sub.code}
+                          </span>
+                          <span className="text-[11px] font-bold text-[#171717]/70 bg-white border border-[#171717]/20 px-2 py-0.5 rounded-full">
+                            {sub.academic_year} • الفصل {sub.semester_number}
+                          </span>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const origin = typeof window !== 'undefined' ? window.location.origin : 'https://survey.nexoura.org';
+                            const link = `${origin}/?course=${sub.code}`;
+                            navigator.clipboard.writeText(link);
+                            showToast(`تم نسخ رابط مادة ${sub.name_ar} (${sub.code}) 📋`, 'info');
+                          }}
+                          className="p-1 rounded-full bg-[#f7efe9] hover:bg-[#ff6f1e] text-[#171717] border border-[#171717]/30 transition-all cursor-pointer"
+                          title="نسخ رابط المادة المباشر"
+                        >
+                          <Link2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+
+                      {/* Course Title */}
+                      <h3 className="text-base sm:text-lg font-black text-[#2b1a07] mb-1">
+                        {sub.name_ar}
+                      </h3>
+                      <p className="text-xs text-[#171717]/70 line-clamp-1 mb-3">
+                        {sub.description || 'مقرر دراسي معتمد لشعبة المساحة العامة.'}
+                      </p>
+
+                      {/* Quick Instructor Input Box */}
+                      <div className="bg-[#f7efe9] border-[1.5px] border-[#171717] rounded-[10px] p-3 space-y-2">
+                        <div className="flex items-center justify-between">
+                          <label className="block text-xs font-black text-[#2b1a07]">
+                            اسم الدكتور / المهندس المحاضر:
+                          </label>
+                          {/* Prefix Shortcuts */}
+                          <div className="flex items-center gap-1 text-[10px] font-bold">
+                            <span className="text-[#171717]/50">بادئة:</span>
+                            <button
+                              type="button"
+                              onClick={() => handlePrefixInstructor(sub.id, 'م.')}
+                              className="px-1.5 py-0.5 rounded bg-white border border-[#171717]/30 hover:bg-[#ff6f1e] hover:text-[#2b1a07] transition-colors cursor-pointer"
+                            >
+                              م.
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handlePrefixInstructor(sub.id, 'د.')}
+                              className="px-1.5 py-0.5 rounded bg-white border border-[#171717]/30 hover:bg-[#ff6f1e] hover:text-[#2b1a07] transition-colors cursor-pointer"
+                            >
+                              د.
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handlePrefixInstructor(sub.id, 'أ.د.')}
+                              className="px-1.5 py-0.5 rounded bg-white border border-[#171717]/30 hover:bg-[#ff6f1e] hover:text-[#2b1a07] transition-colors cursor-pointer"
+                            >
+                              أ.د.
+                            </button>
+                          </div>
+                        </div>
+
+                        <input
+                          type="text"
+                          value={currentVal}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setSubjectInstructorsMap((prev) => ({ ...prev, [sub.id]: val }));
+                          }}
+                          placeholder="مثال: م. حسام الدين توفيق / د. إبراهيم عبد العزيز"
+                          className="w-full bg-white border-[1.5px] border-[#171717] rounded-[8px] p-2.5 text-xs text-[#171717] font-bold focus:outline-none focus:border-[#ff6f1e]"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Action Bar */}
+                    <div className="flex items-center justify-between pt-2 border-t border-[#171717]/10">
+                      <div className="text-xs">
+                        {isSaved ? (
+                          <span className="inline-flex items-center gap-1 text-emerald-700 font-extrabold text-xs">
+                            <Check className="w-4 h-4 text-emerald-600" />
+                            تم حفظ التعديل بنجاح ✓
+                          </span>
+                        ) : (
+                          <span className="text-[11px] text-[#171717]/60">
+                            الحالي: <strong className="text-[#2b1a07]">{sub.instructor_name || 'هيئة التدريس'}</strong>
+                          </span>
+                        )}
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => handleSaveInstructor(sub.id)}
+                        disabled={isSaving}
+                        className={`flex items-center gap-1.5 px-4 py-2 rounded-full font-black text-xs border-[1.5px] border-[#171717] transition-all cursor-pointer shadow-[0_1px_2px_rgba(0,0,0,0.15)] ${
+                          isSaving
+                            ? 'bg-zinc-300 text-zinc-600 cursor-not-allowed'
+                            : 'bg-[#171717] hover:bg-[#ff6f1e] text-white hover:text-[#2b1a07]'
+                        }`}
+                      >
+                        <Save className="w-3.5 h-3.5" />
+                        <span>{isSaving ? 'جارِ الحفظ...' : 'حفظ الاسم 💾'}</span>
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
           </div>
         </div>
       )}

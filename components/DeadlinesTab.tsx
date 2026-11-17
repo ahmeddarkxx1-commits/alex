@@ -153,13 +153,12 @@ export default function DeadlinesTab({
                 </div>
 
                 <div className="flex sm:flex-col items-center sm:items-end justify-between gap-2.5 pt-2 sm:pt-0 border-t sm:border-t-0 border-[#171717]/15">
-                  <div className={`px-3 py-1 rounded-[20px] text-xs font-bold border-[1.5px] border-[#171717] shadow-[0_1px_2px_rgba(0,0,0,0.1)] ${
-                    countdown.isPassed
-                      ? 'bg-[#f7efe9] text-[#171717]/50'
-                      : countdown.isUrgent
+                  <div className={`px-3 py-1 rounded-[20px] text-xs font-bold border-[1.5px] border-[#171717] shadow-[0_1px_2px_rgba(0,0,0,0.1)] ${countdown.isPassed
+                    ? 'bg-[#f7efe9] text-[#171717]/50'
+                    : countdown.isUrgent
                       ? 'bg-[#ff6f1e] text-[#2b1a07]'
                       : 'bg-[#f7efe9] text-[#2b1a07]'
-                  }`}>
+                    }`}>
                     <span className="flex items-center gap-1">
                       <Clock className="w-3.5 h-3.5" />
                       {countdown.text}

@@ -190,6 +190,22 @@ export function dbGetSubjects(params?: {
   return list;
 }
 
+export function dbUpdateSubject(id: string, updates: Partial<Subject>): Subject | null {
+  const db = initDb();
+  if (!db.subjects) {
+    db.subjects = INITIAL_SUBJECTS;
+  }
+  const idx = db.subjects.findIndex((s) => s.id === id);
+  if (idx === -1) return null;
+
+  db.subjects[idx] = {
+    ...db.subjects[idx],
+    ...updates,
+  };
+  writeDb(db);
+  return db.subjects[idx];
+}
+
 // ====================================================================
 // RESOURCES (Lectures, Sheets, Practical Notes, Question Banks)
 // ====================================================================

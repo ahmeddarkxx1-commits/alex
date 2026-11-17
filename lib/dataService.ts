@@ -236,6 +236,48 @@ export async function getSubjectByCodeOrId(codeOrId: string): Promise<Subject | 
   return found || null;
 }
 
+export async function updateSubject(id: string, updates: Partial<Subject>): Promise<Subject | null> {
+  if (typeof window !== 'undefined') {
+    try {
+      const res = await fetch('/api/subjects', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, ...updates }),
+      });
+      if (res.ok) {
+        const updated = await res.json();
+        const list = getLocalItem<Subject[]>(STORAGE_KEYS.SUBJECTS, INITIAL_SUBJECTS);
+        const idx = list.findIndex((s) => s.id === id);
+        if (idx !== -1) {
+          list[idx] = { ...list[idx], ...updates };
+          setLocalItem(STORAGE_KEYS.SUBJECTS, list);
+        }
+        return updated as Subject;
+      }
+    } catch (e) {
+      console.warn('API updateSubject failed', e);
+    }
+  }
+
+  if (isSupabaseConfigured) {
+    try {
+      const { data, error } = await (supabase.from('subjects' as any) as any).update(updates).eq('id', id).select().maybeSingle();
+      if (!error && data) return data as Subject;
+    } catch (e) {
+      console.warn('Supabase updateSubject failed', e);
+    }
+  }
+
+  const list = getLocalItem<Subject[]>(STORAGE_KEYS.SUBJECTS, INITIAL_SUBJECTS);
+  const idx = list.findIndex((s) => s.id === id);
+  if (idx !== -1) {
+    list[idx] = { ...list[idx], ...updates };
+    setLocalItem(STORAGE_KEYS.SUBJECTS, list);
+    return list[idx];
+  }
+  return null;
+}
+
 export async function createResource(newRes: Omit<Resource, 'id' | 'views_count' | 'created_at'>): Promise<Resource> {
   const resourceToSave: Resource = {
     ...newRes,
