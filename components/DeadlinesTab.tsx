@@ -124,11 +124,10 @@ export default function DeadlinesTab({
           <button
             key={cat}
             onClick={() => setSelectedCategory(cat)}
-            className={`px-3 py-1 rounded-[20px] text-xs font-bold whitespace-nowrap transition-colors border-[1.5px] border-[#171717] shadow-[0_1px_2px_rgba(0,0,0,0.1)] cursor-pointer ${
-              selectedCategory === cat
-                ? 'bg-[#ff6f1e] text-[#2b1a07]'
-                : 'bg-[#fdfbf9] text-[#171717] hover:bg-[#f7efe9]'
-            }`}
+            className={`px-3 py-1 rounded-[20px] text-xs font-bold whitespace-nowrap transition-colors border-[1.5px] border-[#171717] shadow-[0_1px_2px_rgba(0,0,0,0.1)] cursor-pointer ${selectedCategory === cat
+              ? 'bg-[#ff6f1e] text-[#2b1a07]'
+              : 'bg-[#fdfbf9] text-[#171717] hover:bg-[#f7efe9]'
+              }`}
           >
             {cat}
           </button>

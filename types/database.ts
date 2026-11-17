@@ -17,6 +17,25 @@ export type AnnouncementCategory = 'تسليم شيت' | 'امتحان عملي'
 export type UrgencyLevel = 'عاجل جداً' | 'هام' | 'عادي';
 export type AdminRole = 'super_admin' | 'dept_rep' | 'reviewer_admin';
 
+export type FeedbackType = 'شكوى' | 'اقتراح' | 'مشكلة تقنية' | 'استفسار';
+export type FeedbackStatus = 'جديدة' | 'تمت المراجعة' | 'تم الحل' | 'مؤجلة';
+
+export interface Feedback {
+  id: string;
+  name: string;
+  student_id?: string | null;
+  contact_info: string;
+  department_name?: string;
+  academic_year?: string;
+  section_number?: string;
+  type: FeedbackType;
+  title: string;
+  message: string;
+  status: FeedbackStatus;
+  admin_notes?: string;
+  created_at: string;
+}
+
 export interface Department {
   id: string;
   slug: string;

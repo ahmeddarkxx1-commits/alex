@@ -38,6 +38,7 @@ import StudyReaderModal from '@/components/StudyReaderModal';
 import SchedulesTab from '@/components/SchedulesTab';
 import DeadlinesTab from '@/components/DeadlinesTab';
 import ToastNotification, { ToastData } from '@/components/ToastNotification';
+import FeedbackModal from '@/components/FeedbackModal';
 import {
   Search,
   BookOpen,
@@ -55,7 +56,8 @@ import {
   Compass,
   Send,
   Link2,
-  Check
+  Check,
+  MessageSquare
 } from 'lucide-react';
 
 export default function SurveyingPortal() {
@@ -72,6 +74,7 @@ export default function SurveyingPortal() {
   // Student Account State
   const [currentStudent, setCurrentStudent] = useState<StudentUser | null>(null);
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   const [isPersonalizedOnly, setIsPersonalizedOnly] = useState(true);
 
   // Active Preferences
@@ -162,6 +165,10 @@ export default function SurveyingPortal() {
               }
             }, 300);
           }
+        }
+
+        if (tabParam === 'feedback' || tabParam === 'complaints') {
+          setShowFeedbackModal(true);
         }
 
         if (semParam) {
@@ -535,6 +542,17 @@ export default function SurveyingPortal() {
                   <span>مشاركة 🔗</span>
                 </button>
 
+                {/* Feedback & Complaints button */}
+                <button
+                  type="button"
+                  onClick={() => setShowFeedbackModal(true)}
+                  className="px-2.5 py-1 rounded-full bg-[#fdfbf9] hover:bg-[#ff6f1e]/15 text-[#2b1a07] border-[1.5px] border-[#171717] font-bold text-[11px] shadow-sm transition-all cursor-pointer flex items-center gap-1"
+                  title="إرسال شكوى أو مقترح للإدارة والبوت"
+                >
+                  <MessageSquare className="w-3 h-3 text-[#ff6f1e]" />
+                  <span>شكاوى ومقترحات 📬</span>
+                </button>
+
                 {/* Edit student info */}
                 <button
                   type="button"
@@ -580,6 +598,14 @@ export default function SurveyingPortal() {
                 >
                   <Link2 className="w-3.5 h-3.5 text-[#ff6f1e]" />
                   <span>نسخ الرابط 🔗</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowFeedbackModal(true)}
+                  className="px-3 py-1.5 rounded-full bg-[#fdfbf9] hover:bg-[#ff6f1e]/15 text-xs font-bold text-[#2b1a07] border-[1.5px] border-[#171717] shadow-[0_1px_2px_rgba(0,0,0,0.15)] transition-all cursor-pointer flex items-center gap-1"
+                >
+                  <MessageSquare className="w-3.5 h-3.5 text-[#ff6f1e]" />
+                  <span>الشكاوى والمقترحات 📬</span>
                 </button>
               </div>
             </div>
@@ -889,6 +915,29 @@ export default function SurveyingPortal() {
         onSuccess={handleStudentLoginSuccess}
         initialStudent={currentStudent}
       />
+
+      {/* Complaints & Suggestions Modal */}
+      <FeedbackModal
+        isOpen={showFeedbackModal}
+        onClose={() => setShowFeedbackModal(false)}
+        currentStudent={currentStudent}
+        onSuccessToast={(msg) => showToast(msg, 'success')}
+      />
+
+      {/* Floating Action Button (FAB) for Complaints & Suggestions */}
+      <div className="fixed bottom-4 left-4 z-40">
+        <button
+          type="button"
+          onClick={() => setShowFeedbackModal(true)}
+          className="px-3.5 py-2.5 rounded-full bg-[#2b1a07] text-[#fdfbf9] hover:bg-[#ff6f1e] hover:text-[#2b1a07] border-[2px] border-[#171717] font-black text-xs shadow-[0_4px_16px_rgba(0,0,0,0.25)] flex items-center gap-2 transition-all hover:scale-105 active:scale-95 cursor-pointer group"
+          title="صندوق الشكاوى والمقترحات • تواصل مع الإدارة"
+        >
+          <MessageSquare className="w-4 h-4 text-[#ff6f1e] group-hover:text-[#2b1a07] transition-colors" />
+          <span className="hidden sm:inline">الشكاوى والمقترحات</span>
+          <span className="sm:hidden">شكاوى ومقترحات</span>
+          <span className="w-2 h-2 rounded-full bg-[#ff6f1e] group-hover:bg-[#2b1a07] animate-pulse"></span>
+        </button>
+      </div>
     </div>
   );
 }

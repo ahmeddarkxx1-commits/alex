@@ -12,7 +12,10 @@ import {
   DayOfWeek,
   SectionNumber,
   SessionType,
-  StudentUser
+  StudentUser,
+  Feedback,
+  FeedbackType,
+  FeedbackStatus
 } from '@/types/database';
 import { 
   INITIAL_DEPARTMENTS, 
@@ -29,6 +32,7 @@ const STORAGE_KEYS = {
   USER_PREFS: 'iti_alex_user_prefs_v4',
   STUDENT_USER: 'iti_alex_student_user_v4',
   STUDENT_ACCOUNTS: 'iti_alex_student_accounts_v4',
+  FEEDBACKS: 'iti_alex_feedbacks_v4',
 };
 
 // Safe helper to get from LocalStorage (client side only)
@@ -840,4 +844,123 @@ export function logoutStudent(): void {
 
 export function getSavedStudentAccounts(): StudentUser[] {
   return getLocalItem<StudentUser[]>(STORAGE_KEYS.STUDENT_ACCOUNTS, []);
+}
+
+// ----------------- FEEDBACKS & COMPLAINTS -----------------
+export async function getFeedbacks(params?: {
+  status?: FeedbackStatus | 'الكل';
+  type?: FeedbackType | 'الكل';
+}): Promise<Feedback[]> {
+  if (typeof window !== 'undefined') {
+    try {
+      const q = new URLSearchParams();
+      if (params?.status && params.status !== 'الكل') q.set('status', params.status);
+      if (params?.type && params.type !== 'الكل') q.set('type', params.type);
+      const res = await fetch(`/api/feedback?${q.toString()}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data)) {
+          setLocalItem(STORAGE_KEYS.FEEDBACKS, data);
+          return data as Feedback[];
+        }
+      }
+    } catch (e) {
+      console.warn('API getFeedbacks failed, using local storage fallback', e);
+    }
+  }
+
+  let list = getLocalItem<Feedback[]>(STORAGE_KEYS.FEEDBACKS, []);
+  if (params?.status && params.status !== 'الكل') {
+    list = list.filter((f) => f.status === params.status);
+  }
+  if (params?.type && params.type !== 'الكل') {
+    list = list.filter((f) => f.type === params.type);
+  }
+  return list;
+}
+
+export async function createFeedback(
+  data: Omit<Feedback, 'id' | 'created_at' | 'status'>
+): Promise<{ success: boolean; feedback: Feedback }> {
+  if (typeof window !== 'undefined') {
+    try {
+      const res = await fetch('/api/feedback', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      if (res.ok) {
+        const resData = await res.json();
+        return resData;
+      } else {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || 'تعذر إرسال الرسالة، يرجى المحاولة لاحقاً');
+      }
+    } catch (e: any) {
+      console.warn('createFeedback API failed', e);
+      throw e;
+    }
+  }
+
+  const fallbackRecord: Feedback = {
+    ...data,
+    id: `fb-${Date.now()}`,
+    status: 'جديدة',
+    created_at: new Date().toISOString(),
+  };
+  const list = getLocalItem<Feedback[]>(STORAGE_KEYS.FEEDBACKS, []);
+  list.unshift(fallbackRecord);
+  setLocalItem(STORAGE_KEYS.FEEDBACKS, list);
+  return { success: true, feedback: fallbackRecord };
+}
+
+export async function updateFeedback(
+  id: string,
+  updates: Partial<Feedback>
+): Promise<Feedback | null> {
+  if (typeof window !== 'undefined') {
+    try {
+      const res = await fetch('/api/feedback', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, ...updates }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        return data.feedback;
+      }
+    } catch (e) {
+      console.warn('updateFeedback API failed', e);
+    }
+  }
+
+  const list = getLocalItem<Feedback[]>(STORAGE_KEYS.FEEDBACKS, []);
+  const idx = list.findIndex((f) => f.id === id);
+  if (idx !== -1) {
+    list[idx] = { ...list[idx], ...updates };
+    setLocalItem(STORAGE_KEYS.FEEDBACKS, list);
+    return list[idx];
+  }
+  return null;
+}
+
+export async function deleteFeedback(id: string): Promise<boolean> {
+  if (typeof window !== 'undefined') {
+    try {
+      const res = await fetch(`/api/feedback?id=${id}`, {
+        method: 'DELETE',
+      });
+      if (res.ok) {
+        const data = await res.json();
+        return Boolean(data.success);
+      }
+    } catch (e) {
+      console.warn('deleteFeedback API failed', e);
+    }
+  }
+
+  const list = getLocalItem<Feedback[]>(STORAGE_KEYS.FEEDBACKS, []);
+  const nextList = list.filter((f) => f.id !== id);
+  setLocalItem(STORAGE_KEYS.FEEDBACKS, nextList);
+  return true;
 }

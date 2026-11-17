@@ -301,3 +301,26 @@ VALUES
 ('ann-2', 'dept-surveying', 'موعد الامتحان العملي الميداني لأجهزة الميزان والثيودوليت', 'يبدأ الاختبار الميداني الشفوي والعملي لقياس السرعة والدقة في ضبط أفقية الأجهزة وقراءة القامة ابتداءً من السبت القادم بأرض الرفع المساحي.', 'امتحان عملي', 'هام', '2026-11-22T20:13:34.075Z', TRUE),
 ('ann-3', NULL, 'تنبيه شئون الطلاب: استلام كارنيهات المعهد وإيصالات الكتب الدراسية', 'تهيب إدارة المعهد الفني الصناعي بالإسكندرية بجميع طلاب الفرق الأولى والثانية سرعة استلام الكارنيهات من صالة الشئون ومراجعة أرقام الجلوس.', 'تنبيه إداري', 'عادي', '2026-11-26T20:13:34.075Z', TRUE)
 ON CONFLICT (id) DO UPDATE SET title = EXCLUDED.title, details = EXCLUDED.details;
+
+-- Feedbacks & Complaints (صندوق الشكاوى والمقترحات)
+CREATE TABLE IF NOT EXISTS public.feedbacks (
+    id VARCHAR(100) PRIMARY KEY,
+    student_id VARCHAR(100),
+    name VARCHAR(255) NOT NULL,
+    contact_info VARCHAR(255),
+    department_name VARCHAR(255) DEFAULT 'شعبة المساحة العامة',
+    academic_year VARCHAR(100),
+    section_number VARCHAR(100),
+    type VARCHAR(50) NOT NULL,
+    title VARCHAR(255) NOT NULL,
+    message TEXT NOT NULL,
+    status VARCHAR(50) DEFAULT 'جديدة',
+    admin_notes TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+ALTER TABLE public.feedbacks ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Allow public insert feedbacks" ON public.feedbacks FOR INSERT WITH CHECK (true);
+CREATE POLICY "Allow admin read feedbacks" ON public.feedbacks FOR SELECT USING (true);
+CREATE POLICY "Allow admin update feedbacks" ON public.feedbacks FOR UPDATE USING (true);
+CREATE POLICY "Allow admin delete feedbacks" ON public.feedbacks FOR DELETE USING (true);

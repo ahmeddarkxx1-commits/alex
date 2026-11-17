@@ -13,7 +13,10 @@ import {
   SectionNumber, 
   ResourceType, 
   DayOfWeek, 
-  SessionType 
+  SessionType,
+  Feedback,
+  FeedbackType,
+  FeedbackStatus
 } from '@/types/database';
 import { 
   INITIAL_DEPARTMENTS, 
@@ -31,6 +34,7 @@ interface DatabaseSchema {
   schedules: Schedule[];
   announcements: Announcement[];
   admins: AdminUser[];
+  feedbacks?: Feedback[];
 }
 
 export const INITIAL_ADMINS: AdminUser[] = [
@@ -64,6 +68,7 @@ function initDb(): DatabaseSchema {
       schedules: [],
       announcements: [],
       admins: INITIAL_ADMINS,
+      feedbacks: [],
     };
     fs.writeFileSync(DB_FILE, JSON.stringify(initialData, null, 2), 'utf-8');
     return initialData;
@@ -81,6 +86,7 @@ function initDb(): DatabaseSchema {
     if (!parsed.schedules) { parsed.schedules = []; modified = true; }
     if (!parsed.announcements) { parsed.announcements = []; modified = true; }
     if (!parsed.admins || parsed.admins.length === 0) { parsed.admins = INITIAL_ADMINS; modified = true; }
+    if (!parsed.feedbacks) { parsed.feedbacks = []; modified = true; }
 
     if (modified) {
       fs.writeFileSync(DB_FILE, JSON.stringify(parsed, null, 2), 'utf-8');
@@ -96,6 +102,7 @@ function initDb(): DatabaseSchema {
       schedules: [],
       announcements: [],
       admins: INITIAL_ADMINS,
+      feedbacks: [],
     };
     fs.writeFileSync(DB_FILE, JSON.stringify(fallback, null, 2), 'utf-8');
     return fallback;
@@ -518,6 +525,74 @@ export function dbDeleteAdmin(id: string): boolean {
   const initLen = db.admins.length;
   db.admins = db.admins.filter((a) => a.id !== id);
   if (db.admins.length !== initLen) {
+    writeDb(db);
+    return true;
+  }
+  return false;
+}
+
+// ====================================================================
+// FEEDBACKS & COMPLAINTS (الشكاوى والمقترحات)
+// ====================================================================
+
+export function dbGetFeedbacks(params?: {
+  status?: FeedbackStatus | 'الكل';
+  type?: FeedbackType | 'الكل';
+}): Feedback[] {
+  const db = initDb();
+  let list = db.feedbacks || [];
+
+  if (params?.status && params.status !== 'الكل') {
+    list = list.filter((f) => f.status === params.status);
+  }
+  if (params?.type && params.type !== 'الكل') {
+    list = list.filter((f) => f.type === params.type);
+  }
+
+  // Sort newest first
+  return list.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+}
+
+export function dbCreateFeedback(item: Omit<Feedback, 'id' | 'created_at'>): Feedback {
+  const db = initDb();
+  if (!db.feedbacks) db.feedbacks = [];
+
+  const targetId = `fb-${Date.now()}`;
+  const newRecord: Feedback = {
+    ...item,
+    id: targetId,
+    status: item.status || 'جديدة',
+    created_at: new Date().toISOString(),
+  };
+
+  db.feedbacks.unshift(newRecord);
+  writeDb(db);
+  return newRecord;
+}
+
+export function dbUpdateFeedback(id: string, updates: Partial<Feedback>): Feedback | null {
+  const db = initDb();
+  if (!db.feedbacks) db.feedbacks = [];
+
+  const idx = db.feedbacks.findIndex((f) => f.id === id);
+  if (idx === -1) return null;
+
+  db.feedbacks[idx] = {
+    ...db.feedbacks[idx],
+    ...updates,
+  };
+
+  writeDb(db);
+  return db.feedbacks[idx];
+}
+
+export function dbDeleteFeedback(id: string): boolean {
+  const db = initDb();
+  if (!db.feedbacks) return false;
+
+  const initLen = db.feedbacks.length;
+  db.feedbacks = db.feedbacks.filter((f) => f.id !== id);
+  if (db.feedbacks.length !== initLen) {
     writeDb(db);
     return true;
   }

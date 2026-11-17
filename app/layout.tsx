@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import Link from "next/link";
-import { Compass, BookOpen, Calendar, Clock, Shield, Code2, Heart, Sparkles, ExternalLink } from "lucide-react";
+import { Compass, BookOpen, Calendar, Clock, Shield, Code2, Heart, Sparkles, ExternalLink, MessageSquare } from "lucide-react";
 import PWAInstaller from "@/components/PWAInstaller";
 
 export const metadata: Metadata = {
@@ -80,6 +80,13 @@ export default function RootLayout({
               >
                 <Clock className="w-3.5 h-3.5 text-[#ff6f1e]" />
                 <span>المواعيد</span>
+              </Link>
+              <Link
+                href="/?tab=feedback"
+                className="hidden md:inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-bold text-[#171717] hover:text-[#ff6f1e] transition-colors"
+              >
+                <MessageSquare className="w-3.5 h-3.5 text-[#ff6f1e]" />
+                <span>الشكاوى والمقترحات</span>
               </Link>
             </div>
           </div>
