@@ -134,6 +134,7 @@ export default function AdminDashboard() {
   const [resTgTarget, setResTgTarget] = useState<'year1' | 'year2' | 'both'>('year1');
   const [uploadingPdf, setUploadingPdf] = useState(false);
   const [uploadedPdfName, setUploadedPdfName] = useState('');
+  const [uploadedPdfBase64, setUploadedPdfBase64] = useState('');
 
   // Review Queue Filter State
   const [reviewFilter, setReviewFilter] = useState<'all' | 'pending_review' | 'approved' | 'rejected'>('all');
@@ -465,6 +466,9 @@ export default function AdminDashboard() {
       }
       setNewResFileUrl(data.url);
       setUploadedPdfName(data.filename);
+      if (data.file_base64) {
+        setUploadedPdfBase64(data.file_base64);
+      }
       showToast(`تم رفع مستند الـ PDF بنجاح (${data.file_size})!`);
     } catch (err: any) {
       showToast(err.message || 'حدث خطأ أثناء رفع الملف', 'error');
@@ -494,6 +498,12 @@ export default function AdminDashboard() {
 
     const isAutoApproved = currentUser?.role === 'super_admin';
 
+    // If a PDF was uploaded, store the base64 payload in content_markdown for persistent cloud serving
+    const textMarkdown = newResMarkdown.trim() || newResSummary.trim();
+    const finalContentMarkdown = uploadedPdfBase64
+      ? `PDF_DATA:::${uploadedPdfBase64}:::${textMarkdown}`
+      : textMarkdown;
+
     const created = await createResource({
       department_id: newResDeptId || 'dept-surveying',
       subject_id: newResSubjectId,
@@ -502,7 +512,7 @@ export default function AdminDashboard() {
       type: newResType,
       title: newResTitle.trim(),
       summary: newResSummary.trim(),
-      content_markdown: newResMarkdown.trim() || newResSummary.trim(),
+      content_markdown: finalContentMarkdown,
       file_url: newResFileUrl.trim() || null,
       due_date: newResDueDate ? new Date(newResDueDate).toISOString() : null,
       week_number: Number(newResWeek) || 1,
@@ -519,6 +529,13 @@ export default function AdminDashboard() {
 
     // Send Telegram broadcast if checked with specific channel (Year 1 or Year 2)
     if (notifyTelegram && isAutoApproved) {
+      const currentOrigin = typeof window !== 'undefined' ? window.location.origin : 'https://alex-iota-two.vercel.app';
+      const postUrl = `${currentOrigin}/?resId=${created.id}`;
+      let fileUrlFormatted: string | undefined = undefined;
+      if (created.file_url) {
+        fileUrlFormatted = created.file_url.startsWith('http') ? created.file_url : `${currentOrigin}${created.file_url}`;
+      }
+
       triggerTelegramBroadcast({
         type: 'resource',
         title: created.title,
@@ -529,6 +546,8 @@ export default function AdminDashboard() {
         dueDate: created.due_date || undefined,
         resourceType: created.type,
         targetChannel: resTgTarget,
+        postUrl: postUrl,
+        fileUrl: fileUrlFormatted,
       });
     }
 
@@ -538,6 +557,7 @@ export default function AdminDashboard() {
     setNewResMarkdown('');
     setNewResFileUrl('');
     setUploadedPdfName('');
+    setUploadedPdfBase64('');
     setNewResDueDate('');
     refreshAllData();
   };
@@ -552,6 +572,13 @@ export default function AdminDashboard() {
     showToast(`تم اعتماد ونشر "${resItem.title}" للطلاب بنجاح!`);
 
     // Broadcast to the respective Telegram channel upon approval!
+    const currentOrigin = typeof window !== 'undefined' ? window.location.origin : 'https://alex-iota-two.vercel.app';
+    const postUrl = `${currentOrigin}/?resId=${resItem.id}`;
+    let fileUrlFormatted: string | undefined = undefined;
+    if (resItem.file_url) {
+      fileUrlFormatted = resItem.file_url.startsWith('http') ? resItem.file_url : `${currentOrigin}${resItem.file_url}`;
+    }
+
     triggerTelegramBroadcast({
       type: 'resource',
       title: resItem.title,
@@ -562,6 +589,8 @@ export default function AdminDashboard() {
       dueDate: resItem.due_date || undefined,
       resourceType: resItem.type,
       targetChannel: resItem.academic_year === 'الفرقة الأولى' ? 'year1' : 'year2',
+      postUrl: postUrl,
+      fileUrl: fileUrlFormatted,
     });
 
     refreshAllData();
@@ -1248,6 +1277,7 @@ export default function AdminDashboard() {
                         type="button"
                         onClick={() => {
                           setUploadedPdfName('');
+                          setUploadedPdfBase64('');
                           setNewResFileUrl('');
                         }}
                         className="text-rose-600 hover:text-rose-800 text-[10px] font-black underline flex-shrink-0 cursor-pointer"

@@ -10,6 +10,8 @@ interface TelegramNotificationPayload {
   dueDate?: string;
   resourceType?: string;
   link?: string;
+  fileUrl?: string;
+  postUrl?: string;
   targetChannel?: 'year1' | 'year2' | 'both';
 }
 
@@ -20,7 +22,11 @@ export async function POST(req: Request) {
     const botToken = process.env.TELEGRAM_BOT_TOKEN;
     const year1ChannelId = process.env.TELEGRAM_CHANNEL_YEAR1_ID || process.env.TELEGRAM_CHAT_ID;
     const year2ChannelId = process.env.TELEGRAM_CHANNEL_YEAR2_ID || process.env.TELEGRAM_CHAT_ID;
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+
+    // Detect live URL from headers or fallback
+    const host = req.headers.get('x-forwarded-host') || req.headers.get('host');
+    const proto = req.headers.get('x-forwarded-proto') || (host?.includes('localhost') ? 'http' : 'https');
+    const detectedOrigin = host ? `${proto}://${host}` : (process.env.NEXT_PUBLIC_APP_URL || 'https://alex-iota-two.vercel.app');
 
     // Determine target channels based on payload
     let targetChannels: { id: string; name: string }[] = [];
@@ -112,8 +118,16 @@ export async function POST(req: Request) {
       message += `\n💬 <i>${trimmed}</i>\n`;
     }
 
-    const targetUrl = body.link || appUrl;
-    message += `\n📥 <b>افتح المنصة لمعاينة وتحميل ملف الـ PDF:</b>\n${targetUrl}\n`;
+    const targetPostUrl = body.postUrl || body.link || detectedOrigin;
+    const directFileUrl = body.fileUrl
+      ? (body.fileUrl.startsWith('http') ? body.fileUrl : `${detectedOrigin}${body.fileUrl}`)
+      : null;
+
+    if (directFileUrl) {
+      message += `\n📥 <b>رابط تحميل وقراءة ملف الـ PDF مباشرة:</b>\n<a href="${directFileUrl}">${directFileUrl}</a>\n`;
+    }
+
+    message += `\n🌐 <b>رابط التلخيص على منصة المعهد:</b>\n<a href="${targetPostUrl}">${targetPostUrl}</a>\n`;
     message += `\n<i>منصة شعبة المساحة العامة • ITI Alex Hub</i>`;
 
     // Send HTTP POST to Telegram Bot API for each target channel

@@ -109,6 +109,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       url: publicUrl,
+      file_base64: buffer.toString('base64'),
       legacy_url: `/uploads/${finalFilename}`,
       filename: file.name,
       stored_name: finalFilename,

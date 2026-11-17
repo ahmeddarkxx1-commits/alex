@@ -24,8 +24,17 @@ export default function StudyReaderModal({ resource, onClose }: StudyReaderModal
 
   if (!resource) return null;
 
+  const displayMarkdown = (() => {
+    const raw = resource.content_markdown || '';
+    if (raw.startsWith('PDF_DATA:::')) {
+      const parts = raw.split(':::');
+      return parts[2] || '';
+    }
+    return raw;
+  })();
+
   const handleCopy = () => {
-    const textToCopy = `${resource.title}\n\n${resource.summary}\n\n${resource.content_markdown}`;
+    const textToCopy = `${resource.title}\n\n${resource.summary}\n\n${displayMarkdown}`;
     navigator.clipboard.writeText(textToCopy);
     setCopied(true);
     setTimeout(() => setCopied(false), 2500);
@@ -169,7 +178,7 @@ export default function StudyReaderModal({ resource, onClose }: StudyReaderModal
           )}
 
           <div className="space-y-3 font-sans text-[#171717]">
-            {renderFormattedContent(resource.content_markdown || 'لا يوجد شرح تفصيلي مكتوب.')}
+            {renderFormattedContent(displayMarkdown || 'لا يوجد شرح تفصيلي مكتوب.')}
           </div>
 
           {resource.file_url && (
