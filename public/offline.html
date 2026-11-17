@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>أنت الآن في وضع عدم الاتصال | شعبة المساحة العامة</title>
+  <link rel="icon" href="/favicon.ico">
+  <meta name="theme-color" content="#ff6f1e">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background-color: #fdfbf9;
+      color: #171717;
+      font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      text-align: center;
+    }
+    .card {
+      background: #fdfbf9;
+      border: 2px solid #171717;
+      border-radius: 24px;
+      padding: 36px 28px;
+      max-width: 480px;
+      width: 100%;
+      box-shadow: 0 16px 40px rgba(0,0,0,0.1);
+    }
+    .icon-box {
+      width: 72px;
+      height: 72px;
+      border-radius: 20px;
+      background: #f7efe9;
+      border: 2px solid #171717;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 20px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    h1 {
+      color: #2b1a07;
+      font-size: 22px;
+      font-weight: 900;
+      margin-bottom: 12px;
+    }
+    p {
+      color: #171717;
+      opacity: 0.85;
+      font-size: 14px;
+      line-height: 1.7;
+      margin-bottom: 24px;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      background: #ff6f1e;
+      color: #2b1a07;
+      font-weight: 800;
+      font-size: 14px;
+      padding: 12px 28px;
+      border-radius: 24px;
+      border: 1.5px solid #171717;
+      text-decoration: none;
+      cursor: pointer;
+      box-shadow: 0 2px 0 #171717;
+      transition: all 0.15s ease;
+    }
+    .btn:active {
+      transform: translateY(2px);
+      box-shadow: none;
+    }
+    .badge {
+      display: inline-block;
+      margin-top: 18px;
+      padding: 6px 14px;
+      background: #f7efe9;
+      border: 1px solid #171717;
+      border-radius: 16px;
+      font-size: 11px;
+      font-weight: bold;
+      color: #2b1a07;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="icon-box">
+      <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#ff6f1e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="1" y1="1" x2="23" y2="23"></line>
+        <path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55"></path>
+        <path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39"></path>
+        <path d="M10.71 5.05A16 16 0 0 1 22.58 9"></path>
+        <path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88"></path>
+        <path d="M8.53 16.11a6 6 0 0 1 6.95 0"></path>
+        <line x1="12" y1="20" x2="12.01" y2="20"></line>
+      </svg>
+    </div>
+    <h1>أنت الآن في وضع عدم الاتصال (Offline)</h1>
+    <p>
+      يبدو أن اتصال الإنترنت منقطع حالياً، لكن تطبيق منصة المعهد يحتفظ بنسخة كاش من المقررات والجداول التي قمت بفتحها مسبقاً!
+    </p>
+    <button class="btn" onclick="window.location.href='/'">
+      تحديث والرجوع للمنصة
+    </button>
+    <br>
+    <div class="badge">
+      منصة شعبة المساحة العامة • ITI Alex Hub
+    </div>
+  </div>
+</body>
+</html>

@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import Link from "next/link";
 import { Compass, BookOpen, Calendar, Clock, Shield, Code2, Heart, Sparkles, ExternalLink } from "lucide-react";
+import PWAInstaller from "@/components/PWAInstaller";
 
 export const metadata: Metadata = {
   title: "شعبة المساحة العامة | المعهد الفني الصناعي بالإسكندرية",
@@ -9,7 +10,12 @@ export const metadata: Metadata = {
   manifest: "/manifest.json",
   icons: {
     icon: "/favicon.ico",
-    apple: "/icons/icon-192x192.png",
+    apple: "/icons/apple-touch-icon.png",
+  },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "مساحة ITI",
   },
 };
 
@@ -112,19 +118,18 @@ export default function RootLayout({
                 </div>
               </div>
 
-              {/* Developer & Nexoura Volunteer Credits Bar */}
-              <div className="pt-6 border-t-[1.5px] border-[#171717]/25 flex flex-col md:flex-row items-center justify-between gap-4 text-xs font-medium">
-                <div className="flex items-center gap-2 text-center md:text-right flex-wrap justify-center md:justify-start">
-                  <span className="inline-flex items-center gap-1.5 font-bold text-[#2b1a07]">
-                    <Code2 className="w-4 h-4 text-[#171717]" />
-                    تمت البرمجة والتطوير كعمل تطوعي وإهداء للزملاء والطلاب عبر
+              {/* Developer & Nexoura Credits Bar */}
+              <div className="pt-5 border-t-[1.5px] border-[#171717]/20 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
+                <div className="flex items-center gap-2">
+                  <span className="font-bold text-[#2b1a07]">
+                    تمت البرمجة والتطوير عبر
                   </span>
                   <a
                     href="https://nexoura.org/en"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-[#fdfbf9] hover:bg-[#171717] text-[#171717] hover:text-[#fdfbf9] border-[1.5px] border-[#171717] font-black transition-all shadow-[0_2px_0_#171717] hover:shadow-none hover:translate-y-0.5 cursor-pointer group"
-                    title="زيارة موقع شركة Nexoura الرسمي"
+                    className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#fdfbf9] hover:bg-[#171717] text-[#171717] hover:text-[#fdfbf9] border-[1.5px] border-[#171717] font-black transition-all shadow-[0_2px_0_#171717] hover:shadow-none hover:translate-y-0.5 cursor-pointer group"
+                    title="زيارة موقع Nexoura الرسمي"
                   >
                     <Sparkles className="w-3.5 h-3.5 text-[#ff6f1e] group-hover:rotate-12 transition-transform" />
                     <span>Nexoura • شركة نيكسورا</span>
@@ -132,20 +137,19 @@ export default function RootLayout({
                   </a>
                 </div>
 
-                <div className="flex items-center gap-2 text-[#2b1a07]/80 text-[11px] font-bold flex-wrap justify-center">
-                  <span className="flex items-center gap-1">
-                    صُنع بكل حب <Heart className="w-3.5 h-3.5 text-rose-700 fill-rose-700 inline" /> لخدمة طلاب المعهد
-                  </span>
-                  <span>•</span>
-                  <span>جميع الحقوق محفوظة © {new Date().getFullYear()} Nexoura</span>
+                <div className="text-[#2b1a07]/80 text-[11px] font-bold">
+                  جميع الحقوق محفوظة © {new Date().getFullYear()} Nexoura
                 </div>
               </div>
             </div>
           </div>
         </footer>
 
+        {/* PWA Offline & Install Prompt */}
+        <PWAInstaller />
+
         {/* Global High-Z Portal Container for modals and overlays */}
-        <div id="portal-root" className="relative z-[9999999]"></div>
+        <div id="portal-root"></div>
       </body>
     </html>
   );

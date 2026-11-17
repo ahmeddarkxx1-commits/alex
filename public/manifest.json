@@ -1,27 +1,71 @@
 {
-  "name": "منصة المعهد الفني الصناعي بالإسكندرية",
-  "short_name": "ITI Alex Hub",
-  "description": "المنصة الأكاديمية الشاملة لطلاب المعهد الفني الصناعي بالإسكندرية - تلخيصات، شيتات، جداول سكاشن، ومواعيد تسليم",
-  "start_url": "/",
+  "name": "شعبة المساحة العامة | المعهد الفني الصناعي بالإسكندرية",
+  "short_name": "مساحة ITI",
+  "description": "المنصة الأكاديمية الشاملة لشعبة المساحة العامة - المعهد الفني الصناعي بالإسكندرية. مقررات دراسية، جداول سكاشن، وتلخيصات قابلة للقراءة دون إنترنت.",
+  "start_url": "/?source=pwa",
+  "scope": "/",
   "display": "standalone",
-  "background_color": "#070B14",
-  "theme_color": "#070B14",
+  "display_override": [
+    "window-controls-overlay",
+    "standalone",
+    "minimal-ui"
+  ],
+  "background_color": "#fdfbf9",
+  "theme_color": "#ff6f1e",
   "orientation": "portrait-primary",
   "dir": "rtl",
   "lang": "ar",
+  "categories": [
+    "education",
+    "productivity"
+  ],
   "icons": [
     {
       "src": "/icons/icon-192x192.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
     },
     {
       "src": "/icons/icon-512x512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "جدول المحاضرات والسكاشن",
+      "short_name": "الجدول",
+      "description": "جدول الفترات والسكاشن الأسبوعي لجميع الفصول",
+      "url": "/?tab=schedules",
+      "icons": [{ "src": "/icons/icon-192x192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "المذكرات والشيتات",
+      "short_name": "المذكرات",
+      "description": "مذكرات المحاضرات وبنك الأسئلة والتكليفات",
+      "url": "/?tab=resources",
+      "icons": [{ "src": "/icons/icon-192x192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "مواعيد التسليم",
+      "short_name": "المواعيد",
+      "description": "متابعة ديدلاين الشيتات والتنبيهات العاجلة",
+      "url": "/?tab=deadlines",
+      "icons": [{ "src": "/icons/icon-192x192.png", "sizes": "192x192" }]
     }
   ]
 }
-

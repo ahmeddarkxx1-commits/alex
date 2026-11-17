@@ -160,12 +160,12 @@ export default function SchedulesTab({
         })}
       </div>
 
-      {/* Sub-filters (Mobile Responsive with clean scroll and wrap) */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 text-xs bg-[#fdfbf9] p-3 sm:p-4 rounded-[12px] border-[1.5px] border-[#171717] shadow-[0_1px_2px_rgba(0,0,0,0.06)] overflow-hidden">
+      {/* Sub-filters (Mobile Responsive with clean wrap) */}
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 text-xs bg-[#fdfbf9] p-3 sm:p-4 rounded-[12px] border-[1.5px] border-[#171717] shadow-[0_1px_2px_rgba(0,0,0,0.06)]">
         {/* Section Filter */}
-        <div className="flex items-center gap-2 overflow-x-auto scrollbar-none pb-0.5">
+        <div className="flex flex-wrap items-center gap-2">
           <span className="text-[#2b1a07] font-bold text-xs flex-shrink-0">السكشن:</span>
-          <div className="flex items-center gap-1.5 flex-nowrap sm:flex-wrap">
+          <div className="flex items-center gap-1.5 flex-wrap">
             {(['الكل', 'عام', 'سكشن 1', 'سكشن 2', 'سكشن 3', 'سكشن 4'] as (SectionNumber | 'الكل')[]).map((sec) => (
               <button
                 key={sec}
@@ -183,9 +183,9 @@ export default function SchedulesTab({
         </div>
 
         {/* Type Filter */}
-        <div className="flex items-center gap-2 border-t lg:border-t-0 border-[#171717]/10 pt-2.5 lg:pt-0 overflow-x-auto scrollbar-none pb-0.5">
+        <div className="flex flex-wrap items-center gap-2 border-t lg:border-t-0 border-[#171717]/10 pt-2.5 lg:pt-0">
           <span className="text-[#2b1a07] font-bold text-xs flex-shrink-0">النوع:</span>
-          <div className="flex items-center gap-1.5 flex-nowrap sm:flex-wrap">
+          <div className="flex items-center gap-1.5 flex-wrap">
             {(['الكل', 'محاضرة نظري', 'سكشن عملي', 'ورشة', 'معمل'] as (SessionType | 'الكل')[]).map((t) => (
               <button
                 key={t}
