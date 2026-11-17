@@ -5,8 +5,8 @@ import { Feedback, FeedbackStatus, FeedbackType } from '@/types/database';
 export const dynamic = 'force-dynamic';
 
 const DEFAULT_BOT_TOKEN = '5242659245:AAHJ34Sk7MkUpgVLFs7D8Z4qLZP6OHLE1yI';
-const ADMIN_PERSONAL_CHAT_ID = '1914514519'; // Developer & Admin direct bot chat
-const DEFAULT_CHANNEL_ID = '-1004451326626';
+// الشكاوى والمقترحات سرية وخاصة: تُرسل حصرياً على الخاص للمسؤول في البوت ولا تُنشر في القنوات
+const ADMIN_PRIVATE_CHAT_ID = process.env.ADMIN_TELEGRAM_CHAT_ID || '1914514519';
 
 export async function GET(request: NextRequest) {
   try {
@@ -146,24 +146,20 @@ export async function POST(request: NextRequest) {
       console.warn('Local dbCreateFeedback warning (safe on serverless):', e);
     }
 
-    // 3. Dispatch real-time Telegram notification to:
-    //    A) Admin Personal Bot Chat (1914514519)
-    //    B) Admin / Official Channel (-1004451326626)
+    // 3. Dispatch real-time Telegram notification to Admin Private Chat ONLY (ع الخاص فقط للمسؤول ولا يُرسل للقنوات)
     const botToken = process.env.TELEGRAM_BOT_TOKEN || DEFAULT_BOT_TOKEN;
-    const targetChatId = process.env.TELEGRAM_CHAT_ID || process.env.TELEGRAM_CHANNEL_YEAR1_ID || DEFAULT_CHANNEL_ID;
-
-    const targets = Array.from(new Set([ADMIN_PERSONAL_CHAT_ID, targetChatId])).filter(Boolean);
+    const privateChatId = ADMIN_PRIVATE_CHAT_ID;
 
     let telegramSent = false;
     let telegramError: string | null = null;
 
-    if (botToken && targets.length > 0) {
+    if (botToken && privateChatId) {
       let typeEmoji = '💡';
       if (type === 'شكوى') typeEmoji = '⚠️';
       else if (type === 'مشكلة تقنية') typeEmoji = '🔧';
       else if (type === 'استفسار') typeEmoji = '❓';
 
-      let tgText = `📬 <b>[صندوق الشكاوى والمقترحات • معهد الإسكندرية]</b>\n\n`;
+      let tgText = `📬 <b>[شكوى / مقترح جديد • خاص بالإدارة]</b>\n\n`;
       tgText += `${typeEmoji} <b>نوع الرسالة:</b> ${type}\n`;
       tgText += `📌 <b>الموضوع:</b> ${title.trim()}\n\n`;
       tgText += `👤 <b>المرسل:</b> ${(name || '').trim() || 'طالب (بدون اسم)'}\n`;
@@ -174,28 +170,26 @@ export async function POST(request: NextRequest) {
       tgText += `⏰ <i>${new Date().toLocaleString('ar-EG', { timeZone: 'Africa/Cairo' })}</i>\n`;
       tgText += `🔐 <i>معرف الشكوى في المنصة: <code>${newRecord.id}</code></i>`;
 
-      for (const cid of targets) {
-        try {
-          const tgRes = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              chat_id: cid,
-              text: tgText,
-              parse_mode: 'HTML',
-            }),
-          });
-          const tgData = await tgRes.json();
-          if (tgData.ok) {
-            telegramSent = true;
-          } else {
-            console.warn(`Telegram send to ${cid} failed:`, tgData.description);
-            if (!telegramError) telegramError = tgData.description;
-          }
-        } catch (tgErr: any) {
-          console.warn(`Telegram fetch error to ${cid}:`, tgErr);
-          if (!telegramError) telegramError = tgErr.message;
+      try {
+        const tgRes = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            chat_id: privateChatId,
+            text: tgText,
+            parse_mode: 'HTML',
+          }),
+        });
+        const tgData = await tgRes.json();
+        if (tgData.ok) {
+          telegramSent = true;
+        } else {
+          console.warn(`Telegram private send failed:`, tgData.description);
+          telegramError = tgData.description;
         }
+      } catch (tgErr: any) {
+        console.warn(`Telegram private send error:`, tgErr);
+        telegramError = tgErr.message;
       }
     }
 
