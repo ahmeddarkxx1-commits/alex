@@ -547,7 +547,7 @@ export default function SurveyingPortal() {
                   type="button"
                   onClick={() => setShowFeedbackModal(true)}
                   className="px-2.5 py-1 rounded-full bg-[#fdfbf9] hover:bg-[#ff6f1e]/15 text-[#2b1a07] border-[1.5px] border-[#171717] font-bold text-[11px] shadow-sm transition-all cursor-pointer flex items-center gap-1"
-                  title="إرسال شكوى أو مقترح للإدارة والبوت"
+                  title="إرسال شكوى أو مقترح للإدارة"
                 >
                   <MessageSquare className="w-3 h-3 text-[#ff6f1e]" />
                   <span>شكاوى ومقترحات 📬</span>

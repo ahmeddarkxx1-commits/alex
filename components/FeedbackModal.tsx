@@ -97,7 +97,7 @@ export default function FeedbackModal({
 
       setSubmittedSuccess(true);
       if (onSuccessToast) {
-        onSuccessToast('تم إرسال رسالتك بنجاح ووصلت فوراً للإدارة وعبر بوت التليجرام! 📩');
+        onSuccessToast('تم إرسال رسالتك بنجاح ووصلت للإدارة! 📩');
       }
 
       setTimeout(() => {
@@ -127,7 +127,7 @@ export default function FeedbackModal({
                 صندوق الشكاوى والمقترحات 📬
               </h2>
               <p className="text-xs text-[#171717]/75 font-medium mt-0.5">
-                تصل رسالتك فوراً إلى إدارة المعهد وعبر بوت التليجرام
+                تصل رسالتك مباشرة وبكل سرية إلى إدارة المعهد للمتابعة
               </p>
             </div>
           </div>
@@ -151,7 +151,7 @@ export default function FeedbackModal({
               تم استلام رسالتك بنجاح! 🎉
             </h3>
             <p className="text-xs text-[#171717]/80 leading-relaxed max-w-sm mx-auto">
-              تم إرسال إشعار فوري إلى بوت التليجرام الخاص بالإدارة وتم تدوين الشكوى/المقترح في لوحة التحكم للمتابعة والرد. شكراً لحرصك على التطوير!
+              تم استلام رسالتك وتدوينها في لوحة تحكم الإدارة للمتابعة والرد. شكراً لحرصك على التطوير!
             </p>
             <div className="pt-2 text-[11px] text-emerald-700 font-bold flex items-center justify-center gap-1">
               <Sparkles className="w-3.5 h-3.5" />
@@ -365,12 +365,12 @@ export default function FeedbackModal({
                 {isSubmitting ? (
                   <>
                     <div className="w-3.5 h-3.5 border-2 border-[#2b1a07] border-t-transparent rounded-full animate-spin"></div>
-                    <span>جاري الإرسال للبوت...</span>
+                    <span>جاري الإرسال...</span>
                   </>
                 ) : (
                   <>
                     <Send className="w-3.5 h-3.5 text-[#2b1a07]" />
-                    <span>إرسال الرسالة للبوت والإدارة 🚀</span>
+                    <span>إرسال</span>
                   </>
                 )}
               </button>
