@@ -266,7 +266,7 @@ export function dbGetResources(params?: {
   return list;
 }
 
-export function dbCreateResource(item: Omit<Resource, 'id' | 'views_count' | 'created_at'>): Resource {
+export function dbCreateResource(item: Omit<Resource, 'id' | 'views_count' | 'created_at'> & { id?: string }): Resource {
   const db = initDb();
   let semNumber = item.semester_number;
   if (!semNumber && item.subject_id) {
@@ -277,11 +277,17 @@ export function dbCreateResource(item: Omit<Resource, 'id' | 'views_count' | 'cr
     semNumber = item.academic_year === 'الفرقة الثانية' ? 3 : 1;
   }
 
+  const targetId = item.id || `res-${Date.now()}`;
+  const existingIdx = db.resources.findIndex((r) => r.id === targetId);
+  if (existingIdx !== -1) {
+    return db.resources[existingIdx];
+  }
+
   const newRecord: Resource = {
     ...item,
     semester_number: semNumber,
     review_status: item.review_status || 'approved',
-    id: `res-${Date.now()}`,
+    id: targetId,
     views_count: 0,
     created_at: new Date().toISOString(),
   };
@@ -350,11 +356,17 @@ export function dbGetSchedules(params?: {
   return list;
 }
 
-export function dbCreateSchedule(item: Omit<Schedule, 'id' | 'created_at'>): Schedule {
+export function dbCreateSchedule(item: Omit<Schedule, 'id' | 'created_at'> & { id?: string }): Schedule {
   const db = initDb();
+  const targetId = item.id || `sch-${Date.now()}`;
+  const existingIdx = db.schedules.findIndex((s) => s.id === targetId);
+  if (existingIdx !== -1) {
+    return db.schedules[existingIdx];
+  }
+
   const newRecord: Schedule = {
     ...item,
-    id: `sch-${Date.now()}`,
+    id: targetId,
     created_at: new Date().toISOString(),
   };
 
@@ -384,14 +396,37 @@ export function dbGetAnnouncements(departmentId?: string): Announcement[] {
   if (departmentId) {
     list = list.filter((a) => !a.department_id || a.department_id === departmentId);
   }
-  return list;
+
+  // Deduplicate by id or (title + details + event_date)
+  const seen = new Set<string>();
+  const deduplicated: Announcement[] = [];
+  for (const a of list) {
+    const key = `${a.title.trim()}__${(a.details || '').trim()}__${a.event_date || ''}`;
+    if (!seen.has(a.id) && !seen.has(key)) {
+      seen.add(a.id);
+      seen.add(key);
+      deduplicated.push(a);
+    }
+  }
+
+  return deduplicated;
 }
 
-export function dbCreateAnnouncement(item: Omit<Announcement, 'id' | 'created_at'>): Announcement {
+export function dbCreateAnnouncement(item: Omit<Announcement, 'id' | 'created_at'> & { id?: string }): Announcement {
   const db = initDb();
+  const targetId = item.id || `ann-${Date.now()}`;
+
+  // Deduplicate: If an announcement with same ID or same (title + details) exists, return it
+  const existing = db.announcements.find(
+    (a) => a.id === targetId || (a.title.trim() === item.title.trim() && a.details.trim() === item.details.trim())
+  );
+  if (existing) {
+    return existing;
+  }
+
   const newRecord: Announcement = {
     ...item,
-    id: `ann-${Date.now()}`,
+    id: targetId,
     created_at: new Date().toISOString(),
   };
 

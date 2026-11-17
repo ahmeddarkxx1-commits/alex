@@ -23,7 +23,18 @@ export async function GET(request: NextRequest) {
 
         const { data, error } = await q;
         if (!error && data && data.length > 0) {
-          return NextResponse.json(data);
+          // Deduplicate items with identical title + details
+          const seen = new Set<string>();
+          const deduped: any[] = [];
+          for (const item of (data as any[])) {
+            const key = `${(item.title || '').trim()}__${(item.details || item.body || '').trim()}`;
+            if (!seen.has(item.id) && !seen.has(key)) {
+              seen.add(item.id);
+              seen.add(key);
+              deduped.push(item);
+            }
+          }
+          return NextResponse.json(deduped);
         }
       } catch (e) {
         console.warn('Supabase announcements GET error, falling back:', e);
@@ -45,11 +56,34 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'العنوان وتفاصيل الإشعار مطلوبة' }, { status: 400 });
     }
 
+    const targetId = body.id || `ann-${Date.now()}`;
+    const cleanTitle = body.title.trim();
+    const cleanDetails = (body.details || body.body || '').trim();
+
+    // Check Supabase Cloud first for duplicate prevention
+    const { isSupabaseConfigured, supabase } = await import('@/lib/supabase');
+    if (isSupabaseConfigured) {
+      try {
+        const { data: existingSupabase } = await supabase
+          .from('announcements')
+          .select('*')
+          .eq('title', cleanTitle)
+          .limit(1);
+
+        if (existingSupabase && existingSupabase.length > 0) {
+          return NextResponse.json(existingSupabase[0], { status: 200 });
+        }
+      } catch (err) {
+        console.warn('Supabase check existing warning:', err);
+      }
+    }
+
     let created: any = null;
     try {
       created = dbCreateAnnouncement({
-        title: body.title,
-        details: body.details || body.body || '',
+        id: targetId,
+        title: cleanTitle,
+        details: cleanDetails,
         category: (body.category as AnnouncementCategory) || 'تنبيه_هام',
         urgency: (body.urgency as UrgencyLevel) || (body.is_urgent ? 'عاجل' : 'عادي'),
         event_date: body.event_date || null,
@@ -58,9 +92,9 @@ export async function POST(request: NextRequest) {
       });
     } catch {
       created = {
-        id: `ann-${Date.now()}`,
-        title: body.title,
-        details: body.details || body.body || '',
+        id: targetId,
+        title: cleanTitle,
+        details: cleanDetails,
         category: (body.category as AnnouncementCategory) || 'تنبيه_هام',
         urgency: (body.urgency as UrgencyLevel) || (body.is_urgent ? 'عاجل' : 'عادي'),
         event_date: body.event_date || null,
@@ -71,7 +105,6 @@ export async function POST(request: NextRequest) {
     }
 
     // Sync to Supabase Cloud
-    const { isSupabaseConfigured, supabase } = await import('@/lib/supabase');
     if (isSupabaseConfigured) {
       try {
         await (supabase.from('announcements') as any).upsert(created);

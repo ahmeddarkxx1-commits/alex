@@ -57,7 +57,20 @@ export default function DeadlinesTab({
     subtitle: 'تنبيه أكاديمي',
   }));
 
-  const allTimelineItems = [...sheetItems, ...announcementItems].sort((a, b) => {
+  // Merge and deduplicate items
+  const rawTimelineItems = [...sheetItems, ...announcementItems];
+  const seenTimeline = new Set<string>();
+  const deduplicatedItems: typeof rawTimelineItems = [];
+  for (const item of rawTimelineItems) {
+    const key = `${(item.title || '').trim()}__${(item.details || '').trim()}`;
+    if (!seenTimeline.has(item.id) && !seenTimeline.has(key)) {
+      seenTimeline.add(item.id);
+      seenTimeline.add(key);
+      deduplicatedItems.push(item);
+    }
+  }
+
+  const allTimelineItems = deduplicatedItems.sort((a, b) => {
     const timeA = a.event_date ? new Date(a.event_date).getTime() : 9999999999999;
     const timeB = b.event_date ? new Date(b.event_date).getTime() : 9999999999999;
     return timeA - timeB;

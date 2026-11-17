@@ -315,18 +315,32 @@ export async function createResource(newRes: Omit<Resource, 'id' | 'views_count'
     created_at: new Date().toISOString(),
   };
 
-  // Sync with Backend Server DB
+  // 1. Sync with Backend Server DB (Single Source of Truth)
   if (typeof window !== 'undefined') {
-    fetch('/api/resources', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(resourceToSave),
-    }).catch((e) => console.warn('Backend resource sync error:', e));
+    try {
+      const res = await fetch('/api/resources', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(resourceToSave),
+      });
+      if (res.ok) {
+        const serverCreated = await res.json();
+        if (serverCreated && serverCreated.id) {
+          const list = getLocalItem<Resource[]>(STORAGE_KEYS.RESOURCES, []);
+          const updated = [serverCreated, ...list.filter((r) => r.id !== serverCreated.id)];
+          setLocalItem(STORAGE_KEYS.RESOURCES, updated);
+          return serverCreated as Resource;
+        }
+      }
+    } catch (e) {
+      console.warn('Backend resource sync error:', e);
+    }
   }
 
+  // 2. Fallback only if fetch failed / offline
   if (isSupabaseConfigured) {
     try {
-      const { data, error } = await (supabase.from('resources') as any).insert([resourceToSave]).select().single();
+      const { data, error } = await (supabase.from('resources') as any).upsert([resourceToSave]).select().single();
       if (!error && data) return data as Resource;
     } catch (e) {
       console.error('Supabase create resource failed:', e);
@@ -334,7 +348,7 @@ export async function createResource(newRes: Omit<Resource, 'id' | 'views_count'
   }
 
   const list = getLocalItem<Resource[]>(STORAGE_KEYS.RESOURCES, []);
-  const updated = [resourceToSave, ...list];
+  const updated = [resourceToSave, ...list.filter((r) => r.id !== resourceToSave.id)];
   setLocalItem(STORAGE_KEYS.RESOURCES, updated);
   return resourceToSave;
 }
@@ -503,18 +517,31 @@ export async function createSchedule(newSch: Omit<Schedule, 'id' | 'created_at'>
     created_at: new Date().toISOString(),
   };
 
-  // Sync with Backend Server DB
+  // 1. Sync with Backend Server DB (Single Source of Truth)
   if (typeof window !== 'undefined') {
-    fetch('/api/schedules', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(item),
-    }).catch((e) => console.warn('Backend schedule sync error:', e));
+    try {
+      const res = await fetch('/api/schedules', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(item),
+      });
+      if (res.ok) {
+        const serverCreated = await res.json();
+        if (serverCreated && serverCreated.id) {
+          const list = getLocalItem<Schedule[]>(STORAGE_KEYS.SCHEDULES, []);
+          setLocalItem(STORAGE_KEYS.SCHEDULES, [serverCreated, ...list.filter((s) => s.id !== serverCreated.id)]);
+          return serverCreated as Schedule;
+        }
+      }
+    } catch (e) {
+      console.warn('Backend schedule sync error:', e);
+    }
   }
 
+  // 2. Fallback only if fetch failed / offline
   if (isSupabaseConfigured) {
     try {
-      const { data, error } = await (supabase.from('schedules') as any).insert([item]).select().single();
+      const { data, error } = await (supabase.from('schedules') as any).upsert([item]).select().single();
       if (!error && data) return data as Schedule;
     } catch (e) {
       console.error('Supabase create schedule failed', e);
@@ -522,7 +549,7 @@ export async function createSchedule(newSch: Omit<Schedule, 'id' | 'created_at'>
   }
 
   const list = getLocalItem<Schedule[]>(STORAGE_KEYS.SCHEDULES, []);
-  const updated = [...list, item];
+  const updated = [...list.filter((s) => s.id !== item.id), item];
   setLocalItem(STORAGE_KEYS.SCHEDULES, updated);
   return item;
 }
@@ -551,22 +578,22 @@ export async function deleteSchedule(id: string): Promise<boolean> {
 
 // ----------------- ANNOUNCEMENTS -----------------
 export async function getAnnouncements(departmentId?: string): Promise<Announcement[]> {
+  let announcements: Announcement[] = [];
+
   if (typeof window !== 'undefined') {
     try {
       const url = departmentId ? `/api/announcements?departmentId=${encodeURIComponent(departmentId)}` : '/api/announcements';
       const res = await fetch(url);
       if (res.ok) {
         const data = await res.json();
-        if (Array.isArray(data)) return data as Announcement[];
+        if (Array.isArray(data)) announcements = data as Announcement[];
       }
     } catch (e) {
       // fallback
     }
   }
 
-  let announcements: Announcement[] = [];
-
-  if (isSupabaseConfigured) {
+  if (announcements.length === 0 && isSupabaseConfigured) {
     try {
       const { data, error } = await supabase
         .from('announcements')
@@ -591,7 +618,19 @@ export async function getAnnouncements(departmentId?: string): Promise<Announcem
     );
   }
 
-  return announcements;
+  // Deduplicate announcements with identical title and details
+  const seen = new Set<string>();
+  const deduplicated: Announcement[] = [];
+  for (const a of announcements) {
+    const key = `${(a.title || '').trim()}__${(a.details || '').trim()}`;
+    if (!seen.has(a.id) && !seen.has(key)) {
+      seen.add(a.id);
+      seen.add(key);
+      deduplicated.push(a);
+    }
+  }
+
+  return deduplicated;
 }
 
 export async function createAnnouncement(newAnn: Omit<Announcement, 'id' | 'created_at'>): Promise<Announcement> {
@@ -601,18 +640,31 @@ export async function createAnnouncement(newAnn: Omit<Announcement, 'id' | 'crea
     created_at: new Date().toISOString(),
   };
 
-  // Sync with Backend Server DB
+  // 1. Sync with Backend Server DB (Single Source of Truth)
   if (typeof window !== 'undefined') {
-    fetch('/api/announcements', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(item),
-    }).catch((e) => console.warn('Backend announcement sync error:', e));
+    try {
+      const res = await fetch('/api/announcements', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(item),
+      });
+      if (res.ok) {
+        const serverCreated = await res.json();
+        if (serverCreated && serverCreated.id) {
+          const list = getLocalItem<Announcement[]>(STORAGE_KEYS.ANNOUNCEMENTS, []);
+          setLocalItem(STORAGE_KEYS.ANNOUNCEMENTS, [serverCreated, ...list.filter((a) => a.id !== serverCreated.id)]);
+          return serverCreated as Announcement;
+        }
+      }
+    } catch (e) {
+      console.warn('Backend announcement sync error:', e);
+    }
   }
 
+  // 2. Fallback only if offline / server failed
   if (isSupabaseConfigured) {
     try {
-      const { data, error } = await (supabase.from('announcements') as any).insert([item]).select().single();
+      const { data, error } = await (supabase.from('announcements') as any).upsert([item]).select().single();
       if (!error && data) return data as Announcement;
     } catch (e) {
       console.error(e);
@@ -620,7 +672,7 @@ export async function createAnnouncement(newAnn: Omit<Announcement, 'id' | 'crea
   }
 
   const list = getLocalItem<Announcement[]>(STORAGE_KEYS.ANNOUNCEMENTS, []);
-  setLocalItem(STORAGE_KEYS.ANNOUNCEMENTS, [item, ...list]);
+  setLocalItem(STORAGE_KEYS.ANNOUNCEMENTS, [item, ...list.filter((a) => a.id !== item.id)]);
   return item;
 }
 

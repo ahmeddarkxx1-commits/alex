@@ -235,6 +235,9 @@ export default function AdminDashboard() {
   const [annNotifyTg, setAnnNotifyTg] = useState(true);
   const [annTgTarget, setAnnTgTarget] = useState<'year1' | 'year2' | 'both'>('both');
   const [annQuickSubject, setAnnQuickSubject] = useState<string>('');
+  const [submittingAnn, setSubmittingAnn] = useState(false);
+  const [submittingRes, setSubmittingRes] = useState(false);
+  const [submittingSch, setSubmittingSch] = useState(false);
 
   // Quick date helper functions for instant 1-click filling
   const getQuickDateString = (daysFromNow: number) => {
@@ -752,86 +755,94 @@ export default function AdminDashboard() {
   // Submit New Resource
   const handleCreateResource = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (submittingRes) return;
     if (!newResTitle.trim() || !newResSummary.trim()) {
       showToast('يرجى ملء عنوان التلخيص والملخص السريع', 'error');
       return;
     }
 
-    const dept = departments.find((d) => d.id === newResDeptId);
-    const subj = subjects.find((s) => s.id === newResSubjectId);
+    setSubmittingRes(true);
+    try {
+      const dept = departments.find((d) => d.id === newResDeptId);
+      const subj = subjects.find((s) => s.id === newResSubjectId);
 
-    // Compute semester number so that the student filter always finds this resource!
-    let semNumber: SemesterNumber = 1;
-    if (subj?.semester_number) {
-      semNumber = subj.semester_number;
-    } else {
-      semNumber = newResYear === 'الفرقة الثانية' ? 3 : 1;
-    }
-
-    const isAutoApproved = currentUser?.role === 'super_admin';
-
-    // If a PDF was uploaded, store the base64 payload in content_markdown for persistent cloud serving
-    const textMarkdown = newResMarkdown.trim() || newResSummary.trim();
-    const finalContentMarkdown = uploadedPdfBase64
-      ? `PDF_DATA:::${uploadedPdfBase64}:::${textMarkdown}`
-      : textMarkdown;
-
-    const created = await createResource({
-      department_id: newResDeptId || 'dept-surveying',
-      subject_id: newResSubjectId,
-      academic_year: newResYear,
-      semester_number: semNumber,
-      type: newResType,
-      title: newResTitle.trim(),
-      summary: newResSummary.trim(),
-      content_markdown: finalContentMarkdown,
-      file_url: newResFileUrl.trim() || null,
-      due_date: newResDueDate ? new Date(newResDueDate).toISOString() : null,
-      week_number: Number(newResWeek) || 1,
-      author_name: currentUser?.full_name || 'مندوب الشعبة',
-      is_pinned: false,
-      review_status: isAutoApproved ? 'approved' : 'pending_review',
-    });
-
-    showToast(
-      isAutoApproved
-        ? 'تم نشر واعتماد المحتوى الأكاديمي للطلاب بنجاح!'
-        : 'تم رفع المحتوى الأكاديمي وحفظه بقاعدة البيانات، وهو الآن بانتظار مراجعة واعتماد المشرف.'
-    );
-
-    // Send Telegram broadcast if checked with specific channel (Year 1 or Year 2)
-    if (notifyTelegram && isAutoApproved) {
-      const currentOrigin = getLiveOrigin();
-      const postUrl = `${currentOrigin}/?resId=${created.id}`;
-      let fileUrlFormatted: string | undefined = undefined;
-      if (created.file_url) {
-        fileUrlFormatted = created.file_url.startsWith('http') ? created.file_url : `${currentOrigin}${created.file_url}`;
+      // Compute semester number so that the student filter always finds this resource!
+      let semNumber: SemesterNumber = 1;
+      if (subj?.semester_number) {
+        semNumber = subj.semester_number;
+      } else {
+        semNumber = newResYear === 'الفرقة الثانية' ? 3 : 1;
       }
 
-      triggerTelegramBroadcast({
-        type: 'resource',
-        title: created.title,
-        departmentName: dept?.name_ar || 'شعبة المساحة العامة',
-        academicYear: created.academic_year,
-        subjectName: subj?.name_ar || '',
-        details: created.summary,
-        dueDate: created.due_date || undefined,
-        resourceType: created.type,
-        targetChannel: resTgTarget,
-        postUrl: postUrl,
-        fileUrl: fileUrlFormatted,
-      });
-    }
+      const isAutoApproved = currentUser?.role === 'super_admin';
 
-    // Reset Form
-    setNewResTitle('');
-    setNewResSummary('');
-    setNewResMarkdown('');
-    setNewResFileUrl('');
-    setUploadedPdfName('');
-    setUploadedPdfBase64('');
-    setNewResDueDate('');
-    refreshAllData();
+      // If a PDF was uploaded, store the base64 payload in content_markdown for persistent cloud serving
+      const textMarkdown = newResMarkdown.trim() || newResSummary.trim();
+      const finalContentMarkdown = uploadedPdfBase64
+        ? `PDF_DATA:::${uploadedPdfBase64}:::${textMarkdown}`
+        : textMarkdown;
+
+      const created = await createResource({
+        department_id: newResDeptId || 'dept-surveying',
+        subject_id: newResSubjectId,
+        academic_year: newResYear,
+        semester_number: semNumber,
+        type: newResType,
+        title: newResTitle.trim(),
+        summary: newResSummary.trim(),
+        content_markdown: finalContentMarkdown,
+        file_url: newResFileUrl.trim() || null,
+        due_date: newResDueDate ? new Date(newResDueDate).toISOString() : null,
+        week_number: Number(newResWeek) || 1,
+        author_name: currentUser?.full_name || 'مندوب الشعبة',
+        is_pinned: false,
+        review_status: isAutoApproved ? 'approved' : 'pending_review',
+      });
+
+      showToast(
+        isAutoApproved
+          ? 'تم نشر واعتماد المحتوى الأكاديمي للطلاب بنجاح!'
+          : 'تم رفع المحتوى الأكاديمي وحفظه بقاعدة البيانات، وهو الآن بانتظار مراجعة واعتماد المشرف.'
+      );
+
+      // Send Telegram broadcast if checked with specific channel (Year 1 or Year 2)
+      if (notifyTelegram && isAutoApproved) {
+        const currentOrigin = getLiveOrigin();
+        const postUrl = `${currentOrigin}/?resId=${created.id}`;
+        let fileUrlFormatted: string | undefined = undefined;
+        if (created.file_url) {
+          fileUrlFormatted = created.file_url.startsWith('http') ? created.file_url : `${currentOrigin}${created.file_url}`;
+        }
+
+        triggerTelegramBroadcast({
+          type: 'resource',
+          title: created.title,
+          departmentName: dept?.name_ar || 'شعبة المساحة العامة',
+          academicYear: created.academic_year,
+          subjectName: subj?.name_ar || '',
+          details: created.summary,
+          dueDate: created.due_date || undefined,
+          resourceType: created.type,
+          targetChannel: resTgTarget,
+          postUrl: postUrl,
+          fileUrl: fileUrlFormatted,
+        });
+      }
+
+      // Reset Form
+      setNewResTitle('');
+      setNewResSummary('');
+      setNewResMarkdown('');
+      setNewResFileUrl('');
+      setUploadedPdfName('');
+      setUploadedPdfBase64('');
+      setNewResDueDate('');
+      await refreshAllData();
+    } catch (err: any) {
+      showToast('حدث خطأ أثناء حفظ المحتوى الأكاديمي', 'error');
+    } finally {
+      setSubmittingRes(false);
+    }
   };
 
   // Approve a resource in review
@@ -892,65 +903,81 @@ export default function AdminDashboard() {
   // Submit New Schedule
   const handleCreateSchedule = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (submittingSch) return;
     if (!schRoom.trim()) {
       showToast('يرجى كتابة مكان المدرج أو القاعة أو المعمل', 'error');
       return;
     }
 
-    await createSchedule({
-      department_id: schDeptId,
-      subject_id: schSubjectId,
-      academic_year: schYear,
-      day_of_week: schDay,
-      start_time: schStart,
-      end_time: schEnd,
-      session_type: schType,
-      section_number: schSection,
-      location_room: schRoom.trim(),
-      instructor_name: schInstructor.trim(),
-    });
+    setSubmittingSch(true);
+    try {
+      await createSchedule({
+        department_id: schDeptId,
+        subject_id: schSubjectId,
+        academic_year: schYear,
+        day_of_week: schDay,
+        start_time: schStart,
+        end_time: schEnd,
+        session_type: schType,
+        section_number: schSection,
+        location_room: schRoom.trim(),
+        instructor_name: schInstructor.trim(),
+      });
 
-    showToast('تمت إضافة الفترة الدراسية بنجاح إلى جدول الأسبوع!');
-    refreshAllData();
+      showToast('تمت إضافة الفترة الدراسية بنجاح إلى جدول الأسبوع!');
+      await refreshAllData();
+    } catch (err: any) {
+      showToast('حدث خطأ أثناء إضافة الفترة', 'error');
+    } finally {
+      setSubmittingSch(false);
+    }
   };
 
   // Submit New Announcement
   const handleCreateAnnouncement = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (submittingAnn) return;
     if (!annTitle.trim() || !annDetails.trim()) {
       showToast('يرجى كتابة عنوان التنبيه والتفاصيل', 'error');
       return;
     }
 
-    const dept = departments.find((d) => d.id === annDeptId);
+    setSubmittingAnn(true);
+    try {
+      const dept = departments.find((d) => d.id === annDeptId);
 
-    const created = await createAnnouncement({
-      department_id: annDeptId === 'all' ? null : annDeptId,
-      title: annTitle.trim(),
-      details: annDetails.trim(),
-      category: annCategory,
-      urgency: annUrgency,
-      event_date: annDate ? new Date(annDate).toISOString() : null,
-      is_active: true,
-    });
-
-    showToast('تم نشر الإعلان والتنبيه بنجاح!');
-
-    // Broadcast to Telegram
-    if (annNotifyTg) {
-      triggerTelegramBroadcast({
-        type: 'announcement',
-        title: created.title,
-        departmentName: dept?.name_ar || 'شعبة المساحة العامة',
-        details: created.details,
-        targetChannel: annTgTarget,
+      const created = await createAnnouncement({
+        department_id: annDeptId === 'all' ? null : annDeptId,
+        title: annTitle.trim(),
+        details: annDetails.trim(),
+        category: annCategory,
+        urgency: annUrgency,
+        event_date: annDate ? new Date(annDate).toISOString() : null,
+        is_active: true,
       });
-    }
 
-    setAnnTitle('');
-    setAnnDetails('');
-    setAnnDate('');
-    refreshAllData();
+      showToast('تم نشر الإعلان والتنبيه بنجاح!');
+
+      // Broadcast to Telegram
+      if (annNotifyTg) {
+        triggerTelegramBroadcast({
+          type: 'announcement',
+          title: created.title,
+          departmentName: dept?.name_ar || 'شعبة المساحة العامة',
+          details: created.details,
+          targetChannel: annTgTarget,
+        });
+      }
+
+      setAnnTitle('');
+      setAnnDetails('');
+      setAnnDate('');
+      await refreshAllData();
+    } catch (err: any) {
+      showToast('حدث خطأ أثناء حفظ التنبيه، حاول ثانية', 'error');
+    } finally {
+      setSubmittingAnn(false);
+    }
   };
 
   // Export JSON Backup
@@ -1815,10 +1842,11 @@ export default function AdminDashboard() {
             {/* Submit Button */}
             <button
               type="submit"
-              className="w-full py-3.5 px-4 rounded-full bg-[#ff6f1e] hover:bg-[#ff6f1e]/90 text-[#2b1a07] font-black text-sm border-[1.5px] border-[#171717] shadow-[0_2px_4px_rgba(0,0,0,0.25)] transition-all cursor-pointer flex items-center justify-center gap-2"
+              disabled={submittingRes || uploadingPdf}
+              className="w-full py-3.5 px-4 rounded-full bg-[#ff6f1e] hover:bg-[#ff6f1e]/90 text-[#2b1a07] font-black text-sm border-[1.5px] border-[#171717] shadow-[0_2px_4px_rgba(0,0,0,0.25)] transition-all cursor-pointer flex items-center justify-center gap-2 disabled:opacity-50"
             >
               <CheckCircle2 className="w-4 h-4" />
-              <span>نشر التلخيص / مستند الـ PDF الآن</span>
+              <span>{submittingRes ? 'جاري رفع وحفظ المستند...' : 'نشر التلخيص / مستند الـ PDF الآن'}</span>
             </button>
           </form>
         </div>
@@ -2400,9 +2428,10 @@ export default function AdminDashboard() {
 
               <button
                 type="submit"
-                className="w-full py-3 px-4 rounded-full bg-[#171717] hover:bg-[#171717]/90 text-white font-extrabold text-sm border-[1.5px] border-[#171717] shadow-[0_1px_2px_rgba(0,0,0,0.25)] transition-all cursor-pointer"
+                disabled={submittingSch}
+                className="w-full py-3 px-4 rounded-full bg-[#171717] hover:bg-[#171717]/90 text-white font-extrabold text-sm border-[1.5px] border-[#171717] shadow-[0_1px_2px_rgba(0,0,0,0.25)] transition-all cursor-pointer disabled:opacity-50"
               >
-                إضافة الفترة للجدول
+                {submittingSch ? 'جاري إضافة الفترة...' : 'إضافة الفترة للجدول'}
               </button>
             </form>
           </div>
@@ -2793,10 +2822,11 @@ export default function AdminDashboard() {
 
               <button
                 type="submit"
-                className="w-full py-3.5 px-4 rounded-full bg-[#ff6f1e] hover:bg-[#ff6f1e]/90 text-[#2b1a07] font-black text-sm border-[1.5px] border-[#171717] shadow-[0_2px_4px_rgba(0,0,0,0.25)] transition-all cursor-pointer flex items-center justify-center gap-2"
+                disabled={submittingAnn}
+                className="w-full py-3.5 px-4 rounded-full bg-[#ff6f1e] hover:bg-[#ff6f1e]/90 text-[#2b1a07] font-black text-sm border-[1.5px] border-[#171717] shadow-[0_2px_4px_rgba(0,0,0,0.25)] transition-all cursor-pointer flex items-center justify-center gap-2 disabled:opacity-50"
               >
                 <Bell className="w-4 h-4" />
-                <span>نشر التنبيه الفوري</span>
+                <span>{submittingAnn ? 'جاري نشر وحفظ التنبيه...' : 'نشر التنبيه الفوري'}</span>
               </button>
             </form>
           </div>
