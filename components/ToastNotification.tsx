@@ -56,7 +56,7 @@ export default function ToastNotification({
 
   return (
     <div
-      className="fixed top-5 left-1/2 -translate-x-1/2 z-[110] w-[92%] sm:w-auto sm:min-w-[380px] max-w-lg pointer-events-auto"
+      className="fixed top-5 left-1/2 -translate-x-1/2 z-[1001] w-[92%] sm:w-auto sm:min-w-[380px] max-w-lg pointer-events-auto"
       dir="rtl"
     >
       <div className="bg-[#fdfbf9] border-[2px] border-[#171717] rounded-[20px] p-4 shadow-[0_12px_40px_rgba(0,0,0,0.3)] flex items-start sm:items-center gap-3.5 animate-in slide-in-from-top-4 fade-in duration-200 relative overflow-hidden">

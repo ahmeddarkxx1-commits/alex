@@ -39,7 +39,7 @@ export default function CourseDetailModal({
   return (
     <div
       onClick={onClose}
-      className="fixed inset-0 w-screen h-screen z-50 flex items-center justify-center p-3 sm:p-6 bg-[#171717]/65 backdrop-blur-md animate-fade-in cursor-pointer"
+      className="fixed inset-0 z-[999] flex items-center justify-center p-3 sm:p-6 bg-[#171717]/75 backdrop-blur-lg animate-fade-in cursor-pointer"
     >
       <div
         onClick={(e) => e.stopPropagation()}

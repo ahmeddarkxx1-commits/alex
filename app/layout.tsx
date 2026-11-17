@@ -29,7 +29,7 @@ export default function RootLayout({
     <html lang="ar" dir="rtl">
       <body className="bg-[#fdfbf9] text-[#171717] antialiased selection:bg-[#ff6f1e]/20 selection:text-[#2b1a07] flex flex-col min-h-screen">
         {/* Superr Schoolyard Header */}
-        <header className="sticky top-0 z-50 bg-[#fdfbf9]/95 backdrop-blur-sm border-b-[1.5px] border-[#171717]">
+        <header className="sticky top-0 z-30 bg-[#fdfbf9]/95 backdrop-blur-sm border-b-[1.5px] border-[#171717]">
           <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 h-18 py-3 flex items-center justify-between">
             {/* Top-left / Right Brand Anchor */}
             <Link href="/" className="flex items-center gap-3 group">

@@ -46,7 +46,7 @@ export default function ConfirmModal({
       onClick={() => {
         if (!isLoading) onClose();
       }}
-      className="fixed inset-0 w-screen h-screen z-[100] flex items-center justify-center p-4 bg-[#171717]/65 backdrop-blur-md cursor-pointer animate-in fade-in duration-200"
+      className="fixed inset-0 z-[1000] flex items-center justify-center p-4 bg-[#171717]/75 backdrop-blur-lg cursor-pointer animate-in fade-in duration-200"
       dir="rtl"
     >
       <div

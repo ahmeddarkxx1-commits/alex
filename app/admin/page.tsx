@@ -2699,7 +2699,7 @@ export default function AdminDashboard() {
       {previewPdfUrl && (
         <div
           onClick={() => setPreviewPdfUrl(null)}
-          className="fixed inset-0 w-screen h-screen z-50 flex items-center justify-center p-3 sm:p-6 bg-[#171717]/65 backdrop-blur-md animate-in fade-in duration-200 cursor-pointer"
+          className="fixed inset-0 z-[999] flex items-center justify-center p-3 sm:p-6 bg-[#171717]/75 backdrop-blur-lg animate-in fade-in duration-200 cursor-pointer"
         >
           <div
             onClick={(e) => e.stopPropagation()}

@@ -118,7 +118,7 @@ export default function StudentAuthModal({
   return (
     <div
       onClick={onClose}
-      className="fixed inset-0 w-screen h-screen z-50 flex items-center justify-center p-4 bg-[#171717]/65 backdrop-blur-md overflow-y-auto cursor-pointer"
+      className="fixed inset-0 z-[999] flex items-center justify-center p-4 bg-[#171717]/75 backdrop-blur-lg overflow-y-auto cursor-pointer"
     >
       <div 
         onClick={(e) => e.stopPropagation()}
