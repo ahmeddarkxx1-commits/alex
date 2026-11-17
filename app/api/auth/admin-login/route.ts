@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { dbFindAdmin } from '@/lib/db';
+import { parseSupabaseAdmin } from '@/lib/adminHelpers';
+import { AdminUser } from '@/types/database';
 
 export async function POST(request: NextRequest) {
   try {
@@ -14,7 +16,29 @@ export async function POST(request: NextRequest) {
     }
 
     const cleanEmail = String(email).trim().toLowerCase();
-    const admin = dbFindAdmin({ email: cleanEmail });
+    let admin: AdminUser | null = null;
+
+    // 1. Check Supabase Cloud first
+    const { isSupabaseConfigured, supabase } = await import('@/lib/supabase');
+    if (isSupabaseConfigured) {
+      try {
+        const { data, error } = await supabase
+          .from('admins')
+          .select('*')
+          .eq('email', cleanEmail)
+          .maybeSingle();
+        if (!error && data) {
+          admin = parseSupabaseAdmin(data);
+        }
+      } catch (e) {
+        console.warn('Supabase admin-login query warning:', e);
+      }
+    }
+
+    // 2. Fallback to local DB
+    if (!admin) {
+      admin = dbFindAdmin({ email: cleanEmail });
+    }
 
     if (!admin) {
       return NextResponse.json(

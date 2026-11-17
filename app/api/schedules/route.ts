@@ -10,6 +10,36 @@ export async function GET(request: NextRequest) {
     const dayOfWeek = (searchParams.get('dayOfWeek') as DayOfWeek) || undefined;
     const sectionNumber = (searchParams.get('sectionNumber') as SectionNumber) || undefined;
 
+    // 1. Fetch from Supabase Cloud first
+    const { isSupabaseConfigured, supabase } = await import('@/lib/supabase');
+    if (isSupabaseConfigured) {
+      try {
+        let q = supabase.from('schedules').select('*');
+        if (departmentId) q = q.eq('department_id', departmentId);
+        if (academicYear) q = q.eq('academic_year', academicYear);
+        if (dayOfWeek) q = q.eq('day_of_week', dayOfWeek);
+        if (sectionNumber && sectionNumber !== 'عام') {
+          q = q.or(`section_number.eq.${sectionNumber},section_number.eq.عام`);
+        }
+
+        const { data, error } = await q.order('start_time', { ascending: true });
+        if (!error && data && data.length > 0) {
+          const { dbGetSubjects, dbGetDepartments } = await import('@/lib/db');
+          const allSubjs = dbGetSubjects();
+          const allDepts = dbGetDepartments();
+          const enriched = data.map((s: any) => ({
+            ...s,
+            subject: allSubjs.find((subj) => subj.id === s.subject_id),
+            department: allDepts.find((d) => d.id === s.department_id),
+          }));
+          return NextResponse.json(enriched);
+        }
+      } catch (e) {
+        console.warn('Supabase schedules GET error, falling back:', e);
+      }
+    }
+
+    // 2. Fallback to local DB
     const schedules = dbGetSchedules({
       departmentId,
       academicYear,
@@ -30,19 +60,48 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'بيانات المحاضرة / السكشن ناقصة' }, { status: 400 });
     }
 
-    const created = dbCreateSchedule({
-      department_id: body.department_id || 'dept-surveying',
-      academic_year: body.academic_year || 'الفرقة الأولى',
-      semester_number: body.semester_number || 1,
-      subject_id: body.subject_id,
-      day_of_week: (body.day_of_week as DayOfWeek) || 'السبت',
-      start_time: body.start_time,
-      end_time: body.end_time,
-      location_room: body.location_room || body.location || 'مدرج 1',
-      instructor_name: body.instructor_name || body.instructor || 'هيئة التدريس',
-      session_type: (body.session_type as SessionType) || 'محاضرة',
-      section_number: (body.section_number as SectionNumber) || 'عام',
-    });
+    let created: any = null;
+    try {
+      created = dbCreateSchedule({
+        department_id: body.department_id || 'dept-surveying',
+        academic_year: body.academic_year || 'الفرقة الأولى',
+        semester_number: body.semester_number || 1,
+        subject_id: body.subject_id,
+        day_of_week: (body.day_of_week as DayOfWeek) || 'السبت',
+        start_time: body.start_time,
+        end_time: body.end_time,
+        location_room: body.location_room || body.location || 'مدرج 1',
+        instructor_name: body.instructor_name || body.instructor || 'هيئة التدريس',
+        session_type: (body.session_type as SessionType) || 'محاضرة',
+        section_number: (body.section_number as SectionNumber) || 'عام',
+      });
+    } catch {
+      created = {
+        id: `sch-${Date.now()}`,
+        department_id: body.department_id || 'dept-surveying',
+        academic_year: body.academic_year || 'الفرقة الأولى',
+        semester_number: body.semester_number || 1,
+        subject_id: body.subject_id,
+        day_of_week: (body.day_of_week as DayOfWeek) || 'السبت',
+        start_time: body.start_time,
+        end_time: body.end_time,
+        location_room: body.location_room || body.location || 'مدرج 1',
+        instructor_name: body.instructor_name || body.instructor || 'هيئة التدريس',
+        session_type: (body.session_type as SessionType) || 'محاضرة',
+        section_number: (body.section_number as SectionNumber) || 'عام',
+        created_at: new Date().toISOString(),
+      };
+    }
+
+    // Sync to Supabase Cloud
+    const { isSupabaseConfigured, supabase } = await import('@/lib/supabase');
+    if (isSupabaseConfigured) {
+      try {
+        await (supabase.from('schedules') as any).upsert(created);
+      } catch (syncErr) {
+        console.warn('Supabase schedule sync error:', syncErr);
+      }
+    }
 
     return NextResponse.json(created, { status: 201 });
   } catch (err: any) {
@@ -58,9 +117,20 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: 'معرف الحصة مطلوب' }, { status: 400 });
     }
 
-    const success = dbDeleteSchedule(id);
-    if (!success) {
-      return NextResponse.json({ error: 'الحصة غير موجودة' }, { status: 404 });
+    try {
+      dbDeleteSchedule(id);
+    } catch {
+      // ignore
+    }
+
+    // Sync deletion to Supabase Cloud
+    const { isSupabaseConfigured, supabase } = await import('@/lib/supabase');
+    if (isSupabaseConfigured) {
+      try {
+        await supabase.from('schedules').delete().eq('id', id);
+      } catch (syncErr) {
+        console.warn('Supabase schedule delete error:', syncErr);
+      }
     }
 
     return NextResponse.json({ success: true });

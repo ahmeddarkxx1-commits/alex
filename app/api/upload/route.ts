@@ -39,8 +39,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 3. Ensure uploads folder exists (with /tmp fallback for Vercel serverless read-only filesystem)
-    let uploadsDir = path.join(process.cwd(), 'public', 'uploads');
+    // 3. Ensure uploads folder exists (using /tmp on Vercel Serverless to prevent read-only EROFS)
+    const isServerless = Boolean(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME);
+    let uploadsDir = isServerless ? path.join('/tmp', 'uploads') : path.join(process.cwd(), 'public', 'uploads');
+
     try {
       if (!fs.existsSync(uploadsDir)) {
         fs.mkdirSync(uploadsDir, { recursive: true });
@@ -62,15 +64,47 @@ export async function POST(request: NextRequest) {
       .replace(/\.pdf$/i, '');
     const uniqueSuffix = Date.now();
     const finalFilename = `${uniqueSuffix}_${cleanName.slice(0, 50)}.pdf`;
-    const filePath = path.join(uploadsDir, finalFilename);
 
-    fs.writeFileSync(filePath, buffer);
+    // 5. Write to local or /tmp safely
+    let filePath = path.join(uploadsDir, finalFilename);
+    try {
+      fs.writeFileSync(filePath, buffer);
+    } catch {
+      uploadsDir = path.join('/tmp', 'uploads');
+      if (!fs.existsSync(uploadsDir)) {
+        fs.mkdirSync(uploadsDir, { recursive: true });
+      }
+      filePath = path.join(uploadsDir, finalFilename);
+      fs.writeFileSync(filePath, buffer);
+    }
 
     // Format human-readable file size
     const sizeInMb = (file.size / (1024 * 1024)).toFixed(1);
     const formattedSize = `${sizeInMb} MB`;
 
-    const publicUrl = `/api/files/${finalFilename}`;
+    let publicUrl = `/api/files/${finalFilename}`;
+
+    // 6. Try uploading to Supabase Storage if configured
+    try {
+      const { isSupabaseConfigured, supabase } = await import('@/lib/supabase');
+      if (isSupabaseConfigured) {
+        const { data: uploadData, error: uploadErr } = await supabase.storage
+          .from('resources')
+          .upload(finalFilename, buffer, {
+            contentType: 'application/pdf',
+            upsert: true,
+          });
+
+        if (!uploadErr && uploadData) {
+          const { data: urlData } = supabase.storage.from('resources').getPublicUrl(finalFilename);
+          if (urlData?.publicUrl) {
+            publicUrl = urlData.publicUrl;
+          }
+        }
+      }
+    } catch (storageErr) {
+      console.warn('Supabase storage upload attempt error:', storageErr);
+    }
 
     return NextResponse.json({
       success: true,

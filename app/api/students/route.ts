@@ -9,6 +9,33 @@ export async function GET(request: NextRequest) {
     const name = searchParams.get('name') || undefined;
     const id = searchParams.get('id') || undefined;
 
+    // Check Supabase Cloud first
+    const { isSupabaseConfigured, supabase } = await import('@/lib/supabase');
+    if (isSupabaseConfigured) {
+      try {
+        if (code || name || id) {
+          let q = supabase.from('students').select('*');
+          if (code) q = q.eq('student_code', code);
+          else if (id) q = q.eq('id', id);
+          else if (name) q = q.ilike('name', `%${name.trim()}%`);
+          const { data, error } = await q.maybeSingle();
+          if (!error && data) {
+            return NextResponse.json(data);
+          }
+        } else {
+          const { data, error } = await supabase
+            .from('students')
+            .select('*')
+            .order('created_at', { ascending: false });
+          if (!error && data && data.length > 0) {
+            return NextResponse.json(data);
+          }
+        }
+      } catch (e) {
+        console.warn('Supabase students GET error:', e);
+      }
+    }
+
     if (code || name || id) {
       const found = dbFindStudent({ code, name, id });
       if (!found) {

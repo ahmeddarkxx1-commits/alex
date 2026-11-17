@@ -18,11 +18,32 @@ export async function GET(
     const tmpUploadsPath = path.join('/tmp', 'uploads', safeFilename);
 
     let targetFilePath = '';
-    if (fs.existsSync(localUploadsPath)) {
-      targetFilePath = localUploadsPath;
-    } else if (fs.existsSync(tmpUploadsPath)) {
+    if (fs.existsSync(tmpUploadsPath)) {
       targetFilePath = tmpUploadsPath;
-    } else {
+    } else if (fs.existsSync(localUploadsPath)) {
+      targetFilePath = localUploadsPath;
+    }
+
+    if (!targetFilePath) {
+      // Check Supabase Storage
+      const { isSupabaseConfigured, supabase } = await import('@/lib/supabase');
+      if (isSupabaseConfigured) {
+        try {
+          const { data: fileBlob, error } = await supabase.storage.from('resources').download(safeFilename);
+          if (!error && fileBlob) {
+            const arrayBuf = await fileBlob.arrayBuffer();
+            return new NextResponse(Buffer.from(arrayBuf), {
+              headers: {
+                'Content-Type': 'application/pdf',
+                'Content-Disposition': `inline; filename="${encodeURIComponent(safeFilename)}"`,
+                'Cache-Control': 'public, max-age=31536000, immutable',
+              },
+            });
+          }
+        } catch {
+          // ignore
+        }
+      }
       return NextResponse.json({ error: 'الملف غير موجود على السيرفر' }, { status: 404 });
     }
 

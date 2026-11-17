@@ -14,6 +14,40 @@ export async function GET(request: NextRequest) {
     const search = searchParams.get('search') || undefined;
     const reviewStatus = (searchParams.get('reviewStatus') as any) || undefined;
 
+    // 1. Fetch from Supabase Cloud first
+    const { isSupabaseConfigured, supabase } = await import('@/lib/supabase');
+    if (isSupabaseConfigured) {
+      try {
+        let q = supabase.from('resources').select('*');
+        if (departmentId) q = q.eq('department_id', departmentId);
+        if (academicYear) q = q.eq('academic_year', academicYear);
+        if (semesterNumber) q = q.eq('semester_number', semesterNumber);
+        if (type && type !== 'الكل') q = q.eq('type', type);
+        if (subjectId && subjectId !== 'all') q = q.eq('subject_id', subjectId);
+        if (reviewStatus && reviewStatus !== 'all') q = q.eq('review_status', reviewStatus);
+        if (search) q = q.ilike('title', `%${search}%`);
+
+        const { data, error } = await q
+          .order('is_pinned', { ascending: false })
+          .order('created_at', { ascending: false });
+
+        if (!error && data && data.length > 0) {
+          const { dbGetSubjects, dbGetDepartments } = await import('@/lib/db');
+          const allSubjs = dbGetSubjects();
+          const allDepts = dbGetDepartments();
+          const enriched = data.map((r: any) => ({
+            ...r,
+            subject: allSubjs.find((s) => s.id === r.subject_id),
+            department: allDepts.find((d) => d.id === r.department_id),
+          }));
+          return NextResponse.json(enriched);
+        }
+      } catch (e) {
+        console.warn('Supabase resources GET error, falling back:', e);
+      }
+    }
+
+    // 2. Fallback to local DB
     const resources = dbGetResources({
       departmentId,
       academicYear,
