@@ -870,17 +870,18 @@ export default function AdminDashboard() {
   };
 
   // Delete Resource item
-  const handleDeleteResource = async (id: string, resourceTitle?: string) => {
+  const handleDeleteResource = async (id: string, resourceTitle?: string, fileUrl?: string | null) => {
+    const targetFile = fileUrl || resources.find((r) => r.id === id)?.file_url || undefined;
     requestConfirm({
       title: 'تأكيد حذف التلخيص / الشيت نهائياً',
-      message: 'هل أنت متأكد من حذف هذا المحتوى نهائياً من المنصة وقاعدة البيانات؟ لن يمكن للطلاب أو المشرفين استرجاعه بعد الحذف.',
+      message: 'هل أنت متأكد من حذف هذا المحتوى نهائياً من المنصة وقاعدة البيانات والسيرفر؟ لن يمكن للطلاب أو المشرفين استرجاعه أو فتح روابطه بعد الحذف.',
       highlightText: resourceTitle ? `المحتوى المستهدف: "${resourceTitle}"` : undefined,
-      confirmLabel: 'نعم، احذف نهائياً',
+      confirmLabel: 'نعم، احذف نهائياً وطهر الملفات',
       cancelLabel: 'إلغاء وتراجع',
       variant: 'danger',
       onConfirm: async () => {
-        await deleteResource(id);
-        showToast('تم حذف المحتوى نهائياً بنجاح', 'success');
+        await deleteResource(id, targetFile || undefined);
+        showToast('تم حذف المحتوى وتطهير ملفاته من السيرفر بنجاح', 'success');
         refreshAllData();
       },
     });
@@ -1816,7 +1817,7 @@ export default function AdminDashboard() {
 
                       <button
                         type="button"
-                        onClick={() => handleDeleteResource(r.id, r.title)}
+                        onClick={() => handleDeleteResource(r.id, r.title, r.file_url)}
                         className="p-2 text-rose-600 hover:bg-rose-50 rounded-full border border-rose-200 transition-colors cursor-pointer"
                         title="حذف المحتوى نهائياً"
                       >
@@ -2477,7 +2478,7 @@ export default function AdminDashboard() {
                       <td className="p-3 font-mono">{r.views_count}</td>
                       <td className="p-3">
                         <button
-                          onClick={() => handleDeleteResource(r.id, r.title)}
+                          onClick={() => handleDeleteResource(r.id, r.title, r.file_url)}
                           className="p-1.5 text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
                           title="حذف المحتوى نهائياً"
                         >

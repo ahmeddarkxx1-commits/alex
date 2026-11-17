@@ -339,25 +339,43 @@ export async function createResource(newRes: Omit<Resource, 'id' | 'views_count'
   return resourceToSave;
 }
 
-export async function deleteResource(id: string): Promise<boolean> {
-  // Sync delete with Backend Server DB
+export async function deleteResource(id: string, fileUrl?: string): Promise<boolean> {
+  // 1. Await Backend Server Permanent Delete (purges Supabase records, staged files, storage & disk files)
   if (typeof window !== 'undefined') {
-    fetch(`/api/resources?id=${encodeURIComponent(id)}`, {
-      method: 'DELETE',
-    }).catch((e) => console.warn('Backend resource delete error:', e));
+    try {
+      const q = new URLSearchParams({ id });
+      if (fileUrl) q.set('fileUrl', fileUrl);
+      const res = await fetch(`/api/resources?${q.toString()}`, {
+        method: 'DELETE',
+      });
+      if (res.ok) {
+        console.log('Successfully purged resource from server');
+      }
+    } catch (e) {
+      console.warn('Backend resource delete error:', e);
+    }
   }
 
+  // 2. Direct Supabase Cloud delete fallback
   if (isSupabaseConfigured) {
     try {
-      const { error } = await supabase.from('resources').delete().eq('id', id);
-      if (!error) return true;
+      await supabase.from('resources').delete().eq('id', id);
+      if (fileUrl) {
+        const cleanName = fileUrl.split('/').pop() || '';
+        if (cleanName) {
+          await (supabase.from('resources') as any)
+            .delete()
+            .or(`file_url.ilike.%${cleanName}%,summary.ilike.%${cleanName}%`);
+        }
+      }
     } catch (e) {
       console.error('Supabase delete error:', e);
     }
   }
 
+  // 3. Remove from local cache
   const list = getLocalItem<Resource[]>(STORAGE_KEYS.RESOURCES, []);
-  const filtered = list.filter((r) => r.id !== id);
+  const filtered = list.filter((r) => r.id !== id && (!fileUrl || r.file_url !== fileUrl));
   setLocalItem(STORAGE_KEYS.RESOURCES, filtered);
   return true;
 }

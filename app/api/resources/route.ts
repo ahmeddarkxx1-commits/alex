@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
+import fs from 'fs';
+import path from 'path';
 import { dbGetResources, dbCreateResource, dbDeleteResource } from '@/lib/db';
 import { AcademicYear, ResourceType, SemesterNumber } from '@/types/database';
 
@@ -137,26 +139,92 @@ export async function DELETE(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
+    const explicitFileUrl = searchParams.get('fileUrl');
     if (!id) {
       return NextResponse.json({ error: 'معرف المورد مطلوب' }, { status: 400 });
     }
 
-    const success = dbDeleteResource(id);
-    if (!success) {
-      return NextResponse.json({ error: 'المورد غير موجود' }, { status: 404 });
-    }
+    const targetFileUrls: Set<string> = new Set();
+    if (explicitFileUrl) targetFileUrls.add(explicitFileUrl);
 
-    // Sync delete with Supabase Cloud
-    try {
-      const { isSupabaseConfigured, supabase } = await import('@/lib/supabase');
-      if (isSupabaseConfigured) {
-        await supabase.from('resources').delete().eq('id', id);
+    // 1. Fetch resource from Supabase Cloud to find all linked file URLs
+    const { isSupabaseConfigured, supabase } = await import('@/lib/supabase');
+    if (isSupabaseConfigured) {
+      try {
+        const { data } = await (supabase.from('resources') as any).select('*').eq('id', id).maybeSingle();
+        if (data?.file_url) {
+          targetFileUrls.add(data.file_url);
+        }
+      } catch (e) {
+        console.warn('Supabase fetch before delete error:', e);
       }
-    } catch (syncErr) {
-      console.warn('Supabase resource delete sync warning:', syncErr);
     }
 
-    return NextResponse.json({ success: true });
+    // Also check local db.json
+    try {
+      const local = dbGetResources().find((r) => r.id === id);
+      if (local?.file_url) {
+        targetFileUrls.add(local.file_url);
+      }
+      dbDeleteResource(id);
+    } catch (localErr) {
+      console.warn('Local db delete error:', localErr);
+    }
+
+    // 2. Permanently delete from Supabase Cloud
+    if (isSupabaseConfigured) {
+      try {
+        // Delete the main resource record
+        await supabase.from('resources').delete().eq('id', id);
+
+        // Delete any staged file records or duplicate records matching any of the file URLs
+        for (const fUrl of Array.from(targetFileUrls)) {
+          const filename = path.basename(fUrl);
+          await (supabase.from('resources') as any)
+            .delete()
+            .or(`file_url.ilike.%${filename}%,summary.ilike.%${filename}%`);
+        }
+      } catch (syncErr) {
+        console.warn('Supabase resource delete sync error:', syncErr);
+      }
+
+      // Delete from Supabase Storage bucket if configured
+      try {
+        for (const fUrl of Array.from(targetFileUrls)) {
+          const filename = path.basename(fUrl);
+          await supabase.storage.from('resources').remove([filename]);
+        }
+      } catch (storageErr) {
+        // ignore
+      }
+    }
+
+    // 3. Physically delete file from server storage (/tmp and public/uploads)
+    for (const fUrl of Array.from(targetFileUrls)) {
+      try {
+        const filename = path.basename(fUrl);
+        const tmpPath = path.join('/tmp', 'uploads', filename);
+        const localPath = path.join(process.cwd(), 'public', 'uploads', filename);
+
+        if (fs.existsSync(tmpPath)) {
+          fs.unlinkSync(tmpPath);
+          console.log(`Physically removed from /tmp/uploads: ${filename}`);
+        }
+        if (fs.existsSync(localPath)) {
+          fs.unlinkSync(localPath);
+          console.log(`Physically removed from public/uploads: ${filename}`);
+        }
+      } catch (unlinkErr) {
+        console.warn('Error physically deleting file from disk:', unlinkErr);
+      }
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: 'تم حذف المحتوى والملفات المرفقة به نهائياً من قاعدة البيانات والسيرفر.',
+      deleted_id: id,
+      deleted_files: Array.from(targetFileUrls),
+    });
   } catch (err: any) {
     return NextResponse.json({ error: err.message || 'Error deleting resource' }, { status: 500 });
   }

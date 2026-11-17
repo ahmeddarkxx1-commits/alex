@@ -197,6 +197,8 @@ export default function SurveyingPortal() {
               setIsPersonalizedOnly(false);
               setReadingResource(res);
               showToast(`تم فتح مستند "${res.title}" مباشرة 📄`, 'info');
+            } else {
+              showToast('هذا التلخيص أو المستند تم حذفه نهائياً من المنصة ولم يعد متاحاً ⚠️', 'error', 'المحتوى محذوف');
             }
           });
         }
