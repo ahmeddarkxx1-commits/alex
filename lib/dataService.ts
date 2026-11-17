@@ -68,6 +68,20 @@ export async function getDepartments(): Promise<Department[]> {
   return getLocalItem<Department[]>(STORAGE_KEYS.DEPARTMENTS, INITIAL_DEPARTMENTS);
 }
 
+const sanitizeInstructor = (name?: string | null): string => {
+  if (!name) return '';
+  const trimmed = name.trim();
+  if (
+    trimmed === 'د. إبراهيم عبد العزيز' ||
+    trimmed.includes('إبراهيم') ||
+    trimmed.includes('هيئة') ||
+    trimmed === '—'
+  ) {
+    return '';
+  }
+  return trimmed;
+};
+
 // ----------------- SUBJECTS -----------------
 export async function getSubjects(params?: {
   departmentId?: string;
@@ -84,10 +98,14 @@ export async function getSubjects(params?: {
       if (res.ok) {
         const data = await res.json();
         if (Array.isArray(data) && data.length > 0) {
+          const sanitized = data.map((s: Subject) => ({
+            ...s,
+            instructor_name: sanitizeInstructor(s.instructor_name),
+          }));
           try {
             const current = getLocalItem<Subject[]>(STORAGE_KEYS.SUBJECTS, INITIAL_SUBJECTS);
             const map = new Map<string, Subject>(current.map((s) => [s.id, s]));
-            data.forEach((s: Subject) => {
+            sanitized.forEach((s: Subject) => {
               const old = map.get(s.id);
               map.set(s.id, old ? { ...old, ...s } : s);
             });
@@ -95,7 +113,7 @@ export async function getSubjects(params?: {
           } catch {
             // ignore
           }
-          return data as Subject[];
+          return sanitized;
         }
       }
     } catch (e) {
@@ -111,10 +129,14 @@ export async function getSubjects(params?: {
       if (params?.semesterNumber) query = query.eq('semester_number', params.semesterNumber);
       const { data, error } = await query.order('name_ar', { ascending: true });
       if (!error && data && data.length > 0) {
+        const sanitized = data.map((s: any) => ({
+          ...s,
+          instructor_name: sanitizeInstructor(s.instructor_name),
+        }));
         try {
           const current = getLocalItem<Subject[]>(STORAGE_KEYS.SUBJECTS, INITIAL_SUBJECTS);
           const map = new Map<string, Subject>(current.map((s) => [s.id, s]));
-          data.forEach((s: any) => {
+          sanitized.forEach((s: any) => {
             const old = map.get(s.id);
             map.set(s.id, old ? { ...old, ...s } : s);
           });
@@ -122,7 +144,7 @@ export async function getSubjects(params?: {
         } catch {
           // ignore
         }
-        return data as Subject[];
+        return sanitized as Subject[];
       }
     } catch (e) {
       console.warn('Supabase subjects fetch failed, falling back', e);
@@ -130,6 +152,10 @@ export async function getSubjects(params?: {
   }
 
   let list = getLocalItem<Subject[]>(STORAGE_KEYS.SUBJECTS, INITIAL_SUBJECTS);
+  list = list.map((s) => ({
+    ...s,
+    instructor_name: sanitizeInstructor(s.instructor_name),
+  }));
   if (params?.departmentId) list = list.filter((s) => s.department_id === params.departmentId);
   if (params?.academicYear) list = list.filter((s) => s.academic_year === params.academicYear);
   if (params?.semesterNumber) list = list.filter((s) => s.semester_number === params.semesterNumber);
@@ -478,10 +504,12 @@ export async function getSchedules(params?: {
 
   schedules = schedules.map((s) => {
     const sub = allSubjs.find((subj) => subj.id === s.subject_id);
+    const raw = (s.instructor_name || sub?.instructor_name || '').trim();
+    const isMock = raw.includes('إبراهيم') || raw.includes('هيئة');
     return {
       ...s,
       subject: sub,
-      instructor_name: s.instructor_name || sub?.instructor_name || 'هيئة تدريس المعهد',
+      instructor_name: isMock ? '' : raw,
       department: allDepts.find((d) => d.id === s.department_id),
     };
   });

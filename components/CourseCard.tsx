@@ -66,11 +66,11 @@ export default function CourseCard({
           {subject.name_ar}
         </h3>
 
-        {/* Instructor Field - Always preserved */}
-        <p className="text-xs text-[#2b1a07]/80 font-medium mb-3 flex items-center gap-1.5">
+        {/* Instructor Field - Preserved empty slot */}
+        <p className="text-xs text-[#2b1a07]/80 font-medium mb-3 flex items-center gap-1.5 min-h-[20px]">
           <span className="font-bold text-[#2b1a07]">المحاضر:</span>
-          <span className={subject.instructor_name ? 'text-[#2b1a07]' : 'text-[#171717]/40'}>
-            {subject.instructor_name || '—'}
+          <span className="text-[#2b1a07]">
+            {/* فارغ حالياً ومتروك لحين اعتماد المهندسين */}
           </span>
         </p>
 

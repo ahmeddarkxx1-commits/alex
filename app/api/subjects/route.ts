@@ -2,6 +2,20 @@ import { NextRequest, NextResponse } from 'next/server';
 import { dbGetSubjects, dbUpdateSubject } from '@/lib/db';
 import { AcademicYear, SemesterNumber } from '@/types/database';
 
+const sanitizeInstructor = (name?: string | null): string => {
+  if (!name) return '';
+  const trimmed = name.trim();
+  if (
+    trimmed === 'د. إبراهيم عبد العزيز' ||
+    trimmed.includes('إبراهيم') ||
+    trimmed.includes('هيئة') ||
+    trimmed === '—'
+  ) {
+    return '';
+  }
+  return trimmed;
+};
+
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
@@ -21,7 +35,11 @@ export async function GET(request: NextRequest) {
 
         const { data, error } = await q.order('semester_number', { ascending: true });
         if (!error && data && data.length > 0) {
-          return NextResponse.json(data);
+          const sanitized = data.map((sub: any) => ({
+            ...sub,
+            instructor_name: sanitizeInstructor(sub.instructor_name),
+          }));
+          return NextResponse.json(sanitized);
         }
         if (error) {
           console.warn('Supabase subjects GET error:', error);
@@ -37,8 +55,12 @@ export async function GET(request: NextRequest) {
       academicYear,
       semesterNumber,
     });
+    const sanitizedLocal = subjects.map((sub: any) => ({
+      ...sub,
+      instructor_name: sanitizeInstructor(sub.instructor_name),
+    }));
 
-    return NextResponse.json(subjects);
+    return NextResponse.json(sanitizedLocal);
   } catch (err: any) {
     return NextResponse.json({ error: err.message || 'Error fetching subjects' }, { status: 500 });
   }

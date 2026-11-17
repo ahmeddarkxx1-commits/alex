@@ -154,6 +154,14 @@ export default function SurveyingPortal() {
 
         if (tabParam && ['courses', 'resources', 'schedules', 'deadlines', 'bookmarks'].includes(tabParam)) {
           setActiveTab(tabParam as any);
+          if (['schedules', 'deadlines', 'resources', 'courses'].includes(tabParam)) {
+            setTimeout(() => {
+              const el = document.getElementById('main-tabs-content');
+              if (el) {
+                el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              }
+            }, 300);
+          }
         }
 
         if (semParam) {
@@ -340,12 +348,21 @@ export default function SurveyingPortal() {
     }
   };
 
-  const handleSwitchTab = (tab: 'courses' | 'resources' | 'schedules' | 'deadlines' | 'bookmarks') => {
+  const handleSwitchTab = (tab: 'courses' | 'resources' | 'schedules' | 'deadlines' | 'bookmarks', autoScroll = true) => {
     setActiveTab(tab);
     if (typeof window !== 'undefined') {
       const url = new URL(window.location.href);
       url.searchParams.set('tab', tab);
       window.history.replaceState({}, '', url.toString());
+
+      if (autoScroll) {
+        setTimeout(() => {
+          const el = document.getElementById('main-tabs-content');
+          if (el) {
+            el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }
+        }, 60);
+      }
     }
   };
 
@@ -436,212 +453,154 @@ export default function SurveyingPortal() {
         /* ==================================================== */
         /* PORTAL VIEW (PERSONALIZED STUDENT WORKSPACE) */
         /* ==================================================== */
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full space-y-6 pt-2">
-          {/* Clean Academic Page Header */}
-          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b-[1.5px] border-[#171717]/15 pb-5">
-            <div className="space-y-1">
-              <div className="text-xs font-bold text-[#171717]/70">
-                المعهد الفني الصناعي بالإسكندرية
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 w-full space-y-3 sm:space-y-4 pt-1 sm:pt-2">
+          {currentStudent ? (
+            /* ==================================================== */
+            /* COMPACT LOGGED-IN STUDENT BAR (MINIMAL VERTICAL CLUTTER) */
+            /* ==================================================== */
+            <div className="bg-[#f7efe9] border-[1.5px] border-[#171717] rounded-[14px] p-2.5 sm:px-4 sm:py-2.5 shadow-[0_2px_8px_rgba(0,0,0,0.06)] flex flex-wrap items-center justify-between gap-2.5">
+              {/* Student Name & Meta Badges */}
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-full bg-[#fdfbf9] border-[1.5px] border-[#171717] flex items-center justify-center font-black text-xs sm:text-sm text-[#2b1a07] shadow-sm shrink-0">
+                  {currentStudent.name.charAt(0)}
+                </div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="font-black text-sm text-[#2b1a07]">
+                    أهلاً، {currentStudent.name}
+                  </span>
+                  <span className="text-[11px] font-extrabold px-2 py-0.5 rounded-full bg-[#ff6f1e] text-[#2b1a07] border-[1px] border-[#171717]">
+                    {currentStudent.academic_year} • {getSemesterLabel(currentStudent.semester_number)} • {currentStudent.section_number}
+                  </span>
+                </div>
               </div>
-              <h1 className="text-2xl sm:text-3xl font-extrabold text-[#2b1a07] tracking-tight">
-                شعبة <span className="marker-highlight">المساحة العامة</span>
-              </h1>
-              <p className="text-xs sm:text-sm text-[#171717]/80 max-w-2xl leading-relaxed">
-                المقررات الدراسية والمحاضرات والشيتات والتكليفات لجميع الفصول الدراسية.
-              </p>
+
+              {/* Compact Action Pills */}
+              <div className="flex items-center gap-1.5 flex-wrap self-end sm:self-auto text-xs">
+                {/* Toggle personalized vs browse all */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    const nextVal = !isPersonalizedOnly;
+                    setIsPersonalizedOnly(nextVal);
+                    if (nextVal && currentStudent) {
+                      setActiveYear(currentStudent.academic_year);
+                      setActiveSemester(currentStudent.semester_number);
+                      setActiveSection(currentStudent.section_number);
+                    }
+                  }}
+                  className={`px-2.5 py-1 rounded-full border-[1.5px] font-bold text-[11px] transition-all cursor-pointer flex items-center gap-1 ${
+                    isPersonalizedOnly
+                      ? 'bg-[#171717] text-white border-[#171717]'
+                      : 'bg-[#fdfbf9] text-[#171717] border-[#171717] hover:bg-[#f7efe9]'
+                  }`}
+                  title={isPersonalizedOnly ? 'أنت تشاهد مواد ترمك وسنتك فقط' : 'تصفح كل المواد'}
+                >
+                  {isPersonalizedOnly ? (
+                    <>
+                      <Lock className="w-3 h-3 text-[#ff6f1e]" />
+                      <span>موادي فقط (8)</span>
+                    </>
+                  ) : (
+                    <>
+                      <Globe className="w-3 h-3 text-[#ff6f1e]" />
+                      <span>كل الفصول</span>
+                    </>
+                  )}
+                </button>
+
+                {/* Telegram link */}
+                <a
+                  href={
+                    currentStudent.academic_year === 'الفرقة الأولى'
+                      ? (process.env.NEXT_PUBLIC_TELEGRAM_YEAR1_LINK || 'https://t.me/+DDGoyeN4sCI5N2U0')
+                      : (process.env.NEXT_PUBLIC_TELEGRAM_YEAR2_LINK || 'https://t.me/+XTuMbMJS0akzN2Nk')
+                  }
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-2.5 py-1 rounded-full bg-[#fdfbf9] hover:bg-[#ff6f1e]/15 text-[#2b1a07] border-[1.5px] border-[#171717] font-bold text-[11px] shadow-sm transition-all flex items-center gap-1"
+                  title="قناة تليجرام الفرقة"
+                >
+                  <Send className="w-3 h-3 text-[#ff6f1e]" />
+                  <span>تليجرام 📲</span>
+                </a>
+
+                {/* Copy link */}
+                <button
+                  type="button"
+                  onClick={handleCopyDepartmentLink}
+                  className="px-2.5 py-1 rounded-full bg-[#fdfbf9] hover:bg-[#ff6f1e]/15 text-[#2b1a07] border-[1.5px] border-[#171717] font-bold text-[11px] shadow-sm transition-all cursor-pointer flex items-center gap-1"
+                  title="نسخ رابط منصة شعبة المساحة"
+                >
+                  <Link2 className="w-3 h-3 text-[#ff6f1e]" />
+                  <span>مشاركة 🔗</span>
+                </button>
+
+                {/* Edit student info */}
+                <button
+                  type="button"
+                  onClick={() => setShowAuthModal(true)}
+                  className="px-2.5 py-1 rounded-full bg-[#fdfbf9] hover:bg-[#f7efe9] text-[#2b1a07] border-[1.5px] border-[#171717] font-bold text-[11px] shadow-sm transition-all cursor-pointer flex items-center gap-1"
+                  title="تعديل الترم أو السكشن"
+                >
+                  <Settings className="w-3 h-3 text-[#ff6f1e]" />
+                  <span>تعديل</span>
+                </button>
+
+                {/* Logout */}
+                <button
+                  type="button"
+                  onClick={handleStudentLogout}
+                  className="px-2.5 py-1 rounded-full bg-[#fdfbf9] hover:bg-rose-50 text-rose-700 border-[1.5px] border-[#171717] font-bold text-[11px] shadow-sm transition-all cursor-pointer flex items-center gap-1"
+                  title="تسجيل خروج"
+                >
+                  <LogOut className="w-3 h-3" />
+                  <span>خروج</span>
+                </button>
+              </div>
             </div>
-
-            <div className="flex items-center gap-2 self-start md:self-auto flex-wrap">
-              <button
-                type="button"
-                onClick={handleCopyDepartmentLink}
-                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[#fdfbf9] hover:bg-[#ff6f1e] text-xs font-bold text-[#171717] hover:text-[#2b1a07] border-[1.5px] border-[#171717] shadow-[0_1px_2px_rgba(0,0,0,0.15)] transition-all cursor-pointer"
-                title="نسخ رابط منصة شعبة المساحة لإرساله للطلاب"
-              >
-                <Link2 className="w-3.5 h-3.5 text-[#ff6f1e]" />
-                <span>نسخ رابط الشعبة 🔗</span>
-              </button>
-
-              {currentStudent ? (
-                <>
-                  <button
-                    onClick={() => setShowAuthModal(true)}
-                    className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[#fdfbf9] hover:bg-[#f7efe9] text-xs font-bold text-[#171717] border-[1.5px] border-[#171717] shadow-[0_1px_2px_rgba(0,0,0,0.15)] transition-all cursor-pointer"
-                  >
-                    <Settings className="w-3.5 h-3.5 text-[#ff6f1e]" />
-                    <span>تعديل الفرقة / الترم</span>
-                  </button>
-
-                  <button
-                    onClick={handleStudentLogout}
-                    className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[#fdfbf9] hover:bg-rose-50 text-xs font-bold text-rose-700 border-[1.5px] border-[#171717] shadow-[0_1px_2px_rgba(0,0,0,0.15)] transition-all cursor-pointer"
-                  >
-                    <LogOut className="w-3.5 h-3.5" />
-                    <span>تسجيل خروج</span>
-                  </button>
-                </>
-              ) : (
+          ) : (
+            /* Clean Header for Guests */
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b-[1.5px] border-[#171717]/15 pb-3">
+              <div>
+                <div className="text-xs font-bold text-[#171717]/70">المعهد الفني الصناعي بالإسكندرية</div>
+                <h1 className="text-xl sm:text-2xl font-black text-[#2b1a07]">شعبة <span className="marker-highlight">المساحة العامة</span></h1>
+              </div>
+              <div className="flex items-center gap-2 flex-wrap">
                 <button
                   onClick={() => setShowAuthModal(true)}
-                  className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[#ff6f1e] text-[#2b1a07] hover:bg-[#ff6f1e]/85 text-xs font-black border-[1.5px] border-[#171717] shadow-[0_1px_2px_rgba(0,0,0,0.15)] transition-all cursor-pointer"
+                  className="px-3.5 py-1.5 rounded-full bg-[#ff6f1e] text-[#2b1a07] hover:bg-[#ff6f1e]/85 text-xs font-black border-[1.5px] border-[#171717] shadow-[0_1px_2px_rgba(0,0,0,0.15)] transition-all cursor-pointer flex items-center gap-1.5"
                 >
                   <Sparkles className="w-3.5 h-3.5 text-[#2b1a07]" />
                   <span>تسجيل طالب 🎓</span>
                 </button>
-              )}
-
-              <div className="flex items-center gap-2 text-xs text-[#2b1a07] bg-[#f7efe9] px-3.5 py-1.5 rounded-full border-[1.5px] border-[#171717] shadow-[0_1px_2px_rgba(0,0,0,0.15)] font-bold">
-                <span className="font-extrabold text-[#2b1a07]">{subjects.length} مقررات معتمدة</span>
+                <button
+                  type="button"
+                  onClick={handleCopyDepartmentLink}
+                  className="px-3 py-1.5 rounded-full bg-[#fdfbf9] hover:bg-[#ff6f1e] text-xs font-bold text-[#171717] border-[1.5px] border-[#171717] shadow-[0_1px_2px_rgba(0,0,0,0.15)] transition-all cursor-pointer flex items-center gap-1"
+                >
+                  <Link2 className="w-3.5 h-3.5 text-[#ff6f1e]" />
+                  <span>نسخ الرابط 🔗</span>
+                </button>
               </div>
             </div>
-          </div>
+          )}
 
-        {/* ==================================================== */}
-        {/* STUDENT ACCOUNT SYNC & PERSONALIZATION CARD */}
-        {/* ==================================================== */}
-        {currentStudent ? (
-          <div className="bg-[#f7efe9] border-[1.5px] border-[#171717] rounded-[16px] p-4 sm:p-5 shadow-[0_2px_12px_rgba(0,0,0,0.06)] flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-            <div className="flex items-center gap-3.5">
-              <div className="w-12 h-12 rounded-full bg-[#fdfbf9] border-[1.5px] border-[#171717] flex items-center justify-center font-black text-lg text-[#2b1a07] shadow-[0_1px_2px_rgba(0,0,0,0.15)]">
-                {currentStudent.name.charAt(0)}
-              </div>
-              <div>
-                <div className="flex items-center gap-2 flex-wrap">
-                  <h2 className="font-black text-[#2b1a07] text-base sm:text-lg">
-                    أهلاً، {currentStudent.name}
-                  </h2>
-                  <span className="text-[11px] font-extrabold px-2.5 py-0.5 rounded-full bg-[#ff6f1e] text-[#2b1a07] border-[1px] border-[#171717]">
-                    طالب مفعل
-                  </span>
-                </div>
-                <p className="text-xs text-[#171717]/80 mt-0.5 font-bold">
-                  {currentStudent.department_name || 'شعبة المساحة العامة'} • {currentStudent.academic_year} ({getSemesterLabel(currentStudent.semester_number)}) • {currentStudent.section_number}
-                </p>
-              </div>
-            </div>
+          {/* Semester Selector only when not a student or when browsing other semesters */}
+          {(!currentStudent || !isPersonalizedOnly) && (
+            <SemesterSelector
+              activeYear={activeYear}
+              activeSemester={activeSemester}
+              activeSection={activeSection}
+              onSelectYear={handleSelectYear}
+              onSelectSemester={handleSelectSemester}
+              onSelectSection={handleSelectSection}
+              totalCoursesCount={subjects.length}
+            />
+          )}
 
-            {/* Quick Action Buttons for the Student */}
-            <div className="flex items-center gap-2 flex-wrap self-end md:self-auto text-xs">
-              <button
-                onClick={() => {
-                  const nextVal = !isPersonalizedOnly;
-                  setIsPersonalizedOnly(nextVal);
-                  if (nextVal && currentStudent) {
-                    setActiveYear(currentStudent.academic_year);
-                    setActiveSemester(currentStudent.semester_number);
-                    setActiveSection(currentStudent.section_number);
-                  }
-                }}
-                className={`px-3.5 py-1.5 rounded-full border-[1.5px] font-bold transition-all cursor-pointer flex items-center gap-1.5 ${isPersonalizedOnly
-                    ? 'bg-[#171717] text-white border-[#171717] shadow-[0_1px_2px_rgba(0,0,0,0.2)]'
-                    : 'bg-[#fdfbf9] text-[#171717] border-[#171717] hover:bg-[#f7efe9]'
-                  }`}
-              >
-                {isPersonalizedOnly ? (
-                  <>
-                    <Lock className="w-3.5 h-3.5 text-[#ff6f1e]" />
-                    <span>موادي وترمي فقط (8 مواد)</span>
-                  </>
-                ) : (
-                  <>
-                    <Globe className="w-3.5 h-3.5 text-[#ff6f1e]" />
-                    <span>تصفح باقي الفصول</span>
-                  </>
-                )}
-              </button>
-
-              <button
-                onClick={() => setShowAuthModal(true)}
-                className="px-3.5 py-1.5 rounded-full bg-[#fdfbf9] hover:bg-[#f7efe9] text-[#171717] border-[1.5px] border-[#171717] font-bold shadow-[0_1px_2px_rgba(0,0,0,0.15)] transition-all cursor-pointer flex items-center gap-1.5"
-              >
-                <Settings className="w-3.5 h-3.5 text-[#ff6f1e]" />
-                <span>تعديل الترم / السكشن</span>
-              </button>
-
-              {/* Dedicated Telegram Channel Link for Batch */}
-              <a
-                href={
-                  currentStudent.academic_year === 'الفرقة الأولى'
-                    ? (process.env.NEXT_PUBLIC_TELEGRAM_YEAR1_LINK || 'https://t.me/iti_alex_surveying_year1')
-                    : (process.env.NEXT_PUBLIC_TELEGRAM_YEAR2_LINK || 'https://t.me/iti_alex_surveying_year2')
-                }
-                target="_blank"
-                rel="noopener noreferrer"
-                className="px-3.5 py-1.5 rounded-full bg-[#fdfbf9] hover:bg-[#ff6f1e]/10 text-[#2b1a07] border-[1.5px] border-[#171717] font-bold shadow-[0_1px_2px_rgba(0,0,0,0.15)] transition-all cursor-pointer flex items-center gap-1.5"
-                title={currentStudent.academic_year === 'الفرقة الأولى' ? 'قناة تليجرام سنة أولى الرسمية' : 'قناة تليجرام سنة ثانية الرسمية'}
-              >
-                <Send className="w-3.5 h-3.5 text-[#ff6f1e]" />
-                <span>
-                  {currentStudent.academic_year === 'الفرقة الأولى' ? 'قناة تليجرام أولى 📲' : 'قناة تليجرام ثانية 📲'}
-                </span>
-              </a>
-
-              <button
-                onClick={handleStudentLogout}
-                className="px-3.5 py-1.5 rounded-full bg-[#fdfbf9] hover:bg-rose-50 text-rose-700 border-[1.5px] border-[#171717] font-bold shadow-[0_1px_2px_rgba(0,0,0,0.15)] transition-all cursor-pointer flex items-center gap-1.5"
-              >
-                <LogOut className="w-3.5 h-3.5" />
-                <span>خروج</span>
-              </button>
-            </div>
-          </div>
-        ) : (
-          <div className="bg-[#f7efe9] border-[1.5px] border-[#171717] rounded-[16px] p-4 sm:p-5 shadow-[0_2px_12px_rgba(0,0,0,0.06)] flex flex-col md:flex-row items-center justify-between gap-4">
-            <div className="flex items-center gap-3 text-right">
-              <div className="w-10 h-10 rounded-full bg-[#fdfbf9] border-[1.5px] border-[#171717] flex items-center justify-center text-[#2b1a07] shadow-[0_1px_2px_rgba(0,0,0,0.15)]">
-                <GraduationCap className="w-5 h-5 text-[#ff6f1e]" />
-              </div>
-              <div>
-                <h3 className="font-extrabold text-[#2b1a07] text-sm sm:text-base">
-                  هل أنت طالب في المعهد الفني الصناعي بالإسكندرية؟
-                </h3>
-                <p className="text-xs text-[#171717]/70">
-                  سجل حسابك وحدد شعبتك وسنتك الدراسية ليفتح الموقع مباشرة على مقرراتك وجدولك وتكليفاتك الخاصة فقط!
-                </p>
-              </div>
-            </div>
-
-            <button
-              onClick={() => setShowAuthModal(true)}
-              className="btn-pill inline-flex items-center gap-2 text-xs font-bold whitespace-nowrap cursor-pointer hover:bg-[#ff6f1e] hover:text-[#2b1a07] transition-all"
-            >
-              <Sparkles className="w-3.5 h-3.5 text-[#ff6f1e]" />
-              <span>تسجيل دخول / إنشاء حساب طالب 🎓</span>
-            </button>
-          </div>
-        )}
-
-        {/* Personalized Mode Status Tag or Full Selector */}
-        {currentStudent && isPersonalizedOnly ? (
-          <div className="bg-[#fdfbf9] border-[1.5px] border-[#171717] rounded-[12px] p-3.5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 shadow-[0_1px_2px_rgba(0,0,0,0.08)]">
-            <div className="flex items-center gap-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-[#ff6f1e]"></span>
-              <span className="text-xs font-black text-[#2b1a07]">
-                وضع الطالب المخصص: أنت تشاهد الآن فقط الـ 8 مواد وجدول وسكاشن ({currentStudent.academic_year} - {getSemesterLabel(currentStudent.semester_number)})
-              </span>
-            </div>
-            <button
-              onClick={() => setIsPersonalizedOnly(false)}
-              className="text-xs font-extrabold text-[#ff6f1e] hover:underline cursor-pointer"
-            >
-              عرض كافة فصول وسنوات المعهد ←
-            </button>
-          </div>
-        ) : (
-          /* 4 Semesters Selector Controller with Year 1 & Year 2 Division */
-          <SemesterSelector
-            activeYear={activeYear}
-            activeSemester={activeSemester}
-            activeSection={activeSection}
-            onSelectYear={handleSelectYear}
-            onSelectSemester={handleSelectSemester}
-            onSelectSection={handleSelectSection}
-            totalCoursesCount={subjects.length}
-          />
-        )}
-
-        {/* LMS Academic Navigation Tabs - Superr Pill Style */}
-        <div className="flex items-center gap-2 overflow-x-auto border-b-[1.5px] border-[#171717]/15 pb-3 scrollbar-none text-xs sm:text-sm -mx-2 px-2 touch-pan-x">
+          {/* LMS Academic Navigation Tabs - Superr Pill Style */}
+          <div id="main-tabs-content" className="scroll-mt-16 sm:scroll-mt-20 pt-1">
+            <div className="flex items-center gap-2 overflow-x-auto border-b-[1.5px] border-[#171717]/15 pb-3 scrollbar-none text-xs sm:text-sm -mx-2 px-2 touch-pan-x">
           <button
             onClick={() => handleSwitchTab('courses')}
             className={`flex-shrink-0 flex items-center gap-2 px-4 py-2 rounded-full font-bold transition-all whitespace-nowrap border-[1.5px] cursor-pointer ${activeTab === 'courses'
@@ -697,6 +656,7 @@ export default function SurveyingPortal() {
             <span>المحفوظات ({bookmarks.length})</span>
           </button>
         </div>
+      </div>
 
         {/* ---------------------------------------------------- */}
         {/* TAB 1: COURSES GRID */}

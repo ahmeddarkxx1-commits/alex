@@ -38,10 +38,12 @@ export async function GET(request: NextRequest) {
           const allDepts = dbGetDepartments();
           const enriched = data.map((s: any) => {
             const sub = allSubjs.find((subj) => subj.id === s.subject_id);
+            const inst = (s.instructor_name || sub?.instructor_name || '').trim();
+            const isMock = inst.includes('إبراهيم') || inst.includes('هيئة');
             return {
               ...s,
               subject: sub,
-              instructor_name: s.instructor_name || sub?.instructor_name || 'هيئة تدريس المعهد',
+              instructor_name: isMock ? '' : inst,
               department: allDepts.find((d) => d.id === s.department_id),
             };
           });
@@ -84,7 +86,7 @@ export async function POST(request: NextRequest) {
         start_time: body.start_time,
         end_time: body.end_time,
         location_room: body.location_room || body.location || 'مدرج 1',
-        instructor_name: body.instructor_name || body.instructor || 'هيئة التدريس',
+        instructor_name: body.instructor_name || body.instructor || '',
         session_type: (body.session_type as SessionType) || 'محاضرة',
         section_number: (body.section_number as SectionNumber) || 'عام',
       });
@@ -99,7 +101,7 @@ export async function POST(request: NextRequest) {
         start_time: body.start_time,
         end_time: body.end_time,
         location_room: body.location_room || body.location || 'مدرج 1',
-        instructor_name: body.instructor_name || body.instructor || 'هيئة التدريس',
+        instructor_name: body.instructor_name || body.instructor || '',
         session_type: (body.session_type as SessionType) || 'محاضرة',
         section_number: (body.section_number as SectionNumber) || 'عام',
         created_at: new Date().toISOString(),
