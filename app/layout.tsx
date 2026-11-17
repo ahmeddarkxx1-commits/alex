@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import Link from "next/link";
-import { Compass, BookOpen, Calendar, Clock, Shield } from "lucide-react";
+import { Compass, BookOpen, Calendar, Clock, Shield, Code2, Heart, Sparkles, ExternalLink } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "شعبة المساحة العامة | المعهد الفني الصناعي بالإسكندرية",
@@ -86,26 +86,58 @@ export default function RootLayout({
 
         {/* Superr Footer Brand Band */}
         <footer className="mt-20">
-          <div className="w-full bg-[#ff6f1e] rounded-t-[56px] border-t-[2px] border-[#171717] pt-12 pb-14 px-6 text-[#2b1a07] shadow-[0_-4px_24px_rgba(0,0,0,0.06)]">
-            <div className="max-w-[1200px] mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
-              <div className="flex flex-col items-center md:items-start text-center md:text-right space-y-1">
-                <div className="inline-flex items-center gap-2 bg-[#fdfbf9] border-[1.5px] border-[#171717] px-3.5 py-1 rounded-[20px] text-xs font-bold text-[#171717] shadow-[0_1px_2px_rgba(0,0,0,0.15)]">
-                  <span>المعهد الفني الصناعي بالإسكندرية</span>
+          <div className="w-full bg-[#ff6f1e] rounded-t-[56px] border-t-[2px] border-[#171717] pt-12 pb-8 px-6 text-[#2b1a07] shadow-[0_-4px_24px_rgba(0,0,0,0.06)]">
+            <div className="max-w-[1200px] mx-auto space-y-8">
+              {/* Top part of footer */}
+              <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+                <div className="flex flex-col items-center md:items-start text-center md:text-right space-y-1">
+                  <div className="inline-flex items-center gap-2 bg-[#fdfbf9] border-[1.5px] border-[#171717] px-3.5 py-1 rounded-[20px] text-xs font-bold text-[#171717] shadow-[0_1px_2px_rgba(0,0,0,0.15)]">
+                    <span>المعهد الفني الصناعي بالإسكندرية</span>
+                  </div>
+                  <h3 className="text-xl sm:text-2xl font-black text-[#2b1a07] mt-2">
+                    شعبة المساحة العامة
+                  </h3>
+                  <p className="text-xs sm:text-sm text-[#2b1a07]/80 font-medium">
+                    دفتر المذكرات والشيتات والجداول الدراسية لجميع الفصول
+                  </p>
                 </div>
-                <h3 className="text-xl sm:text-2xl font-black text-[#2b1a07] mt-2">
-                  شعبة المساحة العامة
-                </h3>
-                <p className="text-xs sm:text-sm text-[#2b1a07]/80 font-medium">
-                  دفتر المذكرات والشيتات والجداول الدراسية لجميع الفصول
-                </p>
+
+                <div className="flex flex-wrap items-center justify-center gap-3 text-xs font-bold">
+                  <div className="bg-[#fdfbf9] border-[1.5px] border-[#171717] px-4 py-2 rounded-[20px] shadow-[0_1px_2px_rgba(0,0,0,0.15)]">
+                    سنة أولى وسنة ثانية (32 مادة)
+                  </div>
+                  <div className="bg-[#fdfbf9] border-[1.5px] border-[#171717] px-4 py-2 rounded-[20px] shadow-[0_1px_2px_rgba(0,0,0,0.15)]">
+                    دفعة 2026
+                  </div>
+                </div>
               </div>
 
-              <div className="flex flex-wrap items-center justify-center gap-3 text-xs font-bold">
-                <div className="bg-[#fdfbf9] border-[1.5px] border-[#171717] px-4 py-2 rounded-[20px] shadow-[0_1px_2px_rgba(0,0,0,0.15)]">
-                  سنة أولى وسنة ثانية (32 مادة)
+              {/* Developer & Nexoura Volunteer Credits Bar */}
+              <div className="pt-6 border-t-[1.5px] border-[#171717]/25 flex flex-col md:flex-row items-center justify-between gap-4 text-xs font-medium">
+                <div className="flex items-center gap-2 text-center md:text-right flex-wrap justify-center md:justify-start">
+                  <span className="inline-flex items-center gap-1.5 font-bold text-[#2b1a07]">
+                    <Code2 className="w-4 h-4 text-[#171717]" />
+                    تمت البرمجة والتطوير كعمل تطوعي وإهداء للزملاء والطلاب عبر
+                  </span>
+                  <a
+                    href="https://nexoura.org/en"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-[#fdfbf9] hover:bg-[#171717] text-[#171717] hover:text-[#fdfbf9] border-[1.5px] border-[#171717] font-black transition-all shadow-[0_2px_0_#171717] hover:shadow-none hover:translate-y-0.5 cursor-pointer group"
+                    title="زيارة موقع شركة Nexoura الرسمي"
+                  >
+                    <Sparkles className="w-3.5 h-3.5 text-[#ff6f1e] group-hover:rotate-12 transition-transform" />
+                    <span>Nexoura • شركة نيكسورا</span>
+                    <ExternalLink className="w-3 h-3 opacity-70" />
+                  </a>
                 </div>
-                <div className="bg-[#fdfbf9] border-[1.5px] border-[#171717] px-4 py-2 rounded-[20px] shadow-[0_1px_2px_rgba(0,0,0,0.15)]">
-                  دفعة 2026
+
+                <div className="flex items-center gap-2 text-[#2b1a07]/80 text-[11px] font-bold flex-wrap justify-center">
+                  <span className="flex items-center gap-1">
+                    صُنع بكل حب <Heart className="w-3.5 h-3.5 text-rose-700 fill-rose-700 inline" /> لخدمة طلاب المعهد
+                  </span>
+                  <span>•</span>
+                  <span>جميع الحقوق محفوظة © {new Date().getFullYear()} Nexoura</span>
                 </div>
               </div>
             </div>
