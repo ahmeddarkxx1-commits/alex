@@ -247,12 +247,10 @@ export default function SchedulesTab({
                   <span className="font-medium text-[#2b1a07]">{item.location_room}</span>
                 </div>
 
-                {item.instructor_name && (
-                  <div className="flex items-center gap-2 pt-1 border-t-[1px] border-[#171717]/15 text-[#2b1a07]/70 font-medium">
-                    <User className="w-3.5 h-3.5 text-[#171717]/50 shrink-0" />
-                    <span>{item.instructor_name}</span>
-                  </div>
-                )}
+                <div className="flex items-center gap-2 pt-1 border-t-[1px] border-[#171717]/15 text-[#2b1a07]/70 font-medium">
+                  <User className="w-3.5 h-3.5 text-[#171717]/50 shrink-0" />
+                  <span>المحاضر: {item.instructor_name || '—'}</span>
+                </div>
               </div>
             </div>
           ))}

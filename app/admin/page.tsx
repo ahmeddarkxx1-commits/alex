@@ -32,6 +32,7 @@ import {
   createSchedule, 
   deleteSchedule, 
   createAnnouncement,
+  deleteAnnouncement,
   updateSubject 
 } from '@/lib/dataService';
 import { isSupabaseConfigured } from '@/lib/supabase';
@@ -222,7 +223,7 @@ export default function AdminDashboard() {
   const [schType, setSchType] = useState<SessionType>('محاضرة نظري');
   const [schSection, setSchSection] = useState<SectionNumber>('عام');
   const [schRoom, setSchRoom] = useState('مدرج 2');
-  const [schInstructor, setSchInstructor] = useState('د. إبراهيم عبد العزيز');
+  const [schInstructor, setSchInstructor] = useState('');
 
   // Tab 3: New Announcement Form State
   const [annDeptId, setAnnDeptId] = useState<string>('all');
@@ -233,6 +234,130 @@ export default function AdminDashboard() {
   const [annDate, setAnnDate] = useState('');
   const [annNotifyTg, setAnnNotifyTg] = useState(true);
   const [annTgTarget, setAnnTgTarget] = useState<'year1' | 'year2' | 'both'>('both');
+  const [annQuickSubject, setAnnQuickSubject] = useState<string>('');
+
+  // Quick date helper functions for instant 1-click filling
+  const getQuickDateString = (daysFromNow: number) => {
+    const d = new Date();
+    d.setDate(d.getDate() + daysFromNow);
+    return d.toISOString().split('T')[0];
+  };
+
+  const getNextWeekdayString = (targetDay: number) => { // 0=Sun, 4=Thu, 6=Sat
+    const d = new Date();
+    const current = d.getDay();
+    let diff = (targetDay - current + 7) % 7;
+    if (diff === 0) diff = 7;
+    d.setDate(d.getDate() + diff);
+    return d.toISOString().split('T')[0];
+  };
+
+  // Helper to auto-generate title & summary for resources
+  const handleAutoGenerateResourceDetails = () => {
+    const sub = subjects.find((s) => s.id === newResSubjectId) || allSubjectsList.find((s) => s.id === newResSubjectId);
+    const subName = sub ? sub.name_ar : 'المادة الدراسية';
+    const weekNum = newResWeek || '1';
+
+    if (newResType === 'شيت وتكليف') {
+      setNewResTitle(`شيت رقم (${weekNum}): مادة ${subName} - مسائل وتطبيقات`);
+      setNewResSummary(`مطلوب حل مسائل وتمارين الشيت المرفقة وتسليمها للمهندس المشرف في السكشن مع دفاتر الحقل في الموعد المحدد.`);
+      if (!newResDueDate) {
+        setNewResDueDate(getNextWeekdayString(4)); // Default to next Thursday
+      }
+    } else if (newResType === 'تلخيص محاضرة') {
+      setNewResTitle(`تلخيص المحاضرة (${weekNum}): ${subName}`);
+      setNewResSummary(`ملخص شامل ومفصل لأهم القوانين والنظريات والشروحات الهندسية التي تم تغطيتها في محاضرة الأسبوع ${weekNum}.`);
+    } else if (newResType === 'مذكرة سكشن عملي') {
+      setNewResTitle(`مذكرة تجارب وتطبيقات سكشن: ${subName}`);
+      setNewResSummary(`خطوات الضبط الميداني للأجهزة، جداول رصد القراءات، وطرق حساب وتصحيح المناسيب والأخطاء.`);
+    } else {
+      setNewResTitle(`بنك أسئلة ونماذج امتحانات سابقة محلولة: ${subName}`);
+      setNewResSummary(`مجموعة شاملة من الأسئلة المتوقعة ونماذج امتحانات السنوات السابقة مع الإجابات النموذجية.`);
+    }
+    showToast(`تم توليد العنوان والملخص تلقائياً لمادة "${subName}" ⚡`, 'info');
+  };
+
+  // Presets for Resource Types
+  const applySheetPreset = () => {
+    setNewResType('شيت وتكليف');
+    const due = getNextWeekdayString(4);
+    setNewResDueDate(due);
+    const sub = subjects.find((s) => s.id === newResSubjectId) || allSubjectsList.find((s) => s.id === newResSubjectId);
+    if (sub) {
+      setNewResTitle(`شيت رقم (${newResWeek || '1'}): مادة ${sub.name_ar} - مسائل وتطبيقات`);
+      setNewResSummary(`مطلوب حل مسائل وتمارين الشيت المرفقة وتسليمها للمهندس المشرف في السكشن قبل الموعد المحدد.`);
+    }
+    showToast('تم تفعيل قالب "شيت وتكليف مطلوب تسليمه" وضبط موعد التسليم للخميس القادم 📝', 'info');
+  };
+
+  const applySummaryPreset = () => {
+    setNewResType('تلخيص محاضرة');
+    setNewResDueDate('');
+    const sub = subjects.find((s) => s.id === newResSubjectId) || allSubjectsList.find((s) => s.id === newResSubjectId);
+    if (sub) {
+      setNewResTitle(`تلخيص المحاضرة (${newResWeek || '1'}): ${sub.name_ar}`);
+      setNewResSummary(`ملخص شامل ومفصل لأهم القوانين والنظريات والشروحات التي تم شرحها بالمحاضرة.`);
+    }
+    showToast('تم تفعيل قالب "تلخيص محاضرة" 📚', 'info');
+  };
+
+  const applyLabPreset = () => {
+    setNewResType('مذكرة سكشن عملي');
+    setNewResDueDate('');
+    const sub = subjects.find((s) => s.id === newResSubjectId) || allSubjectsList.find((s) => s.id === newResSubjectId);
+    if (sub) {
+      setNewResTitle(`مذكرة تجارب وتطبيقات سكشن: ${sub.name_ar}`);
+      setNewResSummary(`خطوات الضبط الميداني للأجهزة، جداول رصد القراءات، وطرق حساب وتصحيح المناسيب.`);
+    }
+    showToast('تم تفعيل قالب "مذكرة سكشن عملي" 🛠️', 'info');
+  };
+
+  const applyExamBankPreset = () => {
+    setNewResType('بنك أسئلة وامتحانات');
+    setNewResDueDate('');
+    const sub = subjects.find((s) => s.id === newResSubjectId) || allSubjectsList.find((s) => s.id === newResSubjectId);
+    if (sub) {
+      setNewResTitle(`بنك أسئلة ونماذج امتحانات سابقة: ${sub.name_ar}`);
+      setNewResSummary(`مجموعة شاملة من الأسئلة المتوقعة ونماذج امتحانات السنوات السابقة مع الإجابات النموذجية.`);
+    }
+    showToast('تم تفعيل قالب "بنك أسئلة وامتحانات" 🎯', 'info');
+  };
+
+  // Presets for Announcements
+  const applyAnnouncementPreset = (preset: {
+    category: AnnouncementCategory;
+    urgency: UrgencyLevel;
+    title: string;
+    details: string;
+    days: number;
+    target: 'year1' | 'year2' | 'both';
+  }) => {
+    setAnnCategory(preset.category);
+    setAnnUrgency(preset.urgency);
+    setAnnTitle(preset.title);
+    setAnnDetails(preset.details);
+    setAnnDate(getQuickDateString(preset.days));
+    setAnnTgTarget(preset.target);
+    setAnnNotifyTg(true);
+    showToast(`تم تطبيق قالب "${preset.title}" بنجاح! ⚡`, 'info');
+  };
+
+  // Delete Announcement Handler
+  const handleDeleteAnnouncement = async (id: string, title?: string) => {
+    requestConfirm({
+      title: 'تأكيد حذف التنبيه / الموعد',
+      message: 'هل أنت متأكد من حذف هذا التنبيه نهائياً من المنصة؟',
+      highlightText: title ? `التنبيه: "${title}"` : undefined,
+      confirmLabel: 'نعم، احذف التنبيه',
+      cancelLabel: 'إلغاء',
+      variant: 'danger',
+      onConfirm: async () => {
+        await deleteAnnouncement(id);
+        showToast('تم حذف التنبيه بنجاح', 'success');
+        refreshAllData();
+      },
+    });
+  };
 
   // Load Initial Data
   const refreshAllData = async () => {
@@ -1243,6 +1368,69 @@ export default function AdminDashboard() {
             </p>
           </div>
 
+          {/* Quick 1-Click Resource Presets (Toggling Mode) */}
+          <div className="bg-[#fdfbf9] border-[1.5px] border-[#171717] rounded-[12px] p-4 space-y-3 shadow-sm">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+              <span className="text-xs font-black text-[#2b1a07] flex items-center gap-1.5">
+                <Sparkles className="w-4 h-4 text-[#ff6f1e]" />
+                <span>قوالب ذكية سريعة للنوع والمواعيد (بنقرة واحدة لتجهيز البيانات):</span>
+              </span>
+              <span className="text-[11px] text-[#171717]/60 font-semibold">
+                انقر على أي نوع لضبط الحقول والمواعيد والعناوين تلقائياً ⚡
+              </span>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+              <button
+                type="button"
+                onClick={applySheetPreset}
+                className={`flex items-center justify-center gap-2 p-2.5 rounded-[10px] border-[1.5px] font-black text-xs transition-all cursor-pointer shadow-sm ${
+                  newResType === 'شيت وتكليف'
+                    ? 'bg-[#ff6f1e] text-[#2b1a07] border-[#171717] ring-2 ring-[#171717]/20'
+                    : 'bg-[#f7efe9] text-[#171717] border-[#171717]/30 hover:border-[#171717]'
+                }`}
+              >
+                <span>📝 إضافة شيت تسليم</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={applySummaryPreset}
+                className={`flex items-center justify-center gap-2 p-2.5 rounded-[10px] border-[1.5px] font-black text-xs transition-all cursor-pointer shadow-sm ${
+                  newResType === 'تلخيص محاضرة'
+                    ? 'bg-[#ff6f1e] text-[#2b1a07] border-[#171717] ring-2 ring-[#171717]/20'
+                    : 'bg-[#f7efe9] text-[#171717] border-[#171717]/30 hover:border-[#171717]'
+                }`}
+              >
+                <span>📚 إضافة تلخيص محاضرة</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={applyLabPreset}
+                className={`flex items-center justify-center gap-2 p-2.5 rounded-[10px] border-[1.5px] font-black text-xs transition-all cursor-pointer shadow-sm ${
+                  newResType === 'مذكرة سكشن عملي'
+                    ? 'bg-[#ff6f1e] text-[#2b1a07] border-[#171717] ring-2 ring-[#171717]/20'
+                    : 'bg-[#f7efe9] text-[#171717] border-[#171717]/30 hover:border-[#171717]'
+                }`}
+              >
+                <span>🛠️ إضافة مذكرة سكشن عملي</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={applyExamBankPreset}
+                className={`flex items-center justify-center gap-2 p-2.5 rounded-[10px] border-[1.5px] font-black text-xs transition-all cursor-pointer shadow-sm ${
+                  newResType === 'بنك أسئلة وامتحانات'
+                    ? 'bg-[#ff6f1e] text-[#2b1a07] border-[#171717] ring-2 ring-[#171717]/20'
+                    : 'bg-[#f7efe9] text-[#171717] border-[#171717]/30 hover:border-[#171717]'
+                }`}
+              >
+                <span>🎯 إضافة بنك أسئلة</span>
+              </button>
+            </div>
+          </div>
+
           <form onSubmit={handleCreateResource} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {/* Department */}
@@ -1340,21 +1528,82 @@ export default function AdminDashboard() {
 
               {/* Due Date if Sheet */}
               <div>
-                <label className="block text-xs font-bold text-[#171717] mb-1.5">
-                  موعد التسليم الأخير (للشيتات والتكليفات):
-                </label>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="block text-xs font-bold text-[#171717]">
+                    موعد التسليم الأخير (للشيتات والتكليفات):
+                  </label>
+                  {newResDueDate && (
+                    <button
+                      type="button"
+                      onClick={() => setNewResDueDate('')}
+                      className="text-[10px] font-bold text-rose-700 hover:underline cursor-pointer"
+                    >
+                      إلغاء الموعد ✕
+                    </button>
+                  )}
+                </div>
                 <input
                   type="date"
                   value={newResDueDate}
                   onChange={(e) => setNewResDueDate(e.target.value)}
                   className="w-full bg-[#fdfbf9] border-[1.5px] border-[#171717] rounded-[8px] p-2.5 text-xs sm:text-sm text-[#171717] focus:outline-none focus:border-[#ff6f1e]"
                 />
+                {/* Quick Date Shortcuts */}
+                <div className="flex flex-wrap items-center gap-1.5 mt-2">
+                  <span className="text-[10px] font-bold text-[#171717]/60">تحديد سريع:</span>
+                  <button
+                    type="button"
+                    onClick={() => setNewResDueDate(getNextWeekdayString(4))}
+                    className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-white border border-[#171717]/30 hover:bg-[#ff6f1e] hover:text-[#2b1a07] transition-colors cursor-pointer"
+                  >
+                    الخميس القادم
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setNewResDueDate(getNextWeekdayString(6))}
+                    className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-white border border-[#171717]/30 hover:bg-[#ff6f1e] hover:text-[#2b1a07] transition-colors cursor-pointer"
+                  >
+                    السبت القادم
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setNewResDueDate(getQuickDateString(7))}
+                    className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-white border border-[#171717]/30 hover:bg-[#ff6f1e] hover:text-[#2b1a07] transition-colors cursor-pointer"
+                  >
+                    خلال أسبوع
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setNewResDueDate(getQuickDateString(10))}
+                    className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-white border border-[#171717]/30 hover:bg-[#ff6f1e] hover:text-[#2b1a07] transition-colors cursor-pointer"
+                  >
+                    خلال 10 أيام
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setNewResDueDate(getQuickDateString(14))}
+                    className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-white border border-[#171717]/30 hover:bg-[#ff6f1e] hover:text-[#2b1a07] transition-colors cursor-pointer"
+                  >
+                    خلال أسبوعين
+                  </button>
+                </div>
               </div>
             </div>
 
-            {/* Title */}
+            {/* Title with Auto-Generate Helper */}
             <div>
-              <label className="block text-xs font-bold text-[#171717] mb-1.5">عنوان التلخيص / الشيت:</label>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="block text-xs font-bold text-[#171717]">عنوان التلخيص / الشيت:</label>
+                <button
+                  type="button"
+                  onClick={handleAutoGenerateResourceDetails}
+                  className="flex items-center gap-1 text-[11px] font-black text-[#ce500a] bg-orange-50 hover:bg-orange-100 border border-orange-300 px-2.5 py-0.5 rounded-full transition-colors cursor-pointer shadow-sm"
+                  title="توليد عنوان وملخص تلقائي ذكي بناءً على المادة والأسبوع"
+                >
+                  <Sparkles className="w-3.5 h-3.5 text-[#ff6f1e]" />
+                  <span>توليد العنوان والملخص تلقائياً ⚡</span>
+                </button>
+              </div>
               <input
                 type="text"
                 required
@@ -2138,12 +2387,12 @@ export default function AdminDashboard() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-[#171717] mb-1.5">اسم الدكتور / المهندس المحاضر:</label>
+                  <label className="block text-xs font-bold text-[#171717] mb-1.5">اسم الدكتور / المهندس المحاضر (اختياري):</label>
                   <input
                     type="text"
                     value={schInstructor}
                     onChange={(e) => setSchInstructor(e.target.value)}
-                    placeholder="مثال: د. إبراهيم عبد العزيز / م. حسام الدين"
+                    placeholder="اكتب اسم المهندس هنا أو اتركه فارغاً..."
                     className="w-full bg-[#fdfbf9] border-[1.5px] border-[#171717] rounded-[8px] p-2.5 text-xs text-[#171717]"
                   />
                 </div>
@@ -2205,161 +2454,422 @@ export default function AdminDashboard() {
       {/* TAB 3: ANNOUNCEMENTS */}
       {/* ---------------------------------------------------- */}
       {activeTab === 'announcements' && (
-        <div className="bg-[#f7efe9] border-[1.5px] border-[#171717] rounded-[16px] p-6 sm:p-8 shadow-[0_1px_2px_rgba(0,0,0,0.15)] space-y-6">
-          <div className="border-b-[1.5px] border-[#171717]/15 pb-4">
-            <h2 className="text-lg font-black text-[#2b1a07] flex items-center gap-2">
-              <Bell className="w-5 h-5 text-[#ff6f1e]" />
-              <span>نشر تنبيه أو موعد تسليم عاجل</span>
-            </h2>
-            <p className="text-xs text-[#171717]/70 mt-1">
-              التنبيهات العاجلة جداً ستظهر في الشريط العلوي للموقع فوراً
-            </p>
-          </div>
+        <div className="space-y-6">
+          <div className="bg-[#f7efe9] border-[1.5px] border-[#171717] rounded-[16px] p-6 sm:p-8 shadow-[0_1px_2px_rgba(0,0,0,0.15)] space-y-6">
+            <div className="border-b-[1.5px] border-[#171717]/15 pb-4">
+              <h2 className="text-lg font-black text-[#2b1a07] flex items-center gap-2">
+                <Bell className="w-5 h-5 text-[#ff6f1e]" />
+                <span>نشر تنبيه أو موعد تسليم عاجل</span>
+              </h2>
+              <p className="text-xs text-[#171717]/70 mt-1">
+                التنبيهات العاجلة جداً ستظهر في الشريط العلوي للموقع فوراً مع إمكانية الإرسال لقناة التليجرام
+              </p>
+            </div>
 
-          <form onSubmit={handleCreateAnnouncement} className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <label className="block text-xs font-bold text-[#171717] mb-1.5">توجيه التنبيه إلى:</label>
-                <select
-                  value={annDeptId}
-                  onChange={(e) => setAnnDeptId(e.target.value)}
-                  className="w-full bg-[#fdfbf9] border-[1.5px] border-[#171717] rounded-[8px] p-2.5 text-xs text-[#171717]"
+            {/* Quick 1-Click Announcement Presets */}
+            <div className="bg-[#fdfbf9] border-[1.5px] border-[#171717] rounded-[12px] p-4 space-y-3 shadow-sm">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+                <span className="text-xs font-black text-[#2b1a07] flex items-center gap-1.5">
+                  <Sparkles className="w-4 h-4 text-[#ff6f1e]" />
+                  <span>قوالب تنبيهات ومواعيد جاهزة (بنقرة واحدة لملء الاستمارة بالكامل):</span>
+                </span>
+                <span className="text-[11px] text-[#171717]/60 font-semibold">
+                  انقر على القالب لملء العنوان والتفاصيل والتاريخ تلقائياً ⚡
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-5 gap-2">
+                <button
+                  type="button"
+                  onClick={() => applyAnnouncementPreset({
+                    category: 'تسليم شيت',
+                    urgency: 'عاجل جداً',
+                    title: 'آخر موعد لتسليم شيت وتوقيع دفاتر الحقل',
+                    details: 'تنبيه هام لجميع الطلاب: يرجى تسليم مسائل الشيت كاملة وتوقيع دفاتر الحقل مع المهندس المشرف في السكشن في موعد أقصاه التاريخ المحدد، ولن تقبل دفاتر متأخرة بعد ذلك.',
+                    days: 7,
+                    target: 'both'
+                  })}
+                  className="flex flex-col items-start p-2.5 rounded-[10px] bg-[#f7efe9] hover:bg-[#ff6f1e]/15 border-[1.5px] border-[#171717] text-right transition-all cursor-pointer shadow-sm group"
                 >
-                  <option value="all">إعلان عام لجميع شعب وطلاب المعهد</option>
-                  {departments.map((d) => (
-                    <option key={d.id} value={d.id}>{d.name_ar}</option>
-                  ))}
-                </select>
+                  <span className="font-black text-xs text-[#2b1a07] group-hover:text-[#ff6f1e]">📝 تسليم شيت ودفاتر</span>
+                  <span className="text-[10px] text-[#171717]/60 mt-0.5">موعد بعد أسبوع + عاجل جداً</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => applyAnnouncementPreset({
+                    category: 'ميدتيرم',
+                    urgency: 'عاجل جداً',
+                    title: 'جدول ومواعيد لجان اختبارات الميدتيرم',
+                    details: 'إعلان رسمي: تم تحديد مواعيد وأرقام جلوس لجان امتحانات منتصف الفصل الدراسي (الميدتيرم). يرجى التواجد بالقاعات قبل الموعد بـ 15 دقيقة مصطحبين إثبات القيد والأدوات.',
+                    days: 10,
+                    target: 'both'
+                  })}
+                  className="flex flex-col items-start p-2.5 rounded-[10px] bg-[#f7efe9] hover:bg-[#ff6f1e]/15 border-[1.5px] border-[#171717] text-right transition-all cursor-pointer shadow-sm group"
+                >
+                  <span className="font-black text-xs text-[#2b1a07] group-hover:text-[#ff6f1e]">🎯 امتحانات الميدتيرم</span>
+                  <span className="text-[10px] text-[#171717]/60 mt-0.5">موعد بعد 10 أيام + عاجل جداً</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => applyAnnouncementPreset({
+                    category: 'امتحان عملي',
+                    urgency: 'عاجل جداً',
+                    title: 'موعد الامتحان العملي الميداني للأجهزة المساحية',
+                    details: 'تنبيه عاجل: موعد اختبار الأجهزة والضبط الميداني (الميزان والثيودوليت). الحضور بالزي والأدوات والآلات الحاسبة المعتمدة مع دفاتر الحقل الموقعة من مهندسي المعامل.',
+                    days: 5,
+                    target: 'both'
+                  })}
+                  className="flex flex-col items-start p-2.5 rounded-[10px] bg-[#f7efe9] hover:bg-[#ff6f1e]/15 border-[1.5px] border-[#171717] text-right transition-all cursor-pointer shadow-sm group"
+                >
+                  <span className="font-black text-xs text-[#2b1a07] group-hover:text-[#ff6f1e]">🛠️ امتحان عملي ميداني</span>
+                  <span className="text-[10px] text-[#171717]/60 mt-0.5">موعد بعد 5 أيام + عاجل جداً</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => applyAnnouncementPreset({
+                    category: 'تنبيه إداري',
+                    urgency: 'هام',
+                    title: 'تنويه هام بشأن تعديل موعد فترة دراسية',
+                    details: 'نظراً للظروف الطارئة تقرر تعديل موعد الفترة الدراسية وفق المواعيد الجديدة المعلنة. يرجى مراجعة الجدول المحدث على منصة المعهد.',
+                    days: 1,
+                    target: 'both'
+                  })}
+                  className="flex flex-col items-start p-2.5 rounded-[10px] bg-[#f7efe9] hover:bg-[#ff6f1e]/15 border-[1.5px] border-[#171717] text-right transition-all cursor-pointer shadow-sm group"
+                >
+                  <span className="font-black text-xs text-[#2b1a07] group-hover:text-[#ff6f1e]">⏰ تعديل موعد فترة</span>
+                  <span className="text-[10px] text-[#171717]/60 mt-0.5">غداً + تنبيه هام</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => applyAnnouncementPreset({
+                    category: 'تنبيه إداري',
+                    urgency: 'عادي',
+                    title: 'إعلان هام بخصوص الجداول وتسجيل الغياب',
+                    details: 'توجيهات إدارة المعهد وشئون الطلاب لجميع طلاب شعبة المساحة بضرورة الالتزام بنسب الحضور والغياب المقررة في المحاضرات والسكاشن.',
+                    days: 0,
+                    target: 'both'
+                  })}
+                  className="flex flex-col items-start p-2.5 rounded-[10px] bg-[#f7efe9] hover:bg-[#ff6f1e]/15 border-[1.5px] border-[#171717] text-right transition-all cursor-pointer shadow-sm group"
+                >
+                  <span className="font-black text-xs text-[#2b1a07] group-hover:text-[#ff6f1e]">📢 إعلان شئون طلاب</span>
+                  <span className="text-[10px] text-[#171717]/60 mt-0.5">اليوم + تنبيه عادي</span>
+                </button>
+              </div>
+            </div>
+
+            <form onSubmit={handleCreateAnnouncement} className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-[#171717] mb-1.5">توجيه التنبيه إلى:</label>
+                  <select
+                    value={annDeptId}
+                    onChange={(e) => setAnnDeptId(e.target.value)}
+                    className="w-full bg-[#fdfbf9] border-[1.5px] border-[#171717] rounded-[8px] p-2.5 text-xs text-[#171717]"
+                  >
+                    <option value="all">إعلان عام لجميع شعب وطلاب المعهد</option>
+                    {departments.map((d) => (
+                      <option key={d.id} value={d.id}>{d.name_ar}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-[#171717] mb-1.5">التصنيف:</label>
+                  <select
+                    value={annCategory}
+                    onChange={(e) => setAnnCategory(e.target.value as AnnouncementCategory)}
+                    className="w-full bg-[#fdfbf9] border-[1.5px] border-[#171717] rounded-[8px] p-2.5 text-xs text-[#171717]"
+                  >
+                    <option value="تسليم شيت">تسليم شيت وتكليف</option>
+                    <option value="امتحان عملي">امتحان عملي معملي</option>
+                    <option value="ميدتيرم">امتحان منتصف الفصل (ميدتيرم)</option>
+                    <option value="تنبيه إداري">تنبيه إداري وشئون طلاب</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-[#171717] mb-1.5">مستوى الأهمية والسرعة:</label>
+                  <select
+                    value={annUrgency}
+                    onChange={(e) => setAnnUrgency(e.target.value as UrgencyLevel)}
+                    className="w-full bg-[#fdfbf9] border-[1.5px] border-[#171717] rounded-[8px] p-2.5 text-xs text-[#171717]"
+                  >
+                    <option value="عاجل جداً">عاجل جداً (شريط أحمر علوي)</option>
+                    <option value="هام">هام</option>
+                    <option value="عادي">عادي</option>
+                  </select>
+                </div>
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-[#171717] mb-1.5">التصنيف:</label>
-                <select
-                  value={annCategory}
-                  onChange={(e) => setAnnCategory(e.target.value as AnnouncementCategory)}
-                  className="w-full bg-[#fdfbf9] border-[1.5px] border-[#171717] rounded-[8px] p-2.5 text-xs text-[#171717]"
-                >
-                  <option value="تسليم شيت">تسليم شيت وتكليف</option>
-                  <option value="امتحان عملي">امتحان عملي معملي</option>
-                  <option value="ميدتيرم">امتحان منتصف الفصل (ميدتيرم)</option>
-                  <option value="تنبيه إداري">تنبيه إداري وشئون طلاب</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-[#171717] mb-1.5">مستوى الأهمية والسرعة:</label>
-                <select
-                  value={annUrgency}
-                  onChange={(e) => setAnnUrgency(e.target.value as UrgencyLevel)}
-                  className="w-full bg-[#fdfbf9] border-[1.5px] border-[#171717] rounded-[8px] p-2.5 text-xs text-[#171717]"
-                >
-                  <option value="عاجل جداً">عاجل جداً (شريط أحمر علوي)</option>
-                  <option value="هام">هام</option>
-                  <option value="عادي">عادي</option>
-                </select>
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-xs font-bold text-[#171717] mb-1.5">عنوان التنبيه:</label>
-              <input
-                type="text"
-                required
-                value={annTitle}
-                onChange={(e) => setAnnTitle(e.target.value)}
-                placeholder="مثال: آخر موعد لتسليم شيت 2 ميزانيات معملية وتوقيع دفاتر الحقل"
-                className="w-full bg-[#fdfbf9] border-[1.5px] border-[#171717] rounded-[8px] p-2.5 text-xs sm:text-sm text-[#171717]"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-bold text-[#171717] mb-1.5">تفاصيل التنبيه:</label>
-              <textarea
-                required
-                rows={3}
-                value={annDetails}
-                onChange={(e) => setAnnDetails(e.target.value)}
-                placeholder="اكتب التوجيهات بالتفصيل والمكان ومواعيد السكاشن..."
-                className="w-full bg-[#fdfbf9] border-[1.5px] border-[#171717] rounded-[8px] p-2.5 text-xs sm:text-sm text-[#171717]"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-bold text-[#171717] mb-1.5">تاريخ الحدث / آخر موعد للتسليم:</label>
-              <input
-                type="date"
-                value={annDate}
-                onChange={(e) => setAnnDate(e.target.value)}
-                className="w-full bg-[#fdfbf9] border-[1.5px] border-[#171717] rounded-[8px] p-2.5 text-xs text-[#171717]"
-              />
-            </div>
-
-            {/* Telegram Notification Options for Announcements */}
-            <div className="p-3.5 rounded-[12px] bg-[#fdfbf9] border-[1.5px] border-[#171717] space-y-2.5">
-              <div className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  id="annNotifyTgBox"
-                  checked={annNotifyTg}
-                  onChange={(e) => setAnnNotifyTg(e.target.checked)}
-                  className="w-4 h-4 rounded text-[#ff6f1e] focus:ring-[#ff6f1e] cursor-pointer accent-[#ff6f1e]"
-                />
-                <label htmlFor="annNotifyTgBox" className="text-xs font-extrabold text-[#2b1a07] cursor-pointer flex items-center gap-1.5">
-                  <Send className="w-3.5 h-3.5 text-[#ff6f1e]" />
-                  <span>إرسال هذا التنبيه فوراً إلى قناة التليجرام</span>
-                </label>
-              </div>
-
-              {annNotifyTg && (
-                <div className="pr-6 pt-1 space-y-1.5 border-t border-[#171717]/10">
-                  <span className="block text-[11px] font-bold text-[#171717]">القناة المستهدفة:</span>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
-                    <button
-                      type="button"
-                      onClick={() => setAnnTgTarget('year1')}
-                      className={`py-2 px-2 rounded-[6px] border-[1.5px] font-bold text-center transition-all cursor-pointer ${
-                        annTgTarget === 'year1'
-                          ? 'bg-[#171717] text-white border-[#171717]'
-                          : 'bg-[#f7efe9] text-[#171717] border-[#171717]/40'
-                      }`}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 mb-1.5">
+                  <label className="block text-xs font-bold text-[#171717]">عنوان التنبيه:</label>
+                  {/* Append Subject Tool */}
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[11px] text-[#171717]/60 font-semibold">إلحاق اسم مادة بالعنوان:</span>
+                    <select
+                      value={annQuickSubject}
+                      onChange={(e) => {
+                        const subId = e.target.value;
+                        setAnnQuickSubject(subId);
+                        const sub = allSubjectsList.find((s) => s.id === subId);
+                        if (sub) {
+                          setAnnTitle((prev) => {
+                            const clean = prev.replace(/\s*-\s*(?:مادة\s*)?[^-]+$/, '').trim();
+                            return clean ? `${clean} - مادة ${sub.name_ar}` : `موعد تسليم شيت - مادة ${sub.name_ar}`;
+                          });
+                        }
+                      }}
+                      className="bg-[#fdfbf9] border border-[#171717]/30 rounded-[6px] px-2 py-0.5 text-xs text-[#171717] font-bold"
                     >
-                      قناة سنة أولى
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setAnnTgTarget('year2')}
-                      className={`py-2 px-2 rounded-[6px] border-[1.5px] font-bold text-center transition-all cursor-pointer ${
-                        annTgTarget === 'year2'
-                          ? 'bg-[#171717] text-white border-[#171717]'
-                          : 'bg-[#f7efe9] text-[#171717] border-[#171717]/40'
-                      }`}
-                    >
-                      قناة سنة ثانية
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setAnnTgTarget('both')}
-                      className={`py-2 px-2 rounded-[6px] border-[1.5px] font-bold text-center transition-all cursor-pointer ${
-                        annTgTarget === 'both'
-                          ? 'bg-[#ff6f1e] text-[#2b1a07] border-[#171717]'
-                          : 'bg-[#f7efe9] text-[#171717] border-[#171717]/40'
-                      }`}
-                    >
-                      القناتين معاً (إشعار عام)
-                    </button>
+                      <option value="">-- اختر مادة --</option>
+                      {allSubjectsList.map((s) => (
+                        <option key={s.id} value={s.id}>
+                          {s.name_ar} ({s.academic_year})
+                        </option>
+                      ))}
+                    </select>
                   </div>
                 </div>
-              )}
+                <input
+                  type="text"
+                  required
+                  value={annTitle}
+                  onChange={(e) => setAnnTitle(e.target.value)}
+                  placeholder="مثال: آخر موعد لتسليم شيت 2 ميزانيات معملية وتوقيع دفاتر الحقل"
+                  className="w-full bg-[#fdfbf9] border-[1.5px] border-[#171717] rounded-[8px] p-2.5 text-xs sm:text-sm text-[#171717]"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-[#171717] mb-1.5">تفاصيل التنبيه والتوجيهات:</label>
+                <textarea
+                  required
+                  rows={3}
+                  value={annDetails}
+                  onChange={(e) => setAnnDetails(e.target.value)}
+                  placeholder="اكتب التوجيهات بالتفصيل والمكان ومواعيد السكاشن..."
+                  className="w-full bg-[#fdfbf9] border-[1.5px] border-[#171717] rounded-[8px] p-2.5 text-xs sm:text-sm text-[#171717]"
+                />
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="block text-xs font-bold text-[#171717]">
+                    تاريخ الحدث / آخر موعد للتسليم:
+                  </label>
+                  {annDate && (
+                    <button
+                      type="button"
+                      onClick={() => setAnnDate('')}
+                      className="text-[10px] font-bold text-rose-700 hover:underline cursor-pointer"
+                    >
+                      إلغاء التاريخ ✕
+                    </button>
+                  )}
+                </div>
+                <input
+                  type="date"
+                  value={annDate}
+                  onChange={(e) => setAnnDate(e.target.value)}
+                  className="w-full bg-[#fdfbf9] border-[1.5px] border-[#171717] rounded-[8px] p-2.5 text-xs text-[#171717]"
+                />
+                {/* Fast Date Pill Buttons */}
+                <div className="flex flex-wrap items-center gap-1.5 mt-2">
+                  <span className="text-[10px] font-bold text-[#171717]/60">تحديد سريع للتاريخ:</span>
+                  <button
+                    type="button"
+                    onClick={() => setAnnDate(getQuickDateString(0))}
+                    className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-white border border-[#171717]/30 hover:bg-[#ff6f1e] hover:text-[#2b1a07] transition-colors cursor-pointer"
+                  >
+                    📅 اليوم
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setAnnDate(getQuickDateString(1))}
+                    className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-white border border-[#171717]/30 hover:bg-[#ff6f1e] hover:text-[#2b1a07] transition-colors cursor-pointer"
+                  >
+                    📅 غداً
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setAnnDate(getQuickDateString(2))}
+                    className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-white border border-[#171717]/30 hover:bg-[#ff6f1e] hover:text-[#2b1a07] transition-colors cursor-pointer"
+                  >
+                    📅 بعد يومين
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setAnnDate(getNextWeekdayString(4))}
+                    className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-white border border-[#171717]/30 hover:bg-[#ff6f1e] hover:text-[#2b1a07] transition-colors cursor-pointer"
+                  >
+                    📅 الخميس القادم
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setAnnDate(getNextWeekdayString(6))}
+                    className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-white border border-[#171717]/30 hover:bg-[#ff6f1e] hover:text-[#2b1a07] transition-colors cursor-pointer"
+                  >
+                    📅 السبت القادم
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setAnnDate(getQuickDateString(7))}
+                    className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-white border border-[#171717]/30 hover:bg-[#ff6f1e] hover:text-[#2b1a07] transition-colors cursor-pointer"
+                  >
+                    📅 خلال أسبوع
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setAnnDate(getQuickDateString(14))}
+                    className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-white border border-[#171717]/30 hover:bg-[#ff6f1e] hover:text-[#2b1a07] transition-colors cursor-pointer"
+                  >
+                    📅 خلال أسبوعين
+                  </button>
+                </div>
+              </div>
+
+              {/* Telegram Notification Options for Announcements */}
+              <div className="p-3.5 rounded-[12px] bg-[#fdfbf9] border-[1.5px] border-[#171717] space-y-2.5">
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    id="annNotifyTgBox"
+                    checked={annNotifyTg}
+                    onChange={(e) => setAnnNotifyTg(e.target.checked)}
+                    className="w-4 h-4 rounded text-[#ff6f1e] focus:ring-[#ff6f1e] cursor-pointer accent-[#ff6f1e]"
+                  />
+                  <label htmlFor="annNotifyTgBox" className="text-xs font-extrabold text-[#2b1a07] cursor-pointer flex items-center gap-1.5">
+                    <Send className="w-3.5 h-3.5 text-[#ff6f1e]" />
+                    <span>إرسال هذا التنبيه فوراً إلى قناة التليجرام</span>
+                  </label>
+                </div>
+
+                {annNotifyTg && (
+                  <div className="pr-6 pt-1 space-y-1.5 border-t border-[#171717]/10">
+                    <span className="block text-[11px] font-bold text-[#171717]">القناة المستهدفة:</span>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
+                      <button
+                        type="button"
+                        onClick={() => setAnnTgTarget('year1')}
+                        className={`py-2 px-2 rounded-[6px] border-[1.5px] font-bold text-center transition-all cursor-pointer ${
+                          annTgTarget === 'year1'
+                            ? 'bg-[#171717] text-white border-[#171717]'
+                            : 'bg-[#f7efe9] text-[#171717] border-[#171717]/40'
+                        }`}
+                      >
+                        قناة سنة أولى
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setAnnTgTarget('year2')}
+                        className={`py-2 px-2 rounded-[6px] border-[1.5px] font-bold text-center transition-all cursor-pointer ${
+                          annTgTarget === 'year2'
+                            ? 'bg-[#171717] text-white border-[#171717]'
+                            : 'bg-[#f7efe9] text-[#171717] border-[#171717]/40'
+                        }`}
+                      >
+                        قناة سنة ثانية
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setAnnTgTarget('both')}
+                        className={`py-2 px-2 rounded-[6px] border-[1.5px] font-bold text-center transition-all cursor-pointer ${
+                          annTgTarget === 'both'
+                            ? 'bg-[#ff6f1e] text-[#2b1a07] border-[#171717]'
+                            : 'bg-[#f7efe9] text-[#171717] border-[#171717]/40'
+                        }`}
+                      >
+                        القناتين معاً (إشعار عام)
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <button
+                type="submit"
+                className="w-full py-3.5 px-4 rounded-full bg-[#ff6f1e] hover:bg-[#ff6f1e]/90 text-[#2b1a07] font-black text-sm border-[1.5px] border-[#171717] shadow-[0_2px_4px_rgba(0,0,0,0.25)] transition-all cursor-pointer flex items-center justify-center gap-2"
+              >
+                <Bell className="w-4 h-4" />
+                <span>نشر التنبيه الفوري</span>
+              </button>
+            </form>
+          </div>
+
+          {/* Current Published Announcements List */}
+          <div className="bg-[#fdfbf9] border-[1.5px] border-[#171717] rounded-[16px] p-6 shadow-[0_1px_2px_rgba(0,0,0,0.15)] space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b-[1.5px] border-[#171717]/15 pb-3">
+              <div>
+                <h3 className="font-extrabold text-[#2b1a07] text-base flex items-center gap-2">
+                  <Bell className="w-5 h-5 text-[#ff6f1e]" />
+                  <span>التنبيهات والمواعيد المنشورة حالياً ({announcements.length}):</span>
+                </h3>
+                <p className="text-xs text-[#171717]/70 mt-0.5">
+                  يمكنك مراجعة جميع المواعيد المعلنة وحذف المنتهي منها بنقرة واحدة
+                </p>
+              </div>
             </div>
 
-            <button
-              type="submit"
-              className="w-full py-3.5 px-4 rounded-full bg-[#ff6f1e] hover:bg-[#ff6f1e]/90 text-[#2b1a07] font-black text-sm border-[1.5px] border-[#171717] shadow-[0_2px_4px_rgba(0,0,0,0.25)] transition-all cursor-pointer flex items-center justify-center gap-2"
-            >
-              <Bell className="w-4 h-4" />
-              <span>نشر التنبيه الفوري</span>
-            </button>
-          </form>
+            {announcements.length === 0 ? (
+              <div className="text-center py-8 bg-[#f7efe9] rounded-[12px] border border-[#171717]/20 p-4">
+                <Bell className="w-8 h-8 text-[#171717]/30 mx-auto mb-2" />
+                <p className="text-xs font-bold text-[#171717]/60">لا توجد تنبيهات منشورة حالياً</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {announcements.map((ann) => (
+                  <div
+                    key={ann.id}
+                    className="p-4 rounded-[12px] bg-[#f7efe9] border-[1.5px] border-[#171717] shadow-[0_1px_2px_rgba(0,0,0,0.06)] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3"
+                  >
+                    <div className="space-y-1.5 flex-1">
+                      <div className="flex flex-wrap items-center gap-2 text-xs">
+                        <span className={`px-2.5 py-0.5 rounded-full border text-[11px] font-black ${
+                          ann.urgency === 'عاجل جداً'
+                            ? 'bg-rose-100 text-rose-800 border-rose-300 animate-pulse'
+                            : ann.urgency === 'هام'
+                            ? 'bg-amber-100 text-amber-900 border-amber-300'
+                            : 'bg-emerald-100 text-emerald-900 border-emerald-300'
+                        }`}>
+                          {ann.urgency}
+                        </span>
+                        <span className="px-2.5 py-0.5 rounded-full bg-white border border-[#171717]/30 text-[#171717] font-bold text-[11px]">
+                          {ann.category}
+                        </span>
+                        {ann.event_date && (
+                          <span className="text-[#ce500a] font-extrabold flex items-center gap-1 text-[11px]">
+                            <Calendar className="w-3.5 h-3.5" />
+                            <span>الموعد: {new Date(ann.event_date).toLocaleDateString('ar-EG', { weekday: 'short', day: 'numeric', month: 'short' })}</span>
+                          </span>
+                        )}
+                      </div>
+
+                      <h4 className="font-extrabold text-[#2b1a07] text-sm sm:text-base">
+                        {ann.title}
+                      </h4>
+                      <p className="text-xs text-[#171717]/80 leading-relaxed">
+                        {ann.details}
+                      </p>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteAnnouncement(ann.id, ann.title)}
+                      className="self-end sm:self-center flex items-center gap-1.5 px-3.5 py-2 rounded-[8px] bg-[#fdfbf9] hover:bg-rose-50 text-rose-700 border-[1.5px] border-[#171717] text-xs font-black transition-all cursor-pointer shadow-sm shrink-0"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      <span>حذف 🗑️</span>
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       )}
 
@@ -2954,7 +3464,7 @@ export default function AdminDashboard() {
                             const val = e.target.value;
                             setSubjectInstructorsMap((prev) => ({ ...prev, [sub.id]: val }));
                           }}
-                          placeholder="مثال: م. حسام الدين توفيق / د. إبراهيم عبد العزيز"
+                          placeholder="اكتب اسم الدكتور أو المهندس المحاضر هنا..."
                           className="w-full bg-white border-[1.5px] border-[#171717] rounded-[8px] p-2.5 text-xs text-[#171717] font-bold focus:outline-none focus:border-[#ff6f1e]"
                         />
                       </div>
@@ -2970,7 +3480,7 @@ export default function AdminDashboard() {
                           </span>
                         ) : (
                           <span className="text-[11px] text-[#171717]/60">
-                            الحالي: <strong className="text-[#2b1a07]">{sub.instructor_name || 'هيئة التدريس'}</strong>
+                            الحالي: <strong className="text-[#2b1a07]">{sub.instructor_name || '— (فارغ)'}</strong>
                           </span>
                         )}
                       </div>

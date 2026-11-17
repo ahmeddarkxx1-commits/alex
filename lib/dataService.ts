@@ -624,6 +624,33 @@ export async function createAnnouncement(newAnn: Omit<Announcement, 'id' | 'crea
   return item;
 }
 
+export async function deleteAnnouncement(id: string): Promise<boolean> {
+  if (typeof window !== 'undefined') {
+    try {
+      await fetch(`/api/announcements?id=${encodeURIComponent(id)}`, {
+        method: 'DELETE',
+      });
+    } catch (e) {
+      console.warn('Backend delete announcement error:', e);
+    }
+  }
+
+  if (isSupabaseConfigured) {
+    try {
+      await (supabase.from('announcements') as any).delete().eq('id', id);
+    } catch (e) {
+      console.warn('Supabase delete announcement error:', e);
+    }
+  }
+
+  const list = getLocalItem<Announcement[]>(STORAGE_KEYS.ANNOUNCEMENTS, []);
+  setLocalItem(
+    STORAGE_KEYS.ANNOUNCEMENTS,
+    list.filter((a) => a.id !== id)
+  );
+  return true;
+}
+
 // ----------------- BOOKMARKS (Local Student Storage) -----------------
 export function getBookmarks(): string[] {
   return getLocalItem<string[]>(STORAGE_KEYS.BOOKMARKS, []);

@@ -66,12 +66,13 @@ export default function CourseCard({
           {subject.name_ar}
         </h3>
 
-        {/* Instructor */}
-        {subject.instructor_name && (
-          <p className="text-xs text-[#2b1a07]/80 font-medium mb-3">
-            المحاضر: {subject.instructor_name}
-          </p>
-        )}
+        {/* Instructor Field - Always preserved */}
+        <p className="text-xs text-[#2b1a07]/80 font-medium mb-3 flex items-center gap-1.5">
+          <span className="font-bold text-[#2b1a07]">المحاضر:</span>
+          <span className={subject.instructor_name ? 'text-[#2b1a07]' : 'text-[#171717]/40'}>
+            {subject.instructor_name || '—'}
+          </span>
+        </p>
 
         {/* Description */}
         <p className="text-xs text-[#171717]/80 leading-relaxed line-clamp-2 mb-4 font-normal">

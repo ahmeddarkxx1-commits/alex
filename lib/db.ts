@@ -400,6 +400,17 @@ export function dbCreateAnnouncement(item: Omit<Announcement, 'id' | 'created_at
   return newRecord;
 }
 
+export function dbDeleteAnnouncement(id: string): boolean {
+  const db = initDb();
+  const initLen = db.announcements.length;
+  db.announcements = db.announcements.filter((a) => a.id !== id);
+  if (db.announcements.length !== initLen) {
+    writeDb(db);
+    return true;
+  }
+  return false;
+}
+
 // ====================================================================
 // DEPARTMENTS
 // ====================================================================

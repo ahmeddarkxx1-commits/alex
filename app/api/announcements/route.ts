@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { dbGetAnnouncements, dbCreateAnnouncement } from '@/lib/db';
+import { dbGetAnnouncements, dbCreateAnnouncement, dbDeleteAnnouncement } from '@/lib/db';
 import { AnnouncementCategory, UrgencyLevel } from '@/types/database';
 
 export async function GET(request: NextRequest) {
@@ -83,5 +83,32 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(created, { status: 201 });
   } catch (err: any) {
     return NextResponse.json({ error: err.message || 'Error creating announcement' }, { status: 500 });
+  }
+}
+
+export async function DELETE(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get('id');
+
+    if (!id) {
+      return NextResponse.json({ error: 'معرف التنبيه مطلوب للحذف' }, { status: 400 });
+    }
+
+    // 1. Delete from Supabase if configured
+    const { isSupabaseConfigured, supabase } = await import('@/lib/supabase');
+    if (isSupabaseConfigured) {
+      try {
+        await supabase.from('announcements').delete().eq('id', id);
+      } catch (err) {
+        console.warn('Supabase announcement delete warning:', err);
+      }
+    }
+
+    // 2. Delete from local database
+    const success = dbDeleteAnnouncement(id);
+    return NextResponse.json({ success, id });
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message || 'Error deleting announcement' }, { status: 500 });
   }
 }

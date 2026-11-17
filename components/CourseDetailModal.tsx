@@ -119,8 +119,11 @@ export default function CourseDetailModal({
         <div className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-5">
           {/* Instructor & Info box */}
           <div className="bg-[#f7efe9] border-[1.5px] border-[#171717] rounded-[12px] p-4 text-xs text-[#171717] space-y-1 shadow-[0_1px_2px_rgba(0,0,0,0.06)]">
-            <p className="font-bold text-[#2b1a07]">
-              المحاضر المسؤول: {subject.instructor_name || 'هيئة تدريس المعهد'}
+            <p className="font-bold text-[#2b1a07] flex items-center gap-1.5">
+              <span>المحاضر المسؤول:</span>
+              <span className={subject.instructor_name ? 'text-[#2b1a07]' : 'text-[#171717]/50 font-normal'}>
+                {subject.instructor_name || '—'}
+              </span>
             </p>
             <p className="text-[#171717]/80 leading-relaxed font-normal">
               {subject.description || 'مقرر دراسي معتمد بقسم المساحة العامة بالمعهد الفني الصناعي بالإسكندرية.'}
