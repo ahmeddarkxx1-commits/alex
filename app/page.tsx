@@ -34,6 +34,7 @@ import ResourceCard from '@/components/ResourceCard';
 import StudyReaderModal from '@/components/StudyReaderModal';
 import SchedulesTab from '@/components/SchedulesTab';
 import DeadlinesTab from '@/components/DeadlinesTab';
+import ToastNotification, { ToastData } from '@/components/ToastNotification';
 import {
   Search,
   BookOpen,
@@ -84,6 +85,14 @@ export default function SurveyingPortal() {
   // Modals
   const [selectedCourse, setSelectedCourse] = useState<Subject | null>(null);
   const [readingResource, setReadingResource] = useState<Resource | null>(null);
+
+  // Floating Toast Notifications
+  const [toast, setToast] = useState<ToastData | null>(null);
+
+  const showToast = (message: string, type: 'success' | 'error' | 'info' = 'success', title?: string) => {
+    setToast({ message, type, title });
+    setTimeout(() => setToast(null), 4000);
+  };
 
   useEffect(() => {
     async function loadInitialData() {
@@ -188,6 +197,7 @@ export default function SurveyingPortal() {
     setActiveSection(student.section_number);
     setIsPersonalizedOnly(true);
     setViewMode('portal');
+    showToast(`أهلاً بك يا ${student.name} في منصة قسم المساحة ✨`, 'success');
   };
 
   const handleStudentLogout = () => {
@@ -195,12 +205,17 @@ export default function SurveyingPortal() {
     setCurrentStudent(null);
     setIsPersonalizedOnly(false);
     setViewMode('landing');
+    showToast('تم تسجيل الخروج بنجاح', 'info');
   };
 
   const handleToggleBookmark = (id: string) => {
     const isNowBookmarked = toggleBookmark(id);
     setBookmarks((prev) =>
       isNowBookmarked ? [...prev, id] : prev.filter((item) => item !== id)
+    );
+    showToast(
+      isNowBookmarked ? 'تم حفظ التلخيص في قائمة المفضلة ⭐' : 'تمت إزالة التلخيص من المحفوظات',
+      isNowBookmarked ? 'success' : 'info'
     );
   };
 
@@ -253,7 +268,10 @@ export default function SurveyingPortal() {
   }, [resources, activeTab, bookmarks, selectedTypeFilter, selectedSubjectFilter, searchQuery]);
 
   return (
-    <div className="min-h-screen flex flex-col space-y-6 pb-16 bg-[#fdfbf9] text-[#171717]">
+    <div className="min-h-screen flex flex-col space-y-6 pb-16 bg-[#fdfbf9] text-[#171717] relative">
+      {/* Floating Modern Toast Notification */}
+      <ToastNotification toast={toast} onClose={() => setToast(null)} />
+
       {/* Top Academic Notification Banner */}
       <UrgentBanner
         announcements={announcements}

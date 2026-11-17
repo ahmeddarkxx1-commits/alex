@@ -33,6 +33,8 @@ import {
   createAnnouncement 
 } from '@/lib/dataService';
 import { isSupabaseConfigured } from '@/lib/supabase';
+import ConfirmModal from '@/components/ConfirmModal';
+import ToastNotification, { ToastData } from '@/components/ToastNotification';
 import { 
   ShieldCheck, 
   Lock, 
@@ -116,8 +118,57 @@ export default function AdminDashboard() {
   const [studentSearch, setStudentSearch] = useState('');
   const [studentYearFilter, setStudentYearFilter] = useState<AcademicYear | 'all'>('all');
 
-  // Feedback Toast
-  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+  // Feedback Toast Notification State
+  const [toast, setToast] = useState<ToastData | null>(null);
+
+  // Show Toast Helper
+  const showToast = (message: string, type: 'success' | 'error' | 'info' = 'success', title?: string) => {
+    setToast({ message, type, title });
+    setTimeout(() => setToast(null), 4000);
+  };
+
+  // Custom Confirmation Modal State (replaces ugly native browser confirm)
+  const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    highlightText?: string;
+    confirmLabel?: string;
+    cancelLabel?: string;
+    variant?: 'danger' | 'warning' | 'info';
+    isLoading?: boolean;
+    onConfirm: () => void | Promise<void>;
+  }>({
+    isOpen: false,
+    title: '',
+    message: '',
+    onConfirm: () => {},
+  });
+
+  const requestConfirm = (config: {
+    title: string;
+    message: string;
+    highlightText?: string;
+    confirmLabel?: string;
+    cancelLabel?: string;
+    variant?: 'danger' | 'warning' | 'info';
+    onConfirm: () => void | Promise<void>;
+  }) => {
+    setConfirmModal({
+      isOpen: true,
+      title: config.title,
+      message: config.message,
+      highlightText: config.highlightText,
+      confirmLabel: config.confirmLabel || 'تأكيد الإجراء',
+      cancelLabel: config.cancelLabel || 'تراجع وإلغاء',
+      variant: config.variant || 'danger',
+      onConfirm: config.onConfirm,
+    });
+  };
+
+  const closeConfirm = () => {
+    setConfirmModal((prev) => ({ ...prev, isOpen: false }));
+  };
 
   // Tab 1: New Resource Form State
   const [newResDeptId, setNewResDeptId] = useState('');
@@ -160,12 +211,6 @@ export default function AdminDashboard() {
   const [annDate, setAnnDate] = useState('');
   const [annNotifyTg, setAnnNotifyTg] = useState(true);
   const [annTgTarget, setAnnTgTarget] = useState<'year1' | 'year2' | 'both'>('both');
-
-  // Show Toast Helper
-  const showToast = (message: string, type: 'success' | 'error' = 'success') => {
-    setToast({ message, type });
-    setTimeout(() => setToast(null), 4000);
-  };
 
   // Load Initial Data
   const refreshAllData = async () => {
@@ -329,38 +374,68 @@ export default function AdminDashboard() {
     const nextRole = targetAdmin.role === 'dept_rep' ? 'reviewer_admin' : 'dept_rep';
     const actionLabel = nextRole === 'reviewer_admin' ? 'ترقية لمراجع ومدقق أكاديمي' : 'تخفيض لمندوب رفع فقط';
 
-    try {
-      const res = await fetch('/api/admins', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: targetAdmin.id, role: nextRole }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'فشل تحديث الصلاحية');
+    requestConfirm({
+      title: `تأكيد ${actionLabel}`,
+      message: `هل تريد تغيير صلاحية "${targetAdmin.full_name}" إلى (${nextRole === 'reviewer_admin' ? 'مراجع ومدقق معتمد - يحق له اعتماد وتعديل وبث المحتوى' : 'مندوب رفع مواد فقط'})؟`,
+      highlightText: `العضو: ${targetAdmin.full_name} (${targetAdmin.email})`,
+      confirmLabel: `نعم، تطبيق ${actionLabel}`,
+      cancelLabel: 'إلغاء',
+      variant: nextRole === 'reviewer_admin' ? 'info' : 'warning',
+      onConfirm: async () => {
+        try {
+          const res = await fetch('/api/admins', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: targetAdmin.id, role: nextRole }),
+          });
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error || 'فشل تحديث الصلاحية');
 
-      showToast(`تم ${actionLabel} لـ "${targetAdmin.full_name}" بنجاح!`);
-      refreshStaffList();
-    } catch (err: any) {
-      showToast(err.message || 'فشل تحديث الصلاحية', 'error');
-    }
+          showToast(`تم ${actionLabel} لـ "${targetAdmin.full_name}" بنجاح!`, 'success');
+          refreshStaffList();
+        } catch (err: any) {
+          showToast(err.message || 'فشل تحديث الصلاحية', 'error');
+        }
+      },
+    });
   };
 
   // Toggle Staff Active/Suspended Status
   const handleToggleStaffStatus = async (targetAdmin: AdminUser) => {
     const nextStatus = targetAdmin.is_active === false ? true : false;
-    try {
-      const res = await fetch('/api/admins', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: targetAdmin.id, is_active: nextStatus }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'فشل تحديث حالة الحساب');
 
-      showToast(nextStatus ? `تم تفعيل حساب "${targetAdmin.full_name}"` : `تم تعطيل حساب "${targetAdmin.full_name}"`);
-      refreshStaffList();
-    } catch (err: any) {
-      showToast(err.message || 'فشل تحديث حالة الحساب', 'error');
+    const executeToggle = async () => {
+      try {
+        const res = await fetch('/api/admins', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: targetAdmin.id, is_active: nextStatus }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'فشل تحديث حالة الحساب');
+
+        showToast(
+          nextStatus ? `تم تفعيل حساب "${targetAdmin.full_name}" بنجاح` : `تم تعطيل حساب "${targetAdmin.full_name}" بنجاح`,
+          nextStatus ? 'success' : 'info'
+        );
+        refreshStaffList();
+      } catch (err: any) {
+        showToast(err.message || 'فشل تحديث حالة الحساب', 'error');
+      }
+    };
+
+    if (!nextStatus) {
+      requestConfirm({
+        title: 'تأكيد تعطيل حساب المشرف أو المندوب',
+        message: `هل أنت متأكد من تعطيل حساب "${targetAdmin.full_name}"؟ سيتعذر عليه الدخول للمنصة أو رفع محتوى حتى يُعاد تفعيله.`,
+        highlightText: `الحساب المستهدف: ${targetAdmin.full_name} (${targetAdmin.email})`,
+        confirmLabel: 'نعم، عطل الحساب مؤقتاً',
+        cancelLabel: 'إلغاء',
+        variant: 'warning',
+        onConfirm: executeToggle,
+      });
+    } else {
+      await executeToggle();
     }
   };
 
@@ -371,18 +446,26 @@ export default function AdminDashboard() {
       return;
     }
 
-    if (!confirm(`هل أنت متأكد من حذف حساب "${targetAdmin.full_name}" نهائياً من المنصة؟`)) return;
+    requestConfirm({
+      title: 'تأكيد حذف الحساب نهائياً',
+      message: `هل أنت متأكد من حذف حساب "${targetAdmin.full_name}" نهائياً من المنصة والسيرفر؟ سيفقد العضو صلاحية الدخول فوراً.`,
+      highlightText: `البريد: ${targetAdmin.email} (${targetAdmin.role === 'reviewer_admin' ? 'مشرف ومدقق أكاديمي' : 'مندوب شعبة'})`,
+      confirmLabel: 'نعم، احذف الحساب نهائياً',
+      cancelLabel: 'إلغاء وتراجع',
+      variant: 'danger',
+      onConfirm: async () => {
+        try {
+          const res = await fetch(`/api/admins?id=${targetAdmin.id}`, { method: 'DELETE' });
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error || 'فشل حذف الحساب');
 
-    try {
-      const res = await fetch(`/api/admins?id=${targetAdmin.id}`, { method: 'DELETE' });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'فشل حذف الحساب');
-
-      showToast(`تم حذف حساب "${targetAdmin.full_name}" بنجاح`);
-      refreshStaffList();
-    } catch (err: any) {
-      showToast(err.message || 'فشل حذف الحساب', 'error');
-    }
+          showToast(`تم حذف حساب "${targetAdmin.full_name}" نهائياً بنجاح`, 'success');
+          refreshStaffList();
+        } catch (err: any) {
+          showToast(err.message || 'فشل حذف الحساب', 'error');
+        }
+      },
+    });
   };
 
   // Create New Staff Member
@@ -597,16 +680,24 @@ export default function AdminDashboard() {
   };
 
   // Reject a resource
-  const handleRejectResource = async (id: string) => {
-    if (confirm('هل أنت متأكد من رفض هذا المحتوى وطلب تعديله من المندوب؟')) {
-      await updateResource(id, {
-        review_status: 'rejected',
-        reviewer_name: currentUser?.full_name || 'المشرف العام',
-        reviewed_at: new Date().toISOString(),
-      });
-      showToast('تم تحديث حالة المحتوى إلى مرفوض.');
-      refreshAllData();
-    }
+  const handleRejectResource = async (id: string, resourceTitle?: string) => {
+    requestConfirm({
+      title: 'تأكيد رفض المحتوى الأكاديمي',
+      message: 'هل أنت متأكد من رفض هذا المحتوى وطلب تعديله وإعادة رفعه من مندوب الشعبة؟',
+      highlightText: resourceTitle ? `المحتوى المستهدف: "${resourceTitle}"` : undefined,
+      confirmLabel: 'تأكيد الرفض وطلب التعديل',
+      cancelLabel: 'إلغاء',
+      variant: 'warning',
+      onConfirm: async () => {
+        await updateResource(id, {
+          review_status: 'rejected',
+          reviewer_name: currentUser?.full_name || 'المشرف العام',
+          reviewed_at: new Date().toISOString(),
+        });
+        showToast('تم تحديث حالة المحتوى إلى مرفوض بنجاح', 'info');
+        refreshAllData();
+      },
+    });
   };
 
   // Submit New Schedule
@@ -715,21 +806,37 @@ export default function AdminDashboard() {
   };
 
   // Delete Resource item
-  const handleDeleteResource = async (id: string) => {
-    if (confirm('هل أنت متأكد من حذف هذا التلخيص/الشيت نهائياً؟')) {
-      await deleteResource(id);
-      showToast('تم حذف المحتوى بنجاح.');
-      refreshAllData();
-    }
+  const handleDeleteResource = async (id: string, resourceTitle?: string) => {
+    requestConfirm({
+      title: 'تأكيد حذف التلخيص / الشيت نهائياً',
+      message: 'هل أنت متأكد من حذف هذا المحتوى نهائياً من المنصة وقاعدة البيانات؟ لن يمكن للطلاب أو المشرفين استرجاعه بعد الحذف.',
+      highlightText: resourceTitle ? `المحتوى المستهدف: "${resourceTitle}"` : undefined,
+      confirmLabel: 'نعم، احذف نهائياً',
+      cancelLabel: 'إلغاء وتراجع',
+      variant: 'danger',
+      onConfirm: async () => {
+        await deleteResource(id);
+        showToast('تم حذف المحتوى نهائياً بنجاح', 'success');
+        refreshAllData();
+      },
+    });
   };
 
   // Delete Schedule item
-  const handleDeleteSchedule = async (id: string) => {
-    if (confirm('هل أنت متأكد من حذف هذا الميعاد من الجدول؟')) {
-      await deleteSchedule(id);
-      showToast('تم حذف الميعاد بنجاح.');
-      refreshAllData();
-    }
+  const handleDeleteSchedule = async (id: string, scheduleInfo?: string) => {
+    requestConfirm({
+      title: 'تأكيد حذف الحصة من الجدول',
+      message: 'هل أنت متأكد من حذف هذا الميعاد نهائياً من جدول الفترات الأسبوعي؟',
+      highlightText: scheduleInfo ? `المحاضرة: "${scheduleInfo}"` : undefined,
+      confirmLabel: 'نعم، احذف من الجدول',
+      cancelLabel: 'إلغاء',
+      variant: 'danger',
+      onConfirm: async () => {
+        await deleteSchedule(id);
+        showToast('تم حذف الميعاد من الجدول بنجاح', 'success');
+        refreshAllData();
+      },
+    });
   };
 
   // ----------------------------------------------------
@@ -737,7 +844,13 @@ export default function AdminDashboard() {
   // ----------------------------------------------------
   if (!currentUser) {
     return (
-      <div className="min-h-[85vh] flex items-center justify-center px-4 py-12 bg-[#fdfbf9]">
+      <div className="min-h-[85vh] flex items-center justify-center px-4 py-12 bg-[#fdfbf9] relative">
+        {/* Floating Toast Notification */}
+        <ToastNotification toast={toast} onClose={() => setToast(null)} />
+
+        {/* Custom Confirmation Modal */}
+        <ConfirmModal {...confirmModal} onClose={closeConfirm} />
+
         <div className="w-full max-w-md bg-[#f7efe9] border-[1.5px] border-[#171717] rounded-[20px] p-6 sm:p-8 shadow-[0_4px_24px_rgba(0,0,0,0.08)] space-y-6">
           <div className="text-center space-y-2">
             <div className="w-14 h-14 rounded-full bg-[#fdfbf9] border-[1.5px] border-[#171717] flex items-center justify-center mx-auto text-[#2b1a07] shadow-[0_1px_2px_rgba(0,0,0,0.2)]">
@@ -830,18 +943,12 @@ export default function AdminDashboard() {
   // LOGGED IN DASHBOARD
   // ----------------------------------------------------
   return (
-    <div className="min-h-screen max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6 bg-[#fdfbf9] text-[#171717]">
-      {/* Toast Notification */}
-      {toast && (
-        <div className={`fixed top-4 left-4 z-50 flex items-center gap-2 px-4 py-3 rounded-full shadow-lg border-[1.5px] border-[#171717] text-sm font-bold ${
-          toast.type === 'success'
-            ? 'bg-[#22c55e]/20 text-[#171717]'
-            : 'bg-[#ff6f1e]/20 text-[#2b1a07]'
-        }`}>
-          {toast.type === 'success' ? <CheckCircle2 className="w-5 h-5 text-[#22c55e]" /> : <AlertCircle className="w-5 h-5 text-[#ce500a]" />}
-          <span>{toast.message}</span>
-        </div>
-      )}
+    <div className="min-h-screen max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6 bg-[#fdfbf9] text-[#171717] relative">
+      {/* Floating Modern Toast Notification */}
+      <ToastNotification toast={toast} onClose={() => setToast(null)} />
+
+      {/* Reusable Neo-Brutalist Confirmation Modal */}
+      <ConfirmModal {...confirmModal} onClose={closeConfirm} />
 
       {/* Admin Top Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-[#f7efe9] border-[1.5px] border-[#171717] p-5 rounded-[16px] shadow-[0_1px_2px_rgba(0,0,0,0.15)]">
@@ -1621,7 +1728,7 @@ export default function AdminDashboard() {
                       {!isRejected && (
                         <button
                           type="button"
-                          onClick={() => handleRejectResource(r.id)}
+                          onClick={() => handleRejectResource(r.id, r.title)}
                           className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-rose-50 hover:bg-rose-100 text-rose-800 font-bold text-xs border-[1.5px] border-rose-300 transition-all cursor-pointer"
                         >
                           <XCircle className="w-4 h-4 text-rose-600" />
@@ -1631,7 +1738,7 @@ export default function AdminDashboard() {
 
                       <button
                         type="button"
-                        onClick={() => handleDeleteResource(r.id)}
+                        onClick={() => handleDeleteResource(r.id, r.title)}
                         className="p-2 text-rose-600 hover:bg-rose-50 rounded-full border border-rose-200 transition-colors cursor-pointer"
                         title="حذف المحتوى نهائياً"
                       >
@@ -1992,9 +2099,9 @@ export default function AdminDashboard() {
                       <td className="p-3 text-[#171717]/80">{s.location_room}</td>
                       <td className="p-3">
                         <button
-                          onClick={() => handleDeleteSchedule(s.id)}
-                          className="p-1.5 text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
-                          title="حذف"
+                          onClick={() => handleDeleteSchedule(s.id, `${s.subject?.name_ar || 'مادة تخصصية'} (${s.day_of_week} من ${s.start_time} إلى ${s.end_time})`)}
+                          className="p-1.5 text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
+                          title="حذف الميعاد من الجدول"
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
@@ -2285,9 +2392,9 @@ export default function AdminDashboard() {
                       <td className="p-3 font-mono">{r.views_count}</td>
                       <td className="p-3">
                         <button
-                          onClick={() => handleDeleteResource(r.id)}
-                          className="p-1.5 text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
-                          title="حذف"
+                          onClick={() => handleDeleteResource(r.id, r.title)}
+                          className="p-1.5 text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
+                          title="حذف المحتوى نهائياً"
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
