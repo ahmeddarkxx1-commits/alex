@@ -47,32 +47,32 @@ export default function RootLayout({
             </Link>
 
             {/* Navigation links & Pill Action Button */}
-            <div className="flex items-center gap-2 sm:gap-3">
+            <div className="flex items-center gap-1.5 sm:gap-3">
               <Link
-                href="/#courses"
-                className="hidden md:inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-[#171717] hover:text-[#ff6f1e] transition-colors"
+                href="/?tab=courses"
+                className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-[#171717] hover:text-[#ff6f1e] transition-colors"
               >
-                <BookOpen className="w-3.5 h-3.5" />
+                <BookOpen className="w-3.5 h-3.5 text-[#ff6f1e]" />
                 <span>المقررات</span>
               </Link>
               <Link
-                href="/#resources"
-                className="hidden md:inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-[#171717] hover:text-[#ff6f1e] transition-colors"
+                href="/?tab=resources"
+                className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-[#171717] hover:text-[#ff6f1e] transition-colors"
               >
                 <span>الشيتات والمذكرات</span>
               </Link>
               <Link
-                href="/#schedules"
-                className="hidden md:inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-[#171717] hover:text-[#ff6f1e] transition-colors"
+                href="/?tab=schedules"
+                className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 text-xs font-bold text-[#171717] hover:text-[#ff6f1e] transition-colors"
               >
-                <Calendar className="w-3.5 h-3.5" />
+                <Calendar className="w-3.5 h-3.5 text-[#ff6f1e]" />
                 <span>الجدول</span>
               </Link>
               <Link
-                href="/#deadlines"
-                className="hidden md:inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-[#171717] hover:text-[#ff6f1e] transition-colors"
+                href="/?tab=deadlines"
+                className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 text-xs font-bold text-[#171717] hover:text-[#ff6f1e] transition-colors"
               >
-                <Clock className="w-3.5 h-3.5" />
+                <Clock className="w-3.5 h-3.5 text-[#ff6f1e]" />
                 <span>المواعيد</span>
               </Link>
             </div>

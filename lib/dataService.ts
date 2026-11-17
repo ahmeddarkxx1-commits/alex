@@ -203,6 +203,39 @@ export async function getResources(params?: {
   return resources;
 }
 
+export async function getResourceById(id: string): Promise<Resource | null> {
+  const allResources = await getResources({ reviewStatus: 'all' });
+  const found = allResources.find((r) => r.id === id);
+  if (found) return found;
+  if (isSupabaseConfigured) {
+    try {
+      const { data } = await supabase.from('resources').select('*').eq('id', id).maybeSingle();
+      if (data) {
+        const item = data as any;
+        const allSubjs = await getSubjects();
+        const allDepts = await getDepartments();
+        return {
+          ...item,
+          subject: allSubjs.find((s) => s.id === item.subject_id),
+          department: allDepts.find((d) => d.id === item.department_id),
+        } as Resource;
+      }
+    } catch (e) {
+      console.warn('getResourceById supabase error', e);
+    }
+  }
+  return null;
+}
+
+export async function getSubjectByCodeOrId(codeOrId: string): Promise<Subject | null> {
+  const allSubjs = await getSubjects({ departmentId: 'dept-surveying' });
+  const clean = codeOrId.trim().toLowerCase();
+  const found = allSubjs.find(
+    (s) => s.code.toLowerCase() === clean || s.id.toLowerCase() === clean || s.name_ar.toLowerCase() === clean
+  );
+  return found || null;
+}
+
 export async function createResource(newRes: Omit<Resource, 'id' | 'views_count' | 'created_at'>): Promise<Resource> {
   const resourceToSave: Resource = {
     ...newRes,

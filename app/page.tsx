@@ -15,6 +15,8 @@ import {
 import {
   getSubjects,
   getResources,
+  getResourceById,
+  getSubjectByCodeOrId,
   getSchedules,
   getAnnouncements,
   getBookmarks,
@@ -50,7 +52,9 @@ import {
   Lock,
   Globe,
   Compass,
-  Send
+  Send,
+  Link2,
+  Check
 } from 'lucide-react';
 
 export default function SurveyingPortal() {
@@ -98,13 +102,15 @@ export default function SurveyingPortal() {
     async function loadInitialData() {
       setLoading(true);
       const student = getCurrentStudent();
+      let isPortalMode = false;
+
       if (student) {
         setCurrentStudent(student);
         setActiveYear(student.academic_year);
         setActiveSemester(student.semester_number);
         setActiveSection(student.section_number);
         setIsPersonalizedOnly(true);
-        setViewMode('portal');
+        isPortalMode = true;
       } else {
         const savedPrefs = getUserPreferences();
         const prefYear = savedPrefs.academicYear || 'الفرقة الأولى';
@@ -112,7 +118,6 @@ export default function SurveyingPortal() {
         setActiveYear(prefYear);
         setActiveSemester(prefSem);
         setActiveSection(savedPrefs.sectionNumber || 'عام');
-        setViewMode('landing');
       }
 
       setBookmarks(getBookmarks());
@@ -121,6 +126,72 @@ export default function SurveyingPortal() {
         getAnnouncements('dept-surveying'),
       ]);
       setAnnouncements(anns);
+
+      // Deep Linking & URL Branching handling
+      if (typeof window !== 'undefined') {
+        const params = new URLSearchParams(window.location.search);
+        const courseParam = params.get('course') || params.get('subject');
+        const resIdParam = params.get('resId');
+        const tabParam = params.get('tab');
+        const semParam = params.get('sem');
+        const yearParam = params.get('year');
+        const deptParam = params.get('dept');
+
+        if (courseParam || resIdParam || tabParam || semParam || yearParam || deptParam) {
+          isPortalMode = true;
+        }
+
+        if (tabParam && ['courses', 'resources', 'schedules', 'deadlines', 'bookmarks'].includes(tabParam)) {
+          setActiveTab(tabParam as any);
+        }
+
+        if (semParam) {
+          const sNum = parseInt(semParam, 10);
+          if ([1, 2, 3, 4].includes(sNum)) {
+            setActiveSemester(sNum as SemesterNumber);
+            setActiveYear(sNum <= 2 ? 'الفرقة الأولى' : 'الفرقة الثانية');
+            setIsPersonalizedOnly(false);
+          }
+        } else if (yearParam) {
+          if (yearParam === '1' || yearParam === 'الفرقة الأولى') {
+            setActiveYear('الفرقة الأولى');
+            setActiveSemester(1);
+            setIsPersonalizedOnly(false);
+          } else if (yearParam === '2' || yearParam === 'الفرقة الثانية') {
+            setActiveYear('الفرقة الثانية');
+            setActiveSemester(3);
+            setIsPersonalizedOnly(false);
+          }
+        }
+
+        if (courseParam) {
+          getSubjectByCodeOrId(courseParam).then((sub) => {
+            if (sub) {
+              setActiveYear(sub.academic_year);
+              setActiveSemester(sub.semester_number);
+              setIsPersonalizedOnly(false);
+              setSelectedCourse(sub);
+              showToast(`تم فتح مادة "${sub.name_ar}" (${sub.code}) مباشرة 📚`, 'info');
+            }
+          });
+        }
+
+        if (resIdParam) {
+          getResourceById(resIdParam).then((res) => {
+            if (res) {
+              if (res.subject) {
+                setActiveYear(res.subject.academic_year);
+                setActiveSemester(res.subject.semester_number);
+              }
+              setIsPersonalizedOnly(false);
+              setReadingResource(res);
+              showToast(`تم فتح مستند "${res.title}" مباشرة 📄`, 'info');
+            }
+          });
+        }
+      }
+
+      setViewMode(isPortalMode ? 'portal' : 'landing');
       setLoading(false);
     }
 
@@ -219,6 +290,59 @@ export default function SurveyingPortal() {
     );
   };
 
+  const handleOpenCourse = (subject: Subject) => {
+    setSelectedCourse(subject);
+    if (typeof window !== 'undefined') {
+      const url = new URL(window.location.href);
+      url.searchParams.set('course', subject.code);
+      window.history.replaceState({}, '', url.toString());
+    }
+  };
+
+  const handleCloseCourse = () => {
+    setSelectedCourse(null);
+    if (typeof window !== 'undefined') {
+      const url = new URL(window.location.href);
+      url.searchParams.delete('course');
+      url.searchParams.delete('subject');
+      window.history.replaceState({}, '', url.toString());
+    }
+  };
+
+  const handleOpenResource = (resource: Resource) => {
+    setReadingResource(resource);
+    if (typeof window !== 'undefined') {
+      const url = new URL(window.location.href);
+      url.searchParams.set('resId', resource.id);
+      window.history.replaceState({}, '', url.toString());
+    }
+  };
+
+  const handleCloseResource = () => {
+    setReadingResource(null);
+    if (typeof window !== 'undefined') {
+      const url = new URL(window.location.href);
+      url.searchParams.delete('resId');
+      window.history.replaceState({}, '', url.toString());
+    }
+  };
+
+  const handleSwitchTab = (tab: 'courses' | 'resources' | 'schedules' | 'deadlines' | 'bookmarks') => {
+    setActiveTab(tab);
+    if (typeof window !== 'undefined') {
+      const url = new URL(window.location.href);
+      url.searchParams.set('tab', tab);
+      window.history.replaceState({}, '', url.toString());
+    }
+  };
+
+  const handleCopyDepartmentLink = () => {
+    const origin = typeof window !== 'undefined' ? window.location.origin : 'https://survey.nexoura.org';
+    const link = `${origin}/?dept=surveying`;
+    navigator.clipboard.writeText(link);
+    showToast('تم نسخ رابط منصة شعبة المساحة بنجاح! جاهز للإرسال للطلاب 📋', 'success');
+  };
+
   const getSemesterLabel = (sem: SemesterNumber | 'all') => {
     switch (sem) {
       case 1: return 'الفصل الدراسي الأول (الترم 1)';
@@ -277,18 +401,21 @@ export default function SurveyingPortal() {
         announcements={announcements}
         onSelectAnnouncement={() => {
           setViewMode('portal');
-          setActiveTab('deadlines');
+          handleSwitchTab('deadlines');
         }}
       />
 
       {/* ==================================================== */}
       {/* ZERO-CONTENT GATE: BEFORE REGISTRATION / LOGIN */}
       {/* ==================================================== */}
-      {!currentStudent ? (
+      {viewMode === 'landing' && !currentStudent ? (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full space-y-6 pt-2">
           <SurveyingLandingPage
             onStudentRegistered={(student) => {
               handleStudentLoginSuccess(student);
+            }}
+            onExploreAsGuest={() => {
+              setViewMode('portal');
             }}
           />
         </div>
@@ -313,23 +440,45 @@ export default function SurveyingPortal() {
 
             <div className="flex items-center gap-2 self-start md:self-auto flex-wrap">
               <button
-                onClick={() => setShowAuthModal(true)}
-                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[#fdfbf9] hover:bg-[#f7efe9] text-xs font-bold text-[#171717] border-[1.5px] border-[#171717] shadow-[0_1px_2px_rgba(0,0,0,0.15)] transition-all cursor-pointer"
+                type="button"
+                onClick={handleCopyDepartmentLink}
+                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[#fdfbf9] hover:bg-[#ff6f1e] text-xs font-bold text-[#171717] hover:text-[#2b1a07] border-[1.5px] border-[#171717] shadow-[0_1px_2px_rgba(0,0,0,0.15)] transition-all cursor-pointer"
+                title="نسخ رابط منصة شعبة المساحة لإرساله للطلاب"
               >
-                <Settings className="w-3.5 h-3.5 text-[#ff6f1e]" />
-                <span>تعديل الفرقة / الترم</span>
+                <Link2 className="w-3.5 h-3.5 text-[#ff6f1e]" />
+                <span>نسخ رابط الشعبة 🔗</span>
               </button>
 
-              <button
-                onClick={handleStudentLogout}
-                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[#fdfbf9] hover:bg-rose-50 text-xs font-bold text-rose-700 border-[1.5px] border-[#171717] shadow-[0_1px_2px_rgba(0,0,0,0.15)] transition-all cursor-pointer"
-              >
-                <LogOut className="w-3.5 h-3.5" />
-                <span>تسجيل خروج</span>
-              </button>
+              {currentStudent ? (
+                <>
+                  <button
+                    onClick={() => setShowAuthModal(true)}
+                    className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[#fdfbf9] hover:bg-[#f7efe9] text-xs font-bold text-[#171717] border-[1.5px] border-[#171717] shadow-[0_1px_2px_rgba(0,0,0,0.15)] transition-all cursor-pointer"
+                  >
+                    <Settings className="w-3.5 h-3.5 text-[#ff6f1e]" />
+                    <span>تعديل الفرقة / الترم</span>
+                  </button>
+
+                  <button
+                    onClick={handleStudentLogout}
+                    className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[#fdfbf9] hover:bg-rose-50 text-xs font-bold text-rose-700 border-[1.5px] border-[#171717] shadow-[0_1px_2px_rgba(0,0,0,0.15)] transition-all cursor-pointer"
+                  >
+                    <LogOut className="w-3.5 h-3.5" />
+                    <span>تسجيل خروج</span>
+                  </button>
+                </>
+              ) : (
+                <button
+                  onClick={() => setShowAuthModal(true)}
+                  className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[#ff6f1e] text-[#2b1a07] hover:bg-[#ff6f1e]/85 text-xs font-black border-[1.5px] border-[#171717] shadow-[0_1px_2px_rgba(0,0,0,0.15)] transition-all cursor-pointer"
+                >
+                  <Sparkles className="w-3.5 h-3.5 text-[#2b1a07]" />
+                  <span>تسجيل طالب 🎓</span>
+                </button>
+              )}
 
               <div className="flex items-center gap-2 text-xs text-[#2b1a07] bg-[#f7efe9] px-3.5 py-1.5 rounded-full border-[1.5px] border-[#171717] shadow-[0_1px_2px_rgba(0,0,0,0.15)] font-bold">
-                <span className="font-extrabold text-[#2b1a07]">8 مقررات في الفصل الحالي</span>
+                <span className="font-extrabold text-[#2b1a07]">{subjects.length} مقررات معتمدة</span>
               </div>
             </div>
           </div>
@@ -479,10 +628,10 @@ export default function SurveyingPortal() {
         )}
 
         {/* LMS Academic Navigation Tabs - Superr Pill Style */}
-        <div className="flex items-center gap-2 overflow-x-auto border-b-[1.5px] border-[#171717]/15 pb-3 scrollbar-none text-xs sm:text-sm">
+        <div className="flex items-center gap-2 overflow-x-auto border-b-[1.5px] border-[#171717]/15 pb-3 scrollbar-none text-xs sm:text-sm -mx-2 px-2 touch-pan-x">
           <button
-            onClick={() => setActiveTab('courses')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-full font-bold transition-all whitespace-nowrap border-[1.5px] ${activeTab === 'courses'
+            onClick={() => handleSwitchTab('courses')}
+            className={`flex-shrink-0 flex items-center gap-2 px-4 py-2 rounded-full font-bold transition-all whitespace-nowrap border-[1.5px] cursor-pointer ${activeTab === 'courses'
                 ? 'bg-[#171717] text-white border-[#171717] shadow-[0_2px_4px_rgba(0,0,0,0.2)]'
                 : 'bg-[#fdfbf9] text-[#171717] border-[#171717] hover:bg-[#f7efe9] shadow-[0_1px_2px_rgba(0,0,0,0.25)]'
               }`}
@@ -492,8 +641,8 @@ export default function SurveyingPortal() {
           </button>
 
           <button
-            onClick={() => setActiveTab('resources')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-full font-bold transition-all whitespace-nowrap border-[1.5px] ${activeTab === 'resources'
+            onClick={() => handleSwitchTab('resources')}
+            className={`flex-shrink-0 flex items-center gap-2 px-4 py-2 rounded-full font-bold transition-all whitespace-nowrap border-[1.5px] cursor-pointer ${activeTab === 'resources'
                 ? 'bg-[#171717] text-white border-[#171717] shadow-[0_2px_4px_rgba(0,0,0,0.2)]'
                 : 'bg-[#fdfbf9] text-[#171717] border-[#171717] hover:bg-[#f7efe9] shadow-[0_1px_2px_rgba(0,0,0,0.25)]'
               }`}
@@ -503,8 +652,8 @@ export default function SurveyingPortal() {
           </button>
 
           <button
-            onClick={() => setActiveTab('schedules')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-full font-bold transition-all whitespace-nowrap border-[1.5px] ${activeTab === 'schedules'
+            onClick={() => handleSwitchTab('schedules')}
+            className={`flex-shrink-0 flex items-center gap-2 px-4 py-2 rounded-full font-bold transition-all whitespace-nowrap border-[1.5px] cursor-pointer ${activeTab === 'schedules'
                 ? 'bg-[#171717] text-white border-[#171717] shadow-[0_2px_4px_rgba(0,0,0,0.2)]'
                 : 'bg-[#fdfbf9] text-[#171717] border-[#171717] hover:bg-[#f7efe9] shadow-[0_1px_2px_rgba(0,0,0,0.25)]'
               }`}
@@ -514,8 +663,8 @@ export default function SurveyingPortal() {
           </button>
 
           <button
-            onClick={() => setActiveTab('deadlines')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-full font-bold transition-all whitespace-nowrap border-[1.5px] ${activeTab === 'deadlines'
+            onClick={() => handleSwitchTab('deadlines')}
+            className={`flex-shrink-0 flex items-center gap-2 px-4 py-2 rounded-full font-bold transition-all whitespace-nowrap border-[1.5px] cursor-pointer ${activeTab === 'deadlines'
                 ? 'bg-[#171717] text-white border-[#171717] shadow-[0_2px_4px_rgba(0,0,0,0.2)]'
                 : 'bg-[#fdfbf9] text-[#171717] border-[#171717] hover:bg-[#f7efe9] shadow-[0_1px_2px_rgba(0,0,0,0.25)]'
               }`}
@@ -525,8 +674,8 @@ export default function SurveyingPortal() {
           </button>
 
           <button
-            onClick={() => setActiveTab('bookmarks')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-full font-bold transition-all whitespace-nowrap border-[1.5px] ${activeTab === 'bookmarks'
+            onClick={() => handleSwitchTab('bookmarks')}
+            className={`flex-shrink-0 flex items-center gap-2 px-4 py-2 rounded-full font-bold transition-all whitespace-nowrap border-[1.5px] cursor-pointer ${activeTab === 'bookmarks'
                 ? 'bg-[#171717] text-white border-[#171717] shadow-[0_2px_4px_rgba(0,0,0,0.2)]'
                 : 'bg-[#fdfbf9] text-[#171717] border-[#171717] hover:bg-[#f7efe9] shadow-[0_1px_2px_rgba(0,0,0,0.25)]'
               }`}
@@ -574,7 +723,8 @@ export default function SurveyingPortal() {
                               subject={sub}
                               resourcesCount={subResources.length}
                               sheetsCount={subSheets.length}
-                              onOpenSubject={setSelectedCourse}
+                              onOpenSubject={handleOpenCourse}
+                              onCopyLink={(s) => showToast(`تم نسخ رابط مقرر "${s.name_ar}" (${s.code}) بنجاح! جاهز للإرسال للطلاب 📋`, 'success')}
                             />
                           );
                         })}
@@ -603,7 +753,8 @@ export default function SurveyingPortal() {
                         subject={sub}
                         resourcesCount={subResources.length}
                         sheetsCount={subSheets.length}
-                        onOpenSubject={setSelectedCourse}
+                        onOpenSubject={handleOpenCourse}
+                        onCopyLink={(s) => showToast(`تم نسخ رابط مقرر "${s.name_ar}" (${s.code}) بنجاح! جاهز للإرسال للطلاب 📋`, 'success')}
                       />
                     );
                   })}
@@ -705,7 +856,8 @@ export default function SurveyingPortal() {
                     resource={res}
                     isBookmarked={bookmarks.includes(res.id)}
                     onToggleBookmark={handleToggleBookmark}
-                    onOpenReader={setReadingResource}
+                    onOpenReader={handleOpenResource}
+                    onCopyLink={(r) => showToast(`تم نسخ رابط "${r.title}" بنجاح! جاهز للإرسال للطلاب 📋`, 'success')}
                   />
                 ))}
               </div>
@@ -721,6 +873,7 @@ export default function SurveyingPortal() {
             schedules={schedules}
             activeDeptName="شعبة المساحة العامة"
             activeYear={`${getYearLabel()} (${getSemesterLabel(activeSemester)})`}
+            onCopyLink={(link, title) => showToast(`تم نسخ رابط ${title} بنجاح! جاهز للإرسال للطلاب 📋`, 'success')}
           />
         )}
 
@@ -731,7 +884,8 @@ export default function SurveyingPortal() {
           <DeadlinesTab
             announcements={announcements}
             resourcesWithDueDates={resources}
-            onOpenResource={setReadingResource}
+            onOpenResource={handleOpenResource}
+            onCopyLink={(link, title) => showToast(`تم نسخ رابط ${title} بنجاح! جاهز للإرسال للطلاب 📋`, 'success')}
           />
         )}
       </div>
@@ -741,14 +895,16 @@ export default function SurveyingPortal() {
       <CourseDetailModal
         subject={selectedCourse}
         resources={resources}
-        onClose={() => setSelectedCourse(null)}
-        onOpenResource={setReadingResource}
+        onClose={handleCloseCourse}
+        onOpenResource={handleOpenResource}
+        onCopyLink={(link, title) => showToast(`تم نسخ رابط ${title} بنجاح! جاهز للإرسال للطلاب 📋`, 'success')}
       />
 
       {/* Study Reader Modal */}
       <StudyReaderModal
         resource={readingResource}
-        onClose={() => setReadingResource(null)}
+        onClose={handleCloseResource}
+        onCopyLink={(link, title) => showToast(`تم نسخ رابط "${title}" بنجاح! جاهز للإرسال للطلاب 📋`, 'success')}
       />
 
       {/* Student Account & Onboarding Modal */}

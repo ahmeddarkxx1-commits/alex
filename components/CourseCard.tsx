@@ -1,14 +1,15 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Subject } from '@/types/database';
-import { ChevronLeft, FileText, FileCheck } from 'lucide-react';
+import { ChevronLeft, FileText, FileCheck, Link2, Check } from 'lucide-react';
 
 interface CourseCardProps {
   subject: Subject;
   resourcesCount: number;
   sheetsCount: number;
   onOpenSubject: (subject: Subject) => void;
+  onCopyLink?: (subject: Subject) => void;
 }
 
 export default function CourseCard({
@@ -16,21 +17,48 @@ export default function CourseCard({
   resourcesCount,
   sheetsCount,
   onOpenSubject,
+  onCopyLink,
 }: CourseCardProps) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const origin = typeof window !== 'undefined' ? window.location.origin : 'https://survey.nexoura.org';
+    const link = `${origin}/?course=${subject.code}`;
+    navigator.clipboard.writeText(link);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2500);
+    if (onCopyLink) {
+      onCopyLink(subject);
+    }
+  };
+
   return (
     <div
       onClick={() => onOpenSubject(subject)}
-      className="group relative flex flex-col justify-between bg-[#fdfbf9] hover:bg-[#f7efe9] border-[1.5px] border-[#171717] rounded-[12px] p-5 shadow-[0_2px_20px_rgba(0,0,0,0.06)] hover:shadow-[0_4px_16px_rgba(0,0,0,0.1)] transition-all cursor-pointer"
+      className="group relative flex flex-col justify-between bg-[#fdfbf9] hover:bg-[#f7efe9] border-[1.5px] border-[#171717] rounded-[12px] p-4 sm:p-5 shadow-[0_2px_20px_rgba(0,0,0,0.06)] hover:shadow-[0_4px_16px_rgba(0,0,0,0.1)] transition-all cursor-pointer"
     >
       <div>
-        {/* Top: School Name Label Badge */}
+        {/* Top: School Name Label Badge + Copy Link */}
         <div className="flex items-center justify-between gap-2 mb-3">
-          <span className="font-mono text-xs font-bold text-[#2b1a07] bg-[#f7efe9] border-[1.5px] border-[#171717] px-2.5 py-0.5 rounded-[8px] shadow-[0_1px_2px_rgba(0,0,0,0.1)]">
-            {subject.code}
-          </span>
-          <span className="text-[11px] font-semibold text-[#2b1a07]/60">
-            {subject.semester}
-          </span>
+          <div className="flex items-center gap-2">
+            <span className="font-mono text-xs font-bold text-[#2b1a07] bg-[#f7efe9] border-[1.5px] border-[#171717] px-2.5 py-0.5 rounded-[8px] shadow-[0_1px_2px_rgba(0,0,0,0.1)]">
+              {subject.code}
+            </span>
+            <span className="text-[11px] font-semibold text-[#2b1a07]/60">
+              {subject.semester}
+            </span>
+          </div>
+
+          <button
+            type="button"
+            onClick={handleCopy}
+            className="p-1.5 rounded-full bg-[#fdfbf9] hover:bg-[#ff6f1e] text-[#171717] hover:text-[#2b1a07] border-[1.5px] border-[#171717] transition-all cursor-pointer shadow-[0_1px_2px_rgba(0,0,0,0.1)] flex items-center gap-1 text-[11px] font-bold px-2.5"
+            title="نسخ رابط المادة المباشر"
+          >
+            {copied ? <Check className="w-3.5 h-3.5 text-[#22c55e]" /> : <Link2 className="w-3.5 h-3.5 text-[#ff6f1e]" />}
+            <span className="hidden sm:inline">{copied ? 'تم النسخ' : 'رابط المادة'}</span>
+          </button>
         </div>
 
         {/* Title in Cocoa Ink */}

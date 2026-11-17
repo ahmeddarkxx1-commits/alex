@@ -2,17 +2,19 @@
 
 import React, { useState } from 'react';
 import { Schedule, DayOfWeek, SectionNumber, SessionType } from '@/types/database';
-import { Clock, MapPin, User, Calendar } from 'lucide-react';
+import { Clock, MapPin, User, Calendar, Share2, Check, Link2 } from 'lucide-react';
 
 interface SchedulesTabProps {
   schedules: Schedule[];
   activeDeptName: string;
   activeYear: string;
+  onCopyLink?: (url: string, title: string) => void;
 }
 
 const DAYS_OF_WEEK: DayOfWeek[] = ['السبت', 'الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس'];
 
-export default function SchedulesTab({ schedules, activeDeptName, activeYear }: SchedulesTabProps) {
+export default function SchedulesTab({ schedules, activeDeptName, activeYear, onCopyLink }: SchedulesTabProps) {
+  const [copiedLink, setCopiedLink] = useState(false);
   const getTodayArabic = (): DayOfWeek => {
     const dayIndex = new Date().getDay();
     const map: Record<number, DayOfWeek> = {
@@ -56,10 +58,21 @@ export default function SchedulesTab({ schedules, activeDeptName, activeYear }: 
     }
   };
 
+  const handleShareSchedule = () => {
+    const origin = typeof window !== 'undefined' ? window.location.origin : 'https://survey.nexoura.org';
+    const link = `${origin}/?tab=schedules`;
+    navigator.clipboard.writeText(link);
+    setCopiedLink(true);
+    setTimeout(() => setCopiedLink(false), 2500);
+    if (onCopyLink) {
+      onCopyLink(link, 'جدول المحاضرات والسكاشن الأسبوعي');
+    }
+  };
+
   return (
     <div className="space-y-4">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-[#f7efe9] border-[1.5px] border-[#171717] p-4 rounded-[12px] shadow-[0_2px_12px_rgba(0,0,0,0.06)]">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-[#f7efe9] border-[1.5px] border-[#171717] p-3.5 sm:p-4 rounded-[12px] shadow-[0_2px_12px_rgba(0,0,0,0.06)]">
         <div>
           <h2 className="text-base sm:text-lg font-black text-[#2b1a07]">
             جدول المحاضرات والسكاشن
@@ -69,16 +82,28 @@ export default function SchedulesTab({ schedules, activeDeptName, activeYear }: 
           </p>
         </div>
 
-        <div className="text-xs font-bold px-3 py-1.5 rounded-[20px] bg-[#fdfbf9] border-[1.5px] border-[#171717] text-[#2b1a07] shadow-[0_1px_2px_rgba(0,0,0,0.15)]">
-          اليوم: <span className="text-[#ff6f1e]">{todayArabic}</span>
+        <div className="flex items-center gap-2 flex-wrap self-stretch sm:self-auto justify-between sm:justify-start">
+          <button
+            type="button"
+            onClick={handleShareSchedule}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-[20px] bg-[#fdfbf9] hover:bg-[#ff6f1e] text-[#171717] hover:text-[#2b1a07] border-[1.5px] border-[#171717] text-xs font-bold transition-all shadow-[0_1px_2px_rgba(0,0,0,0.1)] cursor-pointer"
+            title="نسخ رابط الجدول لإرساله للطلاب"
+          >
+            {copiedLink ? <Check className="w-3.5 h-3.5 text-[#22c55e]" /> : <Link2 className="w-3.5 h-3.5 text-[#ff6f1e]" />}
+            <span>{copiedLink ? 'تم نسخ الرابط ✓' : 'نسخ رابط الجدول 🔗'}</span>
+          </button>
+
+          <div className="text-xs font-bold px-3 py-1.5 rounded-[20px] bg-[#fdfbf9] border-[1.5px] border-[#171717] text-[#2b1a07] shadow-[0_1px_2px_rgba(0,0,0,0.15)]">
+            اليوم: <span className="text-[#ff6f1e]">{todayArabic}</span>
+          </div>
         </div>
       </div>
 
       {/* Days Bar (Pill buttons) */}
-      <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+      <div className="flex items-center gap-1.5 overflow-x-auto pb-2 pt-0.5 scrollbar-none touch-pan-x -mx-1 px-1">
         <button
           onClick={() => setSelectedDay('الكل')}
-          className={`px-3.5 py-1.5 rounded-[20px] text-xs font-bold whitespace-nowrap transition-all border-[1.5px] border-[#171717] shadow-[0_1px_2px_rgba(0,0,0,0.15)] ${
+          className={`px-3.5 py-1.5 rounded-[20px] text-xs font-bold whitespace-nowrap transition-all border-[1.5px] border-[#171717] shadow-[0_1px_2px_rgba(0,0,0,0.15)] flex-shrink-0 cursor-pointer ${
             selectedDay === 'الكل'
               ? 'bg-[#ff6f1e] text-[#2b1a07]'
               : 'bg-[#fdfbf9] text-[#171717] hover:bg-[#f7efe9]'
@@ -96,7 +121,7 @@ export default function SchedulesTab({ schedules, activeDeptName, activeYear }: 
             <button
               key={day}
               onClick={() => setSelectedDay(day)}
-              className={`px-3.5 py-1.5 rounded-[20px] text-xs font-bold whitespace-nowrap transition-all border-[1.5px] border-[#171717] shadow-[0_1px_2px_rgba(0,0,0,0.15)] flex items-center gap-1.5 ${
+              className={`px-3.5 py-1.5 rounded-[20px] text-xs font-bold whitespace-nowrap transition-all border-[1.5px] border-[#171717] shadow-[0_1px_2px_rgba(0,0,0,0.15)] flex-shrink-0 flex items-center gap-1.5 cursor-pointer ${
                 isSelected
                   ? 'bg-[#ff6f1e] text-[#2b1a07]'
                   : 'bg-[#fdfbf9] text-[#171717] hover:bg-[#f7efe9]'
@@ -118,18 +143,19 @@ export default function SchedulesTab({ schedules, activeDeptName, activeYear }: 
         })}
       </div>
 
-      {/* Sub-filters in Superr styling */}
-      <div className="flex flex-wrap items-center justify-between gap-3 text-xs bg-[#fdfbf9] p-3 rounded-[12px] border-[1.5px] border-[#171717] shadow-[0_1px_2px_rgba(0,0,0,0.06)]">
-        <div className="flex items-center gap-2">
-          <span className="text-[#2b1a07] font-bold">السكشن:</span>
-          <div className="flex items-center gap-1">
+      {/* Sub-filters (Mobile Responsive with Wrap) */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 text-xs bg-[#fdfbf9] p-3.5 sm:p-4 rounded-[12px] border-[1.5px] border-[#171717] shadow-[0_1px_2px_rgba(0,0,0,0.06)] overflow-hidden">
+        {/* Section Filter */}
+        <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+          <span className="text-[#2b1a07] font-bold text-xs flex-shrink-0">السكشن:</span>
+          <div className="flex flex-wrap items-center gap-1.5">
             {(['الكل', 'عام', 'سكشن 1', 'سكشن 2', 'سكشن 3', 'سكشن 4'] as (SectionNumber | 'الكل')[]).map((sec) => (
               <button
                 key={sec}
                 onClick={() => setSelectedSection(sec)}
-                className={`px-2.5 py-0.5 rounded-[20px] text-xs border-[1px] transition-colors ${
+                className={`px-3 py-1 rounded-[20px] text-xs border-[1.5px] transition-all cursor-pointer ${
                   selectedSection === sec
-                    ? 'bg-[#171717] text-white border-[#171717] font-bold'
+                    ? 'bg-[#171717] text-white border-[#171717] font-bold shadow-sm'
                     : 'bg-[#f7efe9] text-[#171717] border-[#171717]/30 hover:border-[#171717]'
                 }`}
               >
@@ -139,16 +165,17 @@ export default function SchedulesTab({ schedules, activeDeptName, activeYear }: 
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
-          <span className="text-[#2b1a07] font-bold">النوع:</span>
-          <div className="flex items-center gap-1">
+        {/* Type Filter */}
+        <div className="flex flex-col sm:flex-row sm:items-center gap-2 border-t md:border-t-0 border-[#171717]/10 pt-2.5 md:pt-0">
+          <span className="text-[#2b1a07] font-bold text-xs flex-shrink-0">النوع:</span>
+          <div className="flex flex-wrap items-center gap-1.5">
             {(['الكل', 'محاضرة نظري', 'سكشن عملي', 'ورشة', 'معمل'] as (SessionType | 'الكل')[]).map((t) => (
               <button
                 key={t}
                 onClick={() => setSelectedType(t)}
-                className={`px-2.5 py-0.5 rounded-[20px] text-xs border-[1px] transition-colors ${
+                className={`px-3 py-1 rounded-[20px] text-xs border-[1.5px] transition-all cursor-pointer ${
                   selectedType === t
-                    ? 'bg-[#171717] text-white border-[#171717] font-bold'
+                    ? 'bg-[#171717] text-white border-[#171717] font-bold shadow-sm'
                     : 'bg-[#f7efe9] text-[#171717] border-[#171717]/30 hover:border-[#171717]'
                 }`}
               >

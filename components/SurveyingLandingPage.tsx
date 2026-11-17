@@ -25,10 +25,12 @@ import {
 
 interface SurveyingLandingPageProps {
   onStudentRegistered: (student: StudentUser) => void;
+  onExploreAsGuest?: () => void;
 }
 
 export default function SurveyingLandingPage({
   onStudentRegistered,
+  onExploreAsGuest,
 }: SurveyingLandingPageProps) {
   // Mode: 'register' (new student) | 'login' (existing student)
   const [formMode, setFormMode] = useState<'register' | 'login'>('register');
@@ -160,6 +162,16 @@ export default function SurveyingLandingPage({
             <LogIn className="w-4 h-4 text-[#ff6f1e]" />
             <span>تسجيل الدخول لطالب مسجل مسبقاً</span>
           </button>
+
+          {onExploreAsGuest && (
+            <button
+              onClick={onExploreAsGuest}
+              className="w-full sm:w-auto px-6 py-3.5 rounded-full bg-[#fdfbf9] hover:bg-[#f7efe9] text-[#171717] font-bold text-sm border-[1.5px] border-[#171717] shadow-[0_1px_2px_rgba(0,0,0,0.25)] transition-all flex items-center justify-center gap-2 cursor-pointer"
+            >
+              <Layers className="w-4 h-4 text-[#ff6f1e]" />
+              <span>تصفح المواد والجدول كزائر ←</span>
+            </button>
+          )}
         </div>
 
         {/* Surveying Badges Row */}

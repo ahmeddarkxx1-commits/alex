@@ -3,13 +3,14 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { Subject, Resource } from '@/types/database';
-import { X, FileText, Download, Clock, ChevronLeft } from 'lucide-react';
+import { X, FileText, Download, Clock, ChevronLeft, Link2, Check } from 'lucide-react';
 
 interface CourseDetailModalProps {
   subject: Subject | null;
   resources: Resource[];
   onClose: () => void;
   onOpenResource: (resource: Resource) => void;
+  onCopyLink?: (link: string, title: string) => void;
 }
 
 export default function CourseDetailModal({
@@ -17,8 +18,10 @@ export default function CourseDetailModal({
   resources,
   onClose,
   onOpenResource,
+  onCopyLink,
 }: CourseDetailModalProps) {
   const [mounted, setMounted] = useState(false);
+  const [copiedLink, setCopiedLink] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -60,7 +63,7 @@ export default function CourseDetailModal({
         className="relative w-full max-w-3xl max-h-[90vh] flex flex-col bg-[#fdfbf9] border-[2px] border-[#171717] rounded-[16px] shadow-[0_8px_32px_rgba(0,0,0,0.3)] overflow-hidden cursor-default"
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-5 border-b-[1.5px] border-[#171717] bg-[#f7efe9]">
+        <div className="flex items-center justify-between p-4 sm:p-5 border-b-[1.5px] border-[#171717] bg-[#f7efe9] gap-2">
           <div>
             <div className="flex items-center gap-2">
               <span className="font-mono text-xs font-bold text-[#2b1a07] bg-[#fdfbf9] border-[1.5px] border-[#171717] px-2.5 py-0.5 rounded-[8px]">
@@ -70,17 +73,39 @@ export default function CourseDetailModal({
                 {subject.semester} • {subject.academic_year}
               </span>
             </div>
-            <h2 className="text-lg sm:text-xl font-black text-[#2b1a07] mt-1.5">
+            <h2 className="text-base sm:text-xl font-black text-[#2b1a07] mt-1.5">
               {subject.name_ar}
             </h2>
           </div>
 
-          <button
-            onClick={onClose}
-            className="p-2 rounded-[20px] bg-[#fdfbf9] border-[1.5px] border-[#171717] text-[#171717] hover:bg-[#ff6f1e] hover:text-[#2b1a07] transition-colors shadow-[0_1px_2px_rgba(0,0,0,0.15)]"
-          >
-            <X className="w-4 h-4" />
-          </button>
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <button
+              type="button"
+              onClick={() => {
+                const origin = typeof window !== 'undefined' ? window.location.origin : 'https://survey.nexoura.org';
+                const link = `${origin}/?course=${subject.code}`;
+                navigator.clipboard.writeText(link);
+                setCopiedLink(true);
+                setTimeout(() => setCopiedLink(false), 2500);
+                if (onCopyLink) {
+                  onCopyLink(link, `مقرر ${subject.name_ar} (${subject.code})`);
+                }
+              }}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-[20px] bg-[#fdfbf9] hover:bg-[#ff6f1e] text-[#171717] hover:text-[#2b1a07] border-[1.5px] border-[#171717] text-xs font-bold transition-all shadow-[0_1px_2px_rgba(0,0,0,0.1)] cursor-pointer"
+              title="نسخ رابط المادة المباشر"
+            >
+              {copiedLink ? <Check className="w-3.5 h-3.5 text-[#22c55e]" /> : <Link2 className="w-3.5 h-3.5 text-[#ff6f1e]" />}
+              <span className="hidden sm:inline">{copiedLink ? 'تم نسخ الرابط ✓' : 'نسخ رابط المادة 🔗'}</span>
+            </button>
+
+            <button
+              onClick={onClose}
+              className="p-2 rounded-[20px] bg-[#fdfbf9] border-[1.5px] border-[#171717] text-[#171717] hover:bg-[#ff6f1e] hover:text-[#2b1a07] transition-colors shadow-[0_1px_2px_rgba(0,0,0,0.15)] cursor-pointer"
+              title="إغلاق"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
         </div>
 
         {/* Body */}

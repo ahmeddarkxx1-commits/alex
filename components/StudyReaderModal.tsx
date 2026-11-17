@@ -12,16 +12,19 @@ import {
   FileText, 
   Clock, 
   BookOpen, 
-  Share2 
+  Share2,
+  Link2
 } from 'lucide-react';
 
 interface StudyReaderModalProps {
   resource: Resource | null;
   onClose: () => void;
+  onCopyLink?: (link: string, title: string) => void;
 }
 
-export default function StudyReaderModal({ resource, onClose }: StudyReaderModalProps) {
+export default function StudyReaderModal({ resource, onClose, onCopyLink }: StudyReaderModalProps) {
   const [copied, setCopied] = useState(false);
+  const [copiedLink, setCopiedLink] = useState(false);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -52,19 +55,34 @@ export default function StudyReaderModal({ resource, onClose }: StudyReaderModal
     setTimeout(() => setCopied(false), 2500);
   };
 
+  const handleCopyDirectLink = () => {
+    const origin = typeof window !== 'undefined' ? window.location.origin : 'https://survey.nexoura.org';
+    const link = `${origin}/?resId=${resource.id}`;
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(link);
+    }
+    setCopiedLink(true);
+    setTimeout(() => setCopiedLink(false), 2500);
+    if (onCopyLink) {
+      onCopyLink(link, resource.title);
+    }
+  };
+
   const handlePrint = () => {
     window.print();
   };
 
   const handleShare = () => {
+    const origin = typeof window !== 'undefined' ? window.location.origin : 'https://survey.nexoura.org';
+    const directUrl = `${origin}/?resId=${resource.id}`;
     if (navigator.share) {
       navigator.share({
         title: resource.title,
         text: resource.summary,
-        url: window.location.href,
+        url: directUrl,
       }).catch(() => {});
     } else {
-      handleCopy();
+      handleCopyDirectLink();
     }
   };
 
@@ -141,29 +159,37 @@ export default function StudyReaderModal({ resource, onClose }: StudyReaderModal
 
           <div className="flex items-center gap-1.5">
             <button
+              onClick={handleCopyDirectLink}
+              className="px-2.5 py-1.5 rounded-[20px] bg-[#fdfbf9] border-[1.5px] border-[#171717] text-[#171717] hover:bg-[#ff6f1e] hover:text-[#2b1a07] transition-all flex items-center gap-1 text-xs font-bold cursor-pointer shadow-[0_1px_2px_rgba(0,0,0,0.1)]"
+              title="نسخ رابط مباشر للملف لمشاركته مع الطلاب"
+            >
+              {copiedLink ? <Check className="w-3.5 h-3.5 text-[#22c55e]" /> : <Link2 className="w-3.5 h-3.5 text-[#ff6f1e]" />}
+              <span className="hidden sm:inline">{copiedLink ? 'تم نسخ الرابط ✓' : 'نسخ رابط الملف 🔗'}</span>
+            </button>
+            <button
               onClick={handleCopy}
-              className="p-2 rounded-[20px] bg-[#fdfbf9] border-[1.5px] border-[#171717] text-[#171717] hover:bg-[#ff6f1e] hover:text-[#2b1a07] transition-colors"
-              title="نسخ الشرح"
+              className="p-2 rounded-[20px] bg-[#fdfbf9] border-[1.5px] border-[#171717] text-[#171717] hover:bg-[#ff6f1e] hover:text-[#2b1a07] transition-colors cursor-pointer"
+              title="نسخ الشرح كـ نص"
             >
               {copied ? <Check className="w-4 h-4 text-[#22c55e]" /> : <Copy className="w-4 h-4" />}
             </button>
             <button
               onClick={handleShare}
-              className="p-2 rounded-[20px] bg-[#fdfbf9] border-[1.5px] border-[#171717] text-[#171717] hover:bg-[#ff6f1e] hover:text-[#2b1a07] transition-colors"
+              className="p-2 rounded-[20px] bg-[#fdfbf9] border-[1.5px] border-[#171717] text-[#171717] hover:bg-[#ff6f1e] hover:text-[#2b1a07] transition-colors cursor-pointer"
               title="مشاركة"
             >
               <Share2 className="w-4 h-4" />
             </button>
             <button
               onClick={handlePrint}
-              className="p-2 rounded-[20px] bg-[#fdfbf9] border-[1.5px] border-[#171717] text-[#171717] hover:bg-[#ff6f1e] hover:text-[#2b1a07] transition-colors hidden sm:flex"
+              className="p-2 rounded-[20px] bg-[#fdfbf9] border-[1.5px] border-[#171717] text-[#171717] hover:bg-[#ff6f1e] hover:text-[#2b1a07] transition-colors hidden sm:flex cursor-pointer"
               title="طباعة"
             >
               <Printer className="w-4 h-4" />
             </button>
             <button
               onClick={onClose}
-              className="p-2 rounded-[20px] bg-[#fdfbf9] border-[1.5px] border-[#171717] text-[#171717] hover:bg-[#ff6f1e] hover:text-[#2b1a07] transition-colors"
+              className="p-2 rounded-[20px] bg-[#fdfbf9] border-[1.5px] border-[#171717] text-[#171717] hover:bg-[#ff6f1e] hover:text-[#2b1a07] transition-colors cursor-pointer"
               title="إغلاق النافذة"
             >
               <X className="w-4 h-4" />

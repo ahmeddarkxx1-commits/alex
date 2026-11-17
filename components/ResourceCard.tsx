@@ -1,14 +1,15 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Resource } from '@/types/database';
-import { Bookmark, Clock, User, ChevronLeft } from 'lucide-react';
+import { Bookmark, Clock, User, ChevronLeft, Link2, Check } from 'lucide-react';
 
 interface ResourceCardProps {
   resource: Resource;
   isBookmarked: boolean;
   onToggleBookmark: (id: string) => void;
   onOpenReader: (resource: Resource) => void;
+  onCopyLink?: (resource: Resource) => void;
 }
 
 export default function ResourceCard({
@@ -16,7 +17,21 @@ export default function ResourceCard({
   isBookmarked,
   onToggleBookmark,
   onOpenReader,
+  onCopyLink,
 }: ResourceCardProps) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const origin = typeof window !== 'undefined' ? window.location.origin : 'https://survey.nexoura.org';
+    const link = `${origin}/?resId=${resource.id}`;
+    navigator.clipboard.writeText(link);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2500);
+    if (onCopyLink) {
+      onCopyLink(resource);
+    }
+  };
   const getBadgeStyle = () => {
     switch (resource.type) {
       case 'تلخيص محاضرة':
@@ -67,17 +82,29 @@ export default function ResourceCard({
             )}
           </div>
 
-          <button
-            onClick={() => onToggleBookmark(resource.id)}
-            className={`p-1.5 rounded-[20px] border-[1px] transition-colors ${
-              isBookmarked
-                ? 'bg-[#ff6f1e] text-[#2b1a07] border-[#171717]'
-                : 'bg-[#f7efe9] text-[#171717]/60 border-[#171717]/30 hover:text-[#171717]'
-            }`}
-            title={isBookmarked ? 'إزالة من المحفوظات' : 'حفظ'}
-          >
-            <Bookmark className={`w-3.5 h-3.5 ${isBookmarked ? 'fill-[#2b1a07]' : ''}`} />
-          </button>
+          <div className="flex items-center gap-1.5">
+            <button
+              type="button"
+              onClick={handleCopy}
+              className="p-1.5 rounded-[20px] bg-[#fdfbf9] hover:bg-[#ff6f1e] text-[#171717] hover:text-[#2b1a07] border-[1px] border-[#171717]/40 hover:border-[#171717] transition-all cursor-pointer shadow-[0_1px_2px_rgba(0,0,0,0.1)] flex items-center gap-1 text-[11px] font-bold px-2"
+              title="نسخ رابط المذكرة المباشر"
+            >
+              {copied ? <Check className="w-3.5 h-3.5 text-[#22c55e]" /> : <Link2 className="w-3.5 h-3.5 text-[#ff6f1e]" />}
+              <span className="hidden sm:inline">{copied ? 'تم النسخ' : 'رابط'}</span>
+            </button>
+
+            <button
+              onClick={() => onToggleBookmark(resource.id)}
+              className={`p-1.5 rounded-[20px] border-[1px] transition-colors cursor-pointer ${
+                isBookmarked
+                  ? 'bg-[#ff6f1e] text-[#2b1a07] border-[#171717]'
+                  : 'bg-[#f7efe9] text-[#171717]/60 border-[#171717]/30 hover:text-[#171717]'
+              }`}
+              title={isBookmarked ? 'إزالة من المحفوظات' : 'حفظ'}
+            >
+              <Bookmark className={`w-3.5 h-3.5 ${isBookmarked ? 'fill-[#2b1a07]' : ''}`} />
+            </button>
+          </div>
         </div>
 
         {/* Subject & Week */}
